@@ -49,10 +49,10 @@ The header consists of two main parts, each typically consisting of 0x10 bytes.
 0x18 - 0x1B
  Pixel Format, 4 bytes. The first two bytes aren't used as far as I know.
   Known Values:
-   Rgb5a3 Pixels, data in 8x4 chunks = 0x0005
-   256 Color Palette with Rgb565 colors, indexed data in 8x4 chunks = 0x1809,
-   16 Color Palette per chunk with Rgb5a3 colors, data in 8x4 chunks = 0x2809,
-   16 Color Palette per chunk with Rgb5a3 colors, data in 8x8 chunks = 0x2808
+   *Rgb5a3 Pixels, data in 8x4 chunks = 0x0005
+   *256 Color Palette with Rgb565 colors, indexed data in 8x4 chunks = 0x1809,
+   *16 Color Palette per chunk with Rgb5a3 colors, data in 8x4 chunks = 0x2809,
+   *16 Color Palette per chunk with Rgb5a3 colors, data in 8x8 chunks = 0x2808
 
 0x1C - 0x1D
  Width, 2 bytes
