@@ -19,12 +19,14 @@ Gvr files are used in the Wii port of Puyo Puyo! 15th Anniversary Edition and ar
 }}}
 
 
+
+
 = File Format =
 The file starts off with 0x20 (64) bytes of header data which describes the remainder of the image.
 
-
 == Header ==
 The header consists of two main parts, each typically consisting of 0x10 bytes.
+
 
 === 1st Header ===
 0x00 - 0x03   'GCIX'
@@ -62,26 +64,41 @@ The header consists of two main parts, each typically consisting of 0x10 bytes.
 == Format Header ==
 The format varies based upon the pixel format. Some formats have no additional headers while others have a global palette.
 
+
+
 ===0x0005===
 This format has no format header.
+
 
 ===0x1809===
 256 colors are specified in Rgb5a3 format, taking up 512 bytes.
 
+
 ===0x2809===
 This format has no format header.
+
 
 ===0x2808===
 This format has no format header.
 
+
+
 == Image Data ==
 Next up is the image data which obviously varies per pixel format.
+
+
 
 ===0x0005===
 Each pixel is in a 8x4 chunk of Rgb5a3 colors, occupying 64 bytes per each chunk.
 
+
 ===0x1809===
 Each pixel is in a 8x4 chunk of indexed pixels, occupying 32 bytes per each chunk.
 
-===0x1808===
-Each pixel is in a 8x8 chunk of indexed pixels, occupying 32 bytes per each chunk.
+
+===0x2809===
+This format has not been cracked entirely.
+
+
+===0x2808===
+This format has not been cracked entirely.
