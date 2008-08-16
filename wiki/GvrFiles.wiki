@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Gvr files are containers for a variety of encodings, Which can contain palettes (Per-chunk, or one globally in the file). Not all encodings of Gvr have been cracked yet. Gvr files are compressed via palettes and different color formats, both lossy methods of compression. This means the quality of a Gvr file is dramatically less if the encoding used is very lossy. 
+Gvr files are containers for a variety of encodings, Which can contain palettes (Per-chunk, or one globally in the file). Not all encodings of Gvr have been cracked yet. Gvr files are compressed via palettes and low precision color formats, both lossy methods of compression. This means the quality of a Gvr file is dramatically degraded if the encoding used is very lossy. 
 
 Gvr files are used in the Wii port of Puyo Puyo! 15th Anniversary Edition and are specialized for the platform. This also means it is stored in Big Endian, which our software will convert to Little Endian (Support for running our code on Big Endian machines is nonexistent, for the time being.)
 
@@ -49,10 +49,10 @@ The header consists of two main parts, each typically consisting of 0x10 bytes.
 0x18 - 0x1B
  Pixel Format, 4 bytes. The first two bytes aren't used as far as I know.
   Known Values:
-   *Rgb5a3 Pixels, data in 8x4 chunks = 0x0005
-   *256 Color Palette with Rgb565 colors, indexed data in 8x4 chunks = 0x1809,
-   *16 Color Palette per chunk with Rgb5a3 colors, data in 8x4 chunks = 0x2809,
-   *16 Color Palette per chunk with Rgb5a3 colors, data in 8x8 chunks = 0x2808
+   * Rgb5a3 Pixels, data in 8x4 chunks = 0x0005
+   * 256 Color Palette with Rgb565 colors, indexed data in 8x4 chunks = 0x1809,
+   * 16 Color Palette per chunk with Rgb5a3 colors, data in 8x4 chunks = 0x2809,
+   * 16 Color Palette per chunk with Rgb5a3 colors, data in 8x8 chunks = 0x2808
 
 0x1C - 0x1D
  Width, 2 bytes
