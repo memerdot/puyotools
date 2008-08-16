@@ -1,0 +1,87 @@
+#summary File Specifications for SEGA Gvr files used in the Wii port of Puyo Puyo! 15th Anniversary Edition
+
+= Introduction =
+
+Gvr files are containers for a variety of encodings, Which can contain palettes (Per-chunk, or one globally in the file). Not all encodings of Gvr have been cracked yet. Gvr files are compressed via palettes and different color formats, both lossy methods of compression. This means the quality of a Gvr file is dramatically less if the encoding used is very lossy. 
+
+Gvr files are used in the Wii port of Puyo Puyo! 15th Anniversary Edition and are specialized for the platform. This also means it is stored in Big Endian, which our software will convert to Little Endian (Support for running our code on Big Endian machines is nonexistent, for the time being.)
+
+== Color Formats ==
+*Rgb5a3* is Rgb555 when the first bit is one, and Rgb4443 when the first bit is 0.
+{{{
+ 1 | RRRRR | GGGGG | BBBBB |
+ 0 | RRRR  | GGGG  | BBBB  | AAA
+}}}
+
+*Rgb565* dedicates 5 bytes for the Red component, 6 bytes for the Green component, and 5 bytes for the Blue component.
+{{{
+ RRRRR | GGGGGG | BBBBB
+}}}
+
+
+= File Format =
+The file starts off with 0x20 (64) bytes of header data which describes the remainder of the image.
+
+
+== Header ==
+The header consists of two main parts, each typically consisting of 0x10 bytes.
+
+=== 1st Header ===
+0x00 - 0x03   'GCIX'
+ Magic Code, 4 bytes
+
+0x04 - 0x07   Unknown
+ 4 bytes. Possibly useless, Possibly offset to Image Header 2. (Seemingly always 8)
+
+0x08 - 0x0F
+ Reserved - 8 bytes. Always Zero, Probably usable for metadata.
+
+
+=== 2nd Header ===
+0x10 - 0x13   'GVRT'
+ Format Magic Code, 4 bytes
+
+0x14 - 0x17
+ Size, 4 bytes. Looks like the post-header filesize but I just ignore it for decoding.
+
+0x18 - 0x1B
+ Pixel Format, 4 bytes. The first two bytes aren't used as far as I know.
+  Known Values:
+   Rgb5a3 Pixels, data in 8x4 chunks = 0x0005
+   256 Color Palette with Rgb565 colors, indexed data in 8x4 chunks = 0x1809,
+   16 Color Palette per chunk with Rgb5a3 colors, data in 8x4 chunks = 0x2809,
+   16 Color Palette per chunk with Rgb5a3 colors, data in 8x8 chunks = 0x2808
+
+0x1C - 0x1D
+ Width, 2 bytes
+
+0x1E - 0x1F
+ Height, 2 bytes
+
+
+== Format Header ==
+The format varies based upon the pixel format. Some formats have no additional headers while others have a global palette.
+
+===0x0005===
+This format has no format header.
+
+===0x1809===
+256 colors are specified in Rgb5a3 format, taking up 512 bytes.
+
+===0x2809===
+This format has no format header.
+
+===0x2808===
+This format has no format header.
+
+== Image Data ==
+Next up is the image data which obviously varies per pixel format.
+
+===0x0005===
+Each pixel is in a 8x4 chunk of Rgb5a3 colors, occupying 64 bytes per each chunk.
+
+===0x1809===
+Each pixel is in a 8x4 chunk of indexed pixels, occupying 32 bytes per each chunk.
+
+===0x1808===
+Each pixel is in a 8x8 chunk of indexed pixels, occupying 32 bytes per each chunk.
