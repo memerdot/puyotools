@@ -1,0 +1,25 @@
+<Combine name="GvrSharp" fileversion="2.0">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="GvrSharp" configuration="Debug" />
+      <Entry build="True" name="GvrConv" configuration="Debug" />
+      <Entry build="True" name="PngSharp" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="GvrSharp" configuration="Release" />
+      <Entry build="True" name="GvrConv" configuration="Release" />
+      <Entry build="True" name="PngSharp" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <StartMode startupentry="GvrConv" single="True">
+    <Execute type="None" entry="GvrSharp" />
+    <Execute type="None" entry="GvrConv" />
+    <Execute type="None" entry="GvrConv" />
+    <Execute type="None" entry="PngSharp" />
+  </StartMode>
+  <Entries>
+    <Entry filename="GvrSharp/GvrSharp.mdp" />
+    <Entry filename="GvrConv/GvrConv.mdp" />
+    <Entry filename="PngSharp/PngSharp.mdp" />
+  </Entries>
+</Combine>

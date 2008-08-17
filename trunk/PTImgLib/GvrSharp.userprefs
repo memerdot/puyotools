@@ -1,0 +1,32 @@
+﻿<UserCombinePreferences version="1.0" filename="/root/PPFTools/GvrSharp/GvrSharp.mds">
+  <Files>
+    <File name="Welcome" />
+    <File name="GvrSharp/GvrFile.cs" line="22" column="2" />
+    <File name="GvrSharp/AssemblyInfo.cs" line="13" column="32" />
+  </Files>
+  <Views>
+    <ViewMemento id="ProjectPad">
+      <Node expanded="True">
+        <Node name="GvrConv" expanded="True" selected="True">
+          <Node name="GvrConv" expanded="True" />
+        </Node>
+        <Node name="GvrSharp" expanded="True" />
+      </Node>
+    </ViewMemento>
+    <ViewMemento id="ClassPad">
+      <Node expanded="True" selected="True">
+        <Node name="GvrSharp" expanded="True" />
+      </Node>
+    </ViewMemento>
+    <ViewMemento id="ConnectionManagerPad">
+      <Node />
+    </ViewMemento>
+    <ViewMemento id="MonoDevelop.NUnit.TestPad">
+      <Node />
+    </ViewMemento>
+  </Views>
+  <Properties>
+    <Property key="ActiveWindow" value="/root/PPFTools/GvrSharp/GvrSharp/GvrFile.cs" />
+    <Property key="ActiveConfiguration" value="Debug" />
+  </Properties>
+</UserCombinePreferences>
