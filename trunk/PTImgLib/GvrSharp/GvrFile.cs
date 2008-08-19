@@ -1,12 +1,8 @@
 // GvrFile.cs
 // By Nmn / For PuyoNexus.net
 // --
-// I Hearby release this code under Public Domain.
+// This file is released under the New BSD license. See license.txt for details.
 // This code comes with absolutely no warrenty.
-
-using System;
-using System.IO;
-using System.Collections;
 
 // - GVR File Format -
 // ----
@@ -33,15 +29,10 @@ using System.Collections;
 // Paletted pixel formats likely have a format header. This does not include
 // the chunk-interleaved headers for block based paletting.
 // ----
-// -- How to create a new codec --
-// ----
-// Quite simple really.
-// 1. Add a new entry in "GvrFormat"
-// 2. Create your derivitive of "GvrDecoder" (See comments and existing implementatins for hints)
-// 3. Add to the "SetDecompressedData()" switch statement in "GvrFile"
-// And now you have a brand new Gvr codec capable of decoding.
-// ----
 
+using System;
+using System.IO;
+using System.Collections;
 
 namespace GvrSharp
 {
@@ -53,16 +44,19 @@ namespace GvrSharp
 		private byte[] CompressedData;   // GVR Data
 		private byte[] DecompressedData; // Regular, Decompressed Data
 
-        private int height;
-        private int width;
+        private int GvrFileHeight;
+        private int GvrFileWidth;
 
-        private ushort fmtcode;
+        private ushort GvrPixelFormatCode;
 
-        private int chunkwidth;
-        private int chunkheight;
-        private int chunksize;
+        private int GvrCodecHeaderLength;
+        private int GvrCodecChunkWidth;
+        private int GvrCodecChunkHeight;
+        private int GvrCodecChunkLength;
 
-        private GvrDecoder codec;
+        private GvrCodec GvrCodec;
+        private GvrDecoder GvrDecoder;
+        private GvrEncoder GvrEncoder;
 		
 		
 		// - Constructors -
@@ -99,8 +93,6 @@ namespace GvrSharp
 		}
 		
 		
-		
-		
 		// public byte[] GetCompressedData()
 		// Return Value: The byte array of the decompressed data
 		// Description: Gets the decompressed data
@@ -117,9 +109,6 @@ namespace GvrSharp
 		}
 		
 		
-		
-		
-		
 		// - Data Input -
 		// Description: Inputs compressed GVR data (And unpacks it to RGBA8888)
 		// Parameters:
@@ -131,43 +120,40 @@ namespace GvrSharp
 
             if (!IsGvr()) return false;
 			
-			// Decompress
-            fmtcode = (ushort)(Compressed[0x1A] << 8 | Compressed[0x1B]);
-            Console.WriteLine("Format Code: 0x" + fmtcode.ToString("X"));
+			// Get Format Code
+            GvrPixelFormatCode = (ushort)(Compressed[0x1A] << 8 | Compressed[0x1B]);
+            Console.WriteLine("Format Code: 0x" + GvrPixelFormatCode.ToString("X"));
 
-            switch(fmtcode)
-            {
-                case (ushort)GvrFormat.Pal_565_8x4:
-                    codec = new Pal_565_8x4_Decode();
-                    break;
-            }
+            GvrCodec = GvrCodecs.GetCodec(GvrPixelFormatCode.ToString("X"));
+            GvrDecoder = GvrCodec.Decode;
+            GvrEncoder = GvrCodec.Encode;
 
-            width  = Compressed[0x1C] << 8 | Compressed[0x1D];
-            height = Compressed[0x1E] << 8 | Compressed[0x1F];
+            GvrFileWidth  = Compressed[0x1C] << 8 | Compressed[0x1D];
+            GvrFileHeight = Compressed[0x1E] << 8 | Compressed[0x1F];
 
-            DecompressedData = new byte[width * height * 4];
+            DecompressedData = new byte[GvrFileWidth * GvrFileHeight * 4];
 
-            codec.Initialize(CompressedData, width, height);
+            GvrDecoder.Initialize(CompressedData, GvrFileWidth, GvrFileHeight);
 
-            chunkwidth = codec.GetChunkWidth();
-            chunkheight = codec.GetChunkHeight();
-            chunksize = codec.GetChunkSize();
+            GvrCodecChunkWidth = GvrDecoder.GetChunkWidth();
+            GvrCodecChunkHeight = GvrDecoder.GetChunkHeight();
+            GvrCodecChunkLength = GvrDecoder.GetChunkSize();
 
-            if ((width / chunkwidth) * chunkwidth != width)
-                Console.WriteLine("Warning: Image width is not divisible by " + chunkwidth);
+            if ((GvrFileWidth / GvrCodecChunkWidth) * GvrCodecChunkWidth != GvrFileWidth)
+                Console.WriteLine("Warning: Image GvrFileWidth is not divisible by " + GvrCodecChunkWidth);
 
-            if ((height / chunkheight) * chunkheight != height)
-                Console.WriteLine("Warning: Image height is not divisible by " + chunkheight);
+            if ((GvrFileHeight / GvrCodecChunkHeight) * GvrCodecChunkHeight != GvrFileHeight)
+                Console.WriteLine("Warning: Image GvrFileHeight is not divisible by " + GvrCodecChunkHeight);
 
             int ptr = 0x20;
 
-            codec.DecodeFormatHeader(ref CompressedData, ref ptr);
+            GvrDecoder.DecodeFormatHeader(ref CompressedData, ref ptr);
 
-            for (int y = 0; y < height / chunkheight; y++)
+            for (int y = 0; y < GvrFileHeight / GvrCodecChunkHeight; y++)
             {
-                for (int x = 0; x < width / chunkwidth; x++)
+                for (int x = 0; x < GvrFileWidth / GvrCodecChunkWidth; x++)
                 {
-                    codec.DecodeChunk(ref CompressedData, ref ptr, ref DecompressedData, x * chunkwidth, y * chunkheight);
+                    GvrDecoder.DecodeChunk(ref CompressedData, ref ptr, ref DecompressedData, x * GvrCodecChunkWidth, y * GvrCodecChunkHeight);
                 }
             }
 
@@ -183,9 +169,79 @@ namespace GvrSharp
 		// Description: Inputs decompressed, RGBA8888 data (And packs it to GVR with the specified format code)
 		public bool SetDecompressedData(byte[] Decompressed, int Width, int Height, GvrFormat FormatCode)
 		{
-			DecompressedData = Decompressed;
+            DecompressedData = Decompressed;
 
-			// Compress
+            // Set the data passed to us
+            GvrPixelFormatCode = (ushort)FormatCode;
+            GvrFileWidth = Width;
+            GvrFileHeight = Height;
+
+            // Get the codec
+            Console.WriteLine("Format Code: 0x" + GvrPixelFormatCode.ToString("X"));
+            GvrCodec = GvrCodecs.GetCodec(FormatCode.ToString("X"));
+            GvrDecoder = GvrCodec.Decode;
+            GvrEncoder = GvrCodec.Encode;
+
+            // Get relevant data
+            GvrCodecHeaderLength = GvrEncoder.GetFormatHeaderSize();
+            GvrCodecChunkWidth = GvrEncoder.GetChunkWidth();
+            GvrCodecChunkHeight = GvrEncoder.GetChunkHeight();
+            GvrCodecChunkLength = GvrEncoder.GetChunkSize();
+
+            // Size calculation
+            int GvrSize = (GvrFileWidth / GvrCodecChunkWidth * GvrFileHeight / GvrCodecChunkHeight) * GvrCodecChunkLength + GvrCodecHeaderLength + 0x20;
+
+            // Allocate the buffers
+            CompressedData = new byte[GvrSize];
+
+            // Set the file properties
+            //47 56 52 54
+            CompressedData[0x00] = 0x47;
+            CompressedData[0x01] = 0x43;
+            CompressedData[0x02] = 0x49;
+            CompressedData[0x03] = 0x58;
+
+            CompressedData[0x04] = 0x08;
+
+            CompressedData[0x10] = 0x47;
+            CompressedData[0x11] = 0x56;
+            CompressedData[0x12] = 0x52;
+            CompressedData[0x13] = 0x54;
+
+            CompressedData[0x14] = 0x08;
+            CompressedData[0x15] = (byte)((GvrSize >> 8) & 0xFF);
+            CompressedData[0x16] = (byte)((GvrSize >> 16) & 0xFF);
+            CompressedData[0x17] = (byte)((GvrSize >> 24) & 0xFF);
+
+            CompressedData[0x04] = 0x08;
+            CompressedData[0x1A] = (byte)((GvrPixelFormatCode >> 8) & 0xFF);
+            CompressedData[0x1B] = (byte)((GvrPixelFormatCode >> 0) & 0xFF);
+            CompressedData[0x1C] = (byte)((GvrFileWidth >> 8) & 0xFF);
+            CompressedData[0x1D] = (byte)((GvrFileWidth >> 0) & 0xFF);
+            CompressedData[0x1E] = (byte)((GvrFileHeight >> 8) & 0xFF);
+            CompressedData[0x1F] = (byte)((GvrFileHeight >> 0) & 0xFF);
+
+            // Initialize encoder
+            GvrEncoder.Initialize(ref DecompressedData, null, GvrFileWidth, GvrFileHeight);
+
+            // Warn if the width and height are inappropriete
+            if ((GvrFileWidth / GvrCodecChunkWidth) * GvrCodecChunkWidth != GvrFileWidth)
+                Console.WriteLine("Warning: Image GvrFileWidth is not divisible by " + GvrCodecChunkWidth);
+
+            if ((GvrFileHeight / GvrCodecChunkHeight) * GvrCodecChunkHeight != GvrFileHeight)
+                Console.WriteLine("Warning: Image GvrFileHeight is not divisible by " + GvrCodecChunkHeight);
+
+            int ptr = 0x20;
+
+            GvrEncoder.EncodeFormatHeader(ref CompressedData, ref ptr);
+
+            for (int y = 0; y < GvrFileHeight / GvrCodecChunkHeight; y++)
+            {
+                for (int x = 0; x < GvrFileWidth / GvrCodecChunkWidth; x++)
+                {
+                    GvrEncoder.EncodeChunk(ref CompressedData, ref ptr, ref DecompressedData, x * GvrCodecChunkWidth, y * GvrCodecChunkHeight);
+                }
+            }
 			
 			return true;
 		}
@@ -208,9 +264,7 @@ namespace GvrSharp
         }
 		public bool IsGvr()
 		{
-            IsGvr(CompressedData);
-
-            return true;
+            return IsGvr(CompressedData);
         }
         static public bool IsGvr(string Filename)
         {
@@ -218,23 +272,33 @@ namespace GvrSharp
             byte[] FileContents = new byte[GvrMagic.Length];
             File.Read(FileContents, 0, FileContents.Length);
             File.Close();
-            IsGvr(FileContents);
 
-            return true;
+            return IsGvr(FileContents);
         }
+
 		public GvrFormat GetFormatCode()
 		{
-			return (GvrFormat)(CompressedData[0x1A] * 256 + CompressedData[0x1B]);
+			return (GvrFormat)(CompressedData[0x1A] << 8 + CompressedData[0x1B]);
 		}
 
         public int GetHeight()
         {
-            return height;
+            return GvrFileHeight;
         }
 
         public int GetWidth()
         {
-            return width;
+            return GvrFileWidth;
+        }
+
+        public int Length()
+        {
+            return DecompressedData.Length;
+        }
+
+        public int CompressedLength()
+        {
+            return CompressedData.Length;
         }
     }
 }

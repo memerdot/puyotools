@@ -1,5 +1,9 @@
 // AssemblyInfo.cs
-// Created by nmn at 03:44 08/14/2008
+// By Nmn / For PuyoNexus.net
+// --
+// This file is released under the New BSD license. See license.txt for details.
+// This code comes with absolutely no warrenty.
+
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
