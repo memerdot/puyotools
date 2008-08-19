@@ -1,3 +1,9 @@
+// ImageConverter.cs
+// By Nmn / For PuyoNexus.net
+// --
+// This file is released under the New BSD license. See license.txt for details.
+// This code comes with absolutely no warrenty.
+
 using System;
 using System.IO;
 using System.Drawing;
@@ -12,7 +18,7 @@ namespace ImgSharp
         static public byte[] imageToByteArray(System.Drawing.Image imageIn, System.Drawing.Imaging.ImageFormat fmt)
         {
             MemoryStream ms = new MemoryStream();
-            imageIn.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            imageIn.Save(ms, fmt);
             return ms.ToArray();
         }
         static public Image byteArrayToImage(byte[] byteArrayIn, ref System.Drawing.Imaging.ImageFormat fmt)

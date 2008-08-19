@@ -1,3 +1,9 @@
+// GvrDecoder.cs
+// By Nmn / For PuyoNexus.net
+// --
+// This file is released under the New BSD license. See license.txt for details.
+// This code comes with absolutely no warrenty.
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,17 +12,17 @@ namespace GvrSharp
 {
     public abstract class GvrDecoder
     {
-        // The width of a chunk
+        // The GvrFileWidth of a chunk
         abstract public int GetChunkWidth();
 
-        // The height of a chunk
+        // The GvrFileHeight of a chunk
         abstract public int GetChunkHeight();
 
         // The bytes of a chunk
         abstract public int GetChunkSize();
 
         // The format header size
-        abstract public int FormatHeaderSize();
+        abstract public int GetFormatHeaderSize();
 
         // Initialization, always called first.
         // Passed to this function is the entire image header (0x20 bytes to be exact)
@@ -33,7 +39,7 @@ namespace GvrSharp
         abstract public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1);
     }
 
-    public class Pal_565_8x4_Decode : GvrDecoder
+    public class GvrDecoder_Pal_565_8x4 : GvrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -50,7 +56,7 @@ namespace GvrSharp
         {
             return 8 * 4;
         }
-        override public int FormatHeaderSize()
+        override public int GetFormatHeaderSize()
         {
             return 256 * 2;
         }

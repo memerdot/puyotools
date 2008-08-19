@@ -1,9 +1,9 @@
 // AssemblyInfo.cs
 // By Nmn / For PuyoNexus.net
 // --
-// I Hearby release this code under Public Domain.
+// This file is released under the New BSD license. See license.txt for details.
 // This code comes with absolutely no warrenty.
-//
+
 using System.Reflection;
 using System.Runtime.CompilerServices;
 [assembly: AssemblyTitle("ImgSharp")]

@@ -1,7 +1,7 @@
-// PngFile.cs
+// ImgFile.cs
 // By Nmn / For PuyoNexus.net
 // --
-// I Hearby release this code under Public Domain.
+// This file is released under the New BSD license. See license.txt for details.
 // This code comes with absolutely no warrenty.
 
 using System;
@@ -10,7 +10,6 @@ using System.Drawing;
 
 namespace ImgSharp
 {
-	
 	public class ImgFile
 	{
 		// - Variables -
@@ -161,7 +160,7 @@ namespace ImgSharp
 
             return true;
 		}
-		public int Length()
+		public int CompressedLength()
 		{
 			return CompressedData.Length;
         }
@@ -173,5 +172,24 @@ namespace ImgSharp
         {
             return height;
         }
-	}
+
+        public static System.Drawing.Imaging.ImageFormat ImgFormatFromFilename(string InName)
+        {
+            string LowerName = InName.ToLower();
+            if (LowerName.EndsWith(".bmp")) return System.Drawing.Imaging.ImageFormat.Bmp;
+            if (LowerName.EndsWith(".emf")) return System.Drawing.Imaging.ImageFormat.Emf;
+            if (LowerName.EndsWith(".exf")) return System.Drawing.Imaging.ImageFormat.Exif;
+            if (LowerName.EndsWith(".gif")) return System.Drawing.Imaging.ImageFormat.Gif;
+            if (LowerName.EndsWith(".ico")) return System.Drawing.Imaging.ImageFormat.Icon;
+            if (LowerName.EndsWith(".jpg")) return System.Drawing.Imaging.ImageFormat.Jpeg;
+            if (LowerName.EndsWith(".raw")) return System.Drawing.Imaging.ImageFormat.MemoryBmp;
+            if (LowerName.EndsWith(".png")) return System.Drawing.Imaging.ImageFormat.Png;
+            if (LowerName.EndsWith(".wmf")) return System.Drawing.Imaging.ImageFormat.Wmf;
+            if (LowerName.EndsWith(".tiff")) return System.Drawing.Imaging.ImageFormat.Tiff;
+
+            // PNG is by far the most widely used image format with it's level of capability and quality compression.
+            // It will be default.
+            return System.Drawing.Imaging.ImageFormat.Png;
+        }
+    }
 }
