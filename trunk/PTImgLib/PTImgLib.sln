@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GvrSharp", "GvrSharp\GvrSha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GvrConv", "GvrConv\GvrConv.csproj", "{78196D95-D34B-4C0B-A16F-A7A487AE237A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgSharp", "PngSharp\ImgSharp.csproj", "{889DCE80-78CB-4865-A16F-12FD2B85766B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgSharp", "ImgSharp\ImgSharp.csproj", "{889DCE80-78CB-4865-A16F-12FD2B85766B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
