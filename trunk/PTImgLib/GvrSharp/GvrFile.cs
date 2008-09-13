@@ -65,7 +65,11 @@ namespace GvrSharp
 		//  GvrFile: A byte array of the Gvr file
 		// Description: Loads a GVR from a byte array
 		public GvrFile(byte[] GvrFile)
-		{
+        {
+            if (GvrFile == null)
+            {
+                throw new ArgumentException("GvrFile(byte[]): Argument 1, 'GvrFile', Can not be null.");
+            }
 			SetCompressedData(GvrFile);
         }
 
@@ -75,7 +79,19 @@ namespace GvrSharp
         // Description: Loads a GVR from a byte array
         public GvrFile(byte[] GvrFile, int Width, int Height, GvrFormat Format)
         {
-            SetDecompressedData(GvrFile,Width,Height,Format);
+            if (GvrFile == null)
+            {
+                throw new ArgumentException("GvrFile(byte[],int,int,GvrFormat): Argument 1, 'GvrFile', Can not be null.");
+            }
+            if (Width < 8)
+            {
+                throw new ArgumentException("GvrFile(byte[],int,int,GvrFormat): Argument 2, 'Width', Must be at least 8.");
+            }
+            if (Height < 8)
+            {
+                throw new ArgumentException("GvrFile(byte[],int,int,GvrFormat): Argument 3, 'Height', Must be at least 8.");
+            }
+            SetDecompressedData(GvrFile, Width, Height, Format);
         }
 		
 		// GvrFile(byte[] GvrFile)
@@ -116,17 +132,35 @@ namespace GvrSharp
 		// Return Value: True if the data was properly loaded.
 		public bool SetCompressedData(byte[] Compressed)
 		{
-			CompressedData = Compressed;
+            if (Compressed == null)
+            {
+                throw new ArgumentException("SetCompressedData: Argument 1, 'Compressed', Can not be null.");
+            }
+            else
+            {
+                CompressedData = Compressed;
+            }
+            if (!IsGvr()) throw new NotGvrException("The file sent to SetCompressedData() is not a Gvr file.");
 
-            if (!IsGvr()) return false;
 			
 			// Get Format Code
             GvrPixelFormatCode = (ushort)(Compressed[0x1A] << 8 | Compressed[0x1B]);
-            Console.WriteLine("Format Code: 0x" + GvrPixelFormatCode.ToString("X"));
 
             GvrCodec = GvrCodecs.GetCodec(GvrPixelFormatCode.ToString("X"));
-            GvrDecoder = GvrCodec.Decode;
-            GvrEncoder = GvrCodec.Encode;
+            if (GvrCodec == null)
+            {
+                throw new GvrNoSuitableCodecException("No Acceptable Gvr Codec Found For Format: 0x" + GvrPixelFormatCode.ToString("X"));
+            }
+
+            try
+            {
+                GvrDecoder = GvrCodec.Decode;
+                GvrEncoder = GvrCodec.Encode;
+            }
+            catch(Exception e)
+            {
+                throw new GvrCodecLoadingException("The codec for format 0x" + GvrPixelFormatCode.ToString("X") + " could not be loaded.", e);
+            }
 
             GvrFileWidth  = Compressed[0x1C] << 8 | Compressed[0x1D];
             GvrFileHeight = Compressed[0x1E] << 8 | Compressed[0x1F];

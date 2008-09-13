@@ -7,6 +7,7 @@
 using System;
 using System.IO;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace ImgSharp
 {
@@ -89,7 +90,7 @@ namespace ImgSharp
 			CompressedData = Compressed;
 			
 			// Decompress
-            Bitmap TmpBmp = new Bitmap(ImageConverter.byteArrayToImage(CompressedData, ref fmt));
+            Bitmap TmpBmp = new Bitmap(ImageConverter.byteArrayToImage(ref CompressedData, fmt));
 
             DecompressedData = new byte[TmpBmp.Width * TmpBmp.Height * 4];
 
@@ -126,19 +127,28 @@ namespace ImgSharp
 
             // Compress
             Bitmap TmpBmp = new Bitmap(Width,Height,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            for (int y = 0; y < TmpBmp.Height; y++)
+            BitmapData data = TmpBmp.LockBits(new Rectangle(0, 0, TmpBmp.Width, TmpBmp.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            unsafe
             {
-                for (int x = 0; x < TmpBmp.Width; x++)
+                byte* imgPtr = (byte*)(data.Scan0);
+                int ptr = 0;
+                for (int y = 0; y < data.Height; y++)
                 {
-                    int a = DecompressedData[(y * Width + x) * 4 + 0];
-                    int r = DecompressedData[(y * Width + x) * 4 + 1];
-                    int g = DecompressedData[(y * Width + x) * 4 + 2];
-                    int b = DecompressedData[(y * Width + x) * 4 + 3];
-                    TmpBmp.SetPixel(x,y,Color.FromArgb(a, r, g, b));
+                    for (int x = 0; x < data.Width; x++)
+                    {
+                        imgPtr[ptr+0] = DecompressedData[(y * Width + x) * 4 + 3];
+                        imgPtr[ptr+1] = DecompressedData[(y * Width + x) * 4 + 2];
+                        imgPtr[ptr+2] = DecompressedData[(y * Width + x) * 4 + 1];
+                        imgPtr[ptr+3] = DecompressedData[(y * Width + x) * 4 + 0];
+                        ptr += 4;
+                    }
+                    ptr += data.Stride - data.Width * 4;
                 }
             }
-            CompressedData = ImageConverter.imageToByteArray(TmpBmp, fmt);
+            TmpBmp.UnlockBits(data);
+            Image TmpImg = TmpBmp;
+            CompressedData = ImageConverter.imageToByteArray(ref TmpImg, fmt);
+            
 			
 			return true;
 		}
