@@ -8,6 +8,8 @@ using System.IO;
 using GvrSharp;
 using ImgSharp;
 using System.Collections;
+using System.Timers;
+using System.Diagnostics;
 
 namespace GvrConv
 {
@@ -19,6 +21,8 @@ namespace GvrConv
 		
 		public static void Main(string[] args)
 		{
+            Stopwatch sw = Stopwatch.StartNew();
+
             GvrFormat format = GvrFormat.Pal_565_8x4;
 			switch(args.Length)
 			{
@@ -31,6 +35,7 @@ namespace GvrConv
                     if(!File.Exists(InName))
                     {
                         Console.Write("File does not exist...");
+                        Console.ReadKey(true);
                         return;
                     }
                     if (GvrFile.IsGvr(args[0]))
@@ -53,7 +58,8 @@ namespace GvrConv
                     InName = args[0];
                     if (!File.Exists(InName))
                     {
-                        Console.Write("File does not exist...");
+                        Console.Write("File does not exist...\n" + InName);
+                        Console.ReadKey(true);
                         return;
                     }
                     if (GvrFile.IsGvr(args[0]))
@@ -70,26 +76,38 @@ namespace GvrConv
                     string[] namestrings = OutName.Split(delimit);
 				break;
 			}
-            if (ToGvr)
+            try
             {
-                ImgFile ImgIn = new ImgFile(InName);
-                GvrFile GvrOut = new GvrFile(ImgIn.GetDecompressedData(), ImgIn.GetWidth(), ImgIn.GetHeight(), format);
-                FileStream FStream = new FileStream(OutName, FileMode.Create);
-                FStream.Write(GvrOut.GetCompressedData(), 0, GvrOut.CompressedLength());
-                FStream.Close();
-            }
-            else
-            {
-                GvrFile GvrIn = new GvrFile(InName);
-                
-                System.Drawing.Imaging.ImageFormat ImgOutFmt=System.Drawing.Imaging.ImageFormat.Png;
-                ImgOutFmt = ImgFile.ImgFormatFromFilename(OutName);
+                if (ToGvr)
+                {
+                    ImgFile ImgIn = new ImgFile(InName);
+                    GvrFile GvrOut = new GvrFile(ImgIn.GetDecompressedData(), ImgIn.GetWidth(), ImgIn.GetHeight(), format);
+                    FileStream FStream = new FileStream(OutName, FileMode.Create);
+                    FStream.Write(GvrOut.GetCompressedData(), 0, GvrOut.CompressedLength());
+                    FStream.Close();
+                }
+                else
+                {
+                    GvrFile GvrIn = new GvrFile(InName);
 
-                ImgFile ImgOut = new ImgFile(GvrIn.GetDecompressedData(), GvrIn.GetWidth(), GvrIn.GetHeight(), ImgOutFmt);
-                FileStream FStream = new FileStream(OutName, FileMode.Create);
-                FStream.Write(ImgOut.GetCompressedData(), 0, ImgOut.CompressedLength());
-                FStream.Close();
+                    System.Drawing.Imaging.ImageFormat ImgOutFmt = System.Drawing.Imaging.ImageFormat.Png;
+                    ImgOutFmt = ImgFile.ImgFormatFromFilename(OutName);
+
+                    ImgFile ImgOut = new ImgFile(GvrIn.GetDecompressedData(), GvrIn.GetWidth(), GvrIn.GetHeight(), ImgOutFmt);
+                    FileStream FStream = new FileStream(OutName, FileMode.Create);
+                    FStream.Write(ImgOut.GetCompressedData(), 0, ImgOut.CompressedLength());
+                    FStream.Close();
+                }
             }
+            catch (GvrNoSuitableCodecException e)
+            {
+                Console.WriteLine("GvrNoSuitableCodecException recieved:");
+                Console.WriteLine(e.Message);
+            }
+            sw.Stop();
+
+            Console.WriteLine("\nOperation Completed!\nExecution Time: " + sw.ElapsedMilliseconds + " ms");
+            Console.ReadKey(true);
 		}
 	}
 }

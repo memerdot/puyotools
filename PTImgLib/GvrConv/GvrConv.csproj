@@ -19,6 +19,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -27,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -45,7 +47,7 @@
       <Project>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</Project>
       <Name>GvrSharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\PngSharp\ImgSharp.csproj">
+    <ProjectReference Include="..\ImgSharp\ImgSharp.csproj">
       <Project>{889DCE80-78CB-4865-A16F-12FD2B85766B}</Project>
       <Name>ImgSharp</Name>
     </ProjectReference>
