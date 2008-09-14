@@ -1,0 +1,23 @@
+#summary ACX Archive Format
+
+= Introduction =
+
+ACX is a container for ADX files. This is a common format that has been used in many non-Puyo Puyo games. 
+
+*Values inside an ACX archive are stored in big-endian. Also, files inside the archive must be stored at an offset that is divisible by 4.*
+
+== Header ==
+0x00 - 0x03: 0000 0000
+ Magic Code, 4 bytes
+
+0x04 - 0x07   Unknown
+ (4 bytes) Number of files in the ACX archive.
+
+== File Offsets & Length (starting at 0x08) ==
+This is repeated for the number of files in the archive.
+
+0x00 - 0x03
+ (4 bytes) Offset of the file in the archive.
+
+0x04 - 0x07
+ (4 bytes) Size of the file in the archive.
