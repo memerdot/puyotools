@@ -1,0 +1,23 @@
+#summary VDD Archive Format
+
+= Introduction =
+
+VDD is a container format that is only used in Puyo Puyo Box.
+
+*Files inside the archive must be stored at an offset that is divisible by 2048. The file size of the archive must be divisible by 2048.*
+
+== Header ==
+0x00 - 0x03
+ (4 bytes) Number of files in the AFS archive.
+
+== Filename, File Offsets & Length (starting at 0x08) ==
+This is repeated for the number of files in the archive.
+
+0x00 - 0x0F
+ (16 bytes) Filename of the file
+
+0x10 - 0x13
+ (4 bytes) Offset of the file in the archive divided by 2048.
+
+0x14 - 0x17
+ (4 bytes) Size of the file in the archive.
