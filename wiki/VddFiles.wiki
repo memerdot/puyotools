@@ -14,7 +14,7 @@ VDD is a container format that is only used in Puyo Puyo Box.
 This is repeated for the number of files in the archive.
 
 0x00 - 0x0F
- (16 bytes) Filename of the file
+ (16 bytes) Filename of the file.
 
 0x10 - 0x13
  (4 bytes) Offset of the file in the archive divided by 2048.
