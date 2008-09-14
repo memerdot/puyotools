@@ -31,7 +31,7 @@ This comes directly after the File Offsets & Length Data.
 0x04 - 0x07
  (4 bytes)  Size of the filename data.
 
-== Filename Data (Stored at the end of the file) ==
+== Filename Data (Stored at the end of the archive) ==
 This is repeated for the number of files in the archive.
 
 0x00 - 0x2B
