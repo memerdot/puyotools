@@ -1,0 +1,42 @@
+#summary AFS Archive Format
+
+= Introduction =
+
+AFS is a container for any kind of files, although it usually contains only ADX files. This is a common format that has been used in many non-Puyo Puyo games. 
+
+== Header ==
+0x00 - 0x03: 'AFS'
+ Magic Code, 4 bytes
+
+0x04 - 0x07
+ (4 bytes) Number of files in the AFS archive.
+
+== File Offsets & Length (starting at 0x08) ==
+This is repeated for the number of files in the archive.
+
+0x00 - 0x03
+ (4 bytes) Offset of the file in the archive.
+
+0x04 - 0x07
+ (4 bytes) Size of the file in the archive.
+
+=== Filenames Location ===
+This comes directly after the File Offsets & Length Data.
+
+*If the value at 0x00 - 0x03 is 0, this data is stored before the first file.*
+
+0x00 - 0x03
+ (4 bytes) Offset where the filenames are located.
+
+0x04 - 0x07
+ (4 bytes)  Size of the filename data.
+
+== Filename Data ==
+This is repeated for the number of files in the archive.
+
+0x00 - 0x2B
+ Filename for the file inside the archive, for the current file number.
+
+0x2C - 0x2F
+ (4 bytes) This uses data that is in the header. Assuming X is the file number, it uses the value that is at:
+   `0x04 + (X * 0x04)`
