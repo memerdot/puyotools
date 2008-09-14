@@ -10,7 +10,7 @@ VDD is a container format that is only used in Puyo Puyo Box.
 0x00 - 0x03
  (4 bytes) Number of files in the AFS archive.
 
-== Filename, File Offsets & Length (starting at 0x08) ==
+== Filename, File Offsets & Length (starting at 0x04) ==
 This is repeated for the number of files in the archive.
 
 0x00 - 0x0F
