@@ -38,5 +38,5 @@ This is repeated for the number of files in the archive.
  Filename for the file inside the archive, for the current file number.
 
 0x2C - 0x2F
- (4 bytes) This uses data that is in the header. Assuming X is the file number, it uses the value that is at:
+ (4 bytes) This uses data that is in the header. Assuming X is the current file number, it uses the value that is at:
    `0x04 + (X * 0x04)`
