@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class VDD
     {
@@ -53,34 +53,50 @@ namespace pp_tools
             }
         }
 
-        /* Create ACX archive. */
-        public byte[] create(object[][][] data, bool addFileNames)
+        /* Create VDD archive. */
+        public byte[] create(byte[][] data, string[] fileNames)
         {
             try
             {
-                int fileSize = Header.ACX.Length + (data[0].Length * 0x8);
-                /* Get the size of the ACX archive. */
-                for (int i = 0; i < data[0].Length; i++)
-                    fileSize += (data[0][i].Length + data[1][i].Length);
+                /* Obtain a list of file offsets and lengths. */
+                uint[] fileStart  = new uint[data.Length];
+                uint[] fileLength = new uint[data.Length];
 
-                /* Now that we have the filesize, create the data. */
-                byte[] returnData = new byte[fileSize];
+                /* Set initial data. */
+                int fileSize = PadInteger.multipleLength(0x4 + (data.Length * 0x18), 0x800); // Filesize of Header
+
+                /* Get the size for the files that will be added in the VDD archive. */
+                for (int i = 0; i < data.Length; i++)
+                {
+                    /* Set file offset and length. */
+                    fileStart[i]  = (uint)fileSize;
+                    fileLength[i] = (uint)data[i].Length;
+
+                    fileSize += PadInteger.multipleLength(data[i].Length, 0x800);
+                }
+
+                /* Now that we have the filesize, start writing the data. */
+                byte[] archiveData = new byte[fileSize];
 
                 /* Set up the header */
-                int fileStart = Header.ACX.Length + (data[0].Length * 0x8);
-                Array.Copy(Header.ACX, 0, returnData, 0, Header.ACX.Length);
+                Array.Copy(BitConverter.GetBytes((uint)data.Length), 0, archiveData, 0x0, 0x4); // Number of Files
 
                 /* Add the file data and the header. */
-                for (int i = 0; i < data[0].Length; i++)
+                for (int i = 0; i < data.Length; i++)
                 {
-                    /* Add the file name. */
-                    //if (addFileNames)
-                    /* Add the filename to the file */
-                    //dataStart += data[1][i].Length;
-                }
-                //returnData[Header.ACX.Length + (i * 
+                    /* Add the file size & length. */
+                    Array.Copy(BitConverter.GetBytes(fileStart[i] / 0x800),  0, archiveData, 0x4 + (i * 0x18) + 0x10, 0x4); // Start Offset
+                    Array.Copy(BitConverter.GetBytes(fileLength[i]), 0, archiveData, 0x4 + (i * 0x18) + 0x14, 0x4); // File Length
 
-                return returnData;
+                    /* Add the filename. */
+                    byte[] fileName = PadString.fileNameToBytes(fileNames[i], 0x10);
+                    Array.Copy(fileName, 0, archiveData, 0x4 + (i * 0x18), fileName.Length);
+
+                    /* Add the data now. */
+                    Array.Copy(data[i], 0, archiveData, fileStart[i], fileLength[i]);
+                }
+
+                return archiveData;
             }
             catch
             {

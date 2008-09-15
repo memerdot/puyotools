@@ -5,7 +5,7 @@ using System.Threading;
 using System.Windows.Forms;
 using System.ComponentModel;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class archive_extract : Form
     {
@@ -37,7 +37,7 @@ namespace pp_tools
             this.MaximizeBox     = false;
 
             /* Select the files. */
-            files = Files.selectFiles("Select Archive(s)", "All Supported Archives (*.acx;*.afs;*.gnt;*.mrg;*.snt;*.tex;*.vdd)|*.acx;*.afs;*.gnt;*.mrg;*.snt;*.tex;*.vdd|ACX Archives (*.acx)|*.acx|AFS Archives (*.afs)|*.afs|GNT Archives (*.gnt)|*.gnt|MRG Archives (*.mrg)|*.mrg|SNT Archives (*.snt)|*.snt|TEX Archives (*.tex)|*.tex|VDD Archives (*.vdd)|*.vdd|All Files & Archives (*.*)|*.*");
+            files = Files.selectFiles("Select Archive(s)", "All Supported Archives (*.acx;*.afs;*.gnt;*.mrg;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.gnt;*.mrg;*.snt;*.spk;*.tex;*.vdd|ACX Archives (*.acx)|*.acx|AFS Archives (*.afs)|*.afs|GNT Archives (*.gnt)|*.gnt|MRG Archives (*.mrg)|*.mrg|SNT Archives (*.snt)|*.snt|SPK Archives (*.spk)|*.spk|TEX Archives (*.tex)|*.tex|VDD Archives (*.vdd)|*.vdd|All Files & Archives (*.*)|*.*");
 
             /* Don't continue if no files were selected. */
             if (files.Length < 1)
@@ -181,7 +181,7 @@ namespace pp_tools
                     }
 
                     /* GNT Archive */
-                    else if (Header.isFile(data, Header.GNT, 0) && Header.isFile(data, Header.GNT2, 0x20))
+                    else if (Header.isFile(data, Header.GNT, 0) && Header.isFile(data, Header.GNT_SUB, 0x20))
                     {
                         GNT extractor = new GNT();
                         extractData = extractor.extract(data, getFileNames.Checked);
@@ -201,13 +201,24 @@ namespace pp_tools
                     }
 
                     /* SNT Archive */
-                    else if (Header.isFile(data, Header.SNT, 0) && Header.isFile(data, Header.SNT2, 0x20))
+                    else if ((Header.isFile(data, Header.SNT_PS2, 0) && Header.isFile(data, Header.SNT_SUB_PS2, 0x20)) ||
+                             (Header.isFile(data, Header.SNT_PSP, 0) && Header.isFile(data, Header.SNT_SUB_PSP, 0x20)))
                     {
                         SNT extractor = new SNT();
                         extractData = extractor.extract(data, getFileNames.Checked);
 
                         /* Set the output directory. */
                         outputDir = Path.GetDirectoryName(files[i]) + Path.DirectorySeparatorChar + ExtractDir.SNT + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(files[i]);
+                    }
+
+                    /* SPK Archive */
+                    else if (Header.isFile(data, Header.SPK, 0))
+                    {
+                        SPK extractor = new SPK();
+                        extractData = extractor.extract(data, getFileNames.Checked);
+
+                        /* Set the output directory. */
+                        outputDir = Path.GetDirectoryName(files[i]) + Path.DirectorySeparatorChar + ExtractDir.SPK + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(files[i]);
                     }
 
                     /* TEX Archive */
@@ -281,7 +292,7 @@ namespace pp_tools
                             status.updateStatus(StatusMessage.extractArchive, Path.GetFileName(files[i]), (i + 1));
 
                             /* GNT Archive */
-                            if (Header.isFile(outputData, Header.GNT, 0) && Header.isFile(outputData, Header.GNT2, 0x20))
+                            if (Header.isFile(outputData, Header.GNT, 0) && Header.isFile(outputData, Header.GNT_SUB, 0x20))
                             {
                                 GNT extractor = new GNT();
                                 newExtractData = extractor.extract(outputData, getFileNames.Checked);
@@ -291,7 +302,8 @@ namespace pp_tools
                             }
 
                             /* SNT Archive */
-                            if (Header.isFile(outputData, Header.SNT, 0) && Header.isFile(outputData, Header.SNT2, 0x20))
+                            else if ((Header.isFile(outputData, Header.SNT_PS2, 0) && Header.isFile(outputData, Header.SNT_SUB_PS2, 0x20)) ||
+                                (Header.isFile(outputData, Header.SNT_PSP, 0) && Header.isFile(outputData, Header.SNT_SUB_PSP, 0x20)))
                             {
                                 SNT extractor = new SNT();
                                 newExtractData = extractor.extract(outputData, getFileNames.Checked);
@@ -356,9 +368,8 @@ namespace pp_tools
                     }
 
                 }
-                catch (Exception f)
+                catch (Exception)
                 {
-                    MessageBox.Show(f.ToString());
                     continue;
                 }
             }
@@ -423,13 +434,13 @@ namespace pp_tools
                 return ".tex";
 
             /* SNT file */
-            else if (Header.isFile(data, Header.SNT, 0) &&
-                     Header.isFile(data, Header.SNT2, 0x20))
+            else if ((Header.isFile(data, Header.SNT_PS2, 0) && Header.isFile(data, Header.SNT_SUB_PS2, 0x20)) ||
+                     (Header.isFile(data, Header.SNT_PSP, 0) && Header.isFile(data, Header.SNT_SUB_PSP, 0x20)))
                 return ".snt";
 
             /* GNT file */
             else if (Header.isFile(data, Header.GNT, 0) &&
-                     Header.isFile(data, Header.GNT2, 0x20))
+                     Header.isFile(data, Header.GNT_SUB, 0x20))
                 return ".gnt";
 
             /* ADX file extracted from ACX archive. */

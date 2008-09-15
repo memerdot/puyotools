@@ -1,19 +1,19 @@
 ﻿using System;
 
-namespace pp_tools
+namespace puyo_tools
 {
-    public class TEX
+    public class SPK
     {
         /*
-         * TEX files are archives that contain GIM, SVP, and SVR files.
+         * SPK files are archives that contain LST, HD, and BD files.
         */
 
         /* Main Method */
-        public TEX()
+        public SPK()
         {
         }
 
-        /* Extract files from the TEX archive */
+        /* Extract files from the SPK archive */
         public object[][] extract(byte[] data, bool returnFileNames)
         {
             try
@@ -52,34 +52,57 @@ namespace pp_tools
             }
         }
 
-        /* Create MRG archive. */
-        public byte[] create(object[][][] data, bool addFileNames)
+        /* Create SPK archive. */
+        public byte[] create(byte[][] data, string[] fileNames)
         {
             try
             {
-                int fileSize = Header.ACX.Length + (data[0].Length * 0x8);
-                /* Get the size of the ACX archive. */
-                for (int i = 0; i < data[0].Length; i++)
-                    fileSize += (data[0][i].Length + data[1][i].Length);
+                /* Obtain a list of file offsets and lengths. */
+                uint[] fileStart  = new uint[data.Length];
+                uint[] fileLength = new uint[data.Length];
 
-                /* Now that we have the filesize, create the data. */
-                byte[] returnData = new byte[fileSize];
+                /* Set initial data. */
+                int fileSize = Header.SPK.Length + 0xC + (data.Length * 0x20); // Filesize of Header
+
+                /* Get the size for the files that will be added in the SPK archive. */
+                for (int i = 0; i < data.Length; i++)
+                {
+                    /* Set file offset and length. */
+                    fileStart[i]  = (uint)fileSize;
+                    fileLength[i] = (uint)data[i].Length;
+
+                    fileSize += PadInteger.multipleLength(data[i].Length, 2);
+                }
+
+                /* Now that we have the filesize, start writing the data. */
+                byte[] archiveData = new byte[fileSize];
 
                 /* Set up the header */
-                int fileStart = Header.ACX.Length + (data[0].Length * 0x8);
-                Array.Copy(Header.ACX, 0, returnData, 0, Header.ACX.Length);
+                Array.Copy(Header.SPK, 0, archiveData, 0, Header.SPK.Length); // SPK Header
+                Array.Copy(BitConverter.GetBytes((uint)data.Length), 0, archiveData, 0x4, 0x4); // Number of Files
 
                 /* Add the file data and the header. */
-                for (int i = 0; i < data[0].Length; i++)
+                for (int i = 0; i < data.Length; i++)
                 {
-                    /* Add the file name. */
-                    //if (addFileNames)
-                    /* Add the filename to the file */
-                    //dataStart += data[1][i].Length;
-                }
-                //returnData[Header.ACX.Length + (i * 
+                    /* Add the file extension. */
+                    byte[] fileExt = PadString.fileNameToBytes(System.IO.Path.GetExtension(fileNames[i]), 0x5);
+                    if (fileExt.Length > 0)
+                        Array.Copy(fileExt, 1, archiveData, Header.SPK.Length + 0xC + (i * 0x20), fileExt.Length - 1);
 
-                return returnData;
+                    /* Add the file size & length. */
+                    Array.Copy(BitConverter.GetBytes(fileStart[i]),  0, archiveData, Header.SPK.Length + 0x10 + (i * 0x20), 0x4); // Start Offset
+                    Array.Copy(BitConverter.GetBytes(fileLength[i]), 0, archiveData, Header.SPK.Length + 0x14 + (i * 0x20), 0x4); // File Length
+
+                    /* Add the filename. */
+                    byte[] fileName = PadString.fileNameToBytes(System.IO.Path.GetFileNameWithoutExtension(fileNames[i]), 0x14);
+                    if (fileName.Length > 0)
+                        Array.Copy(fileName, 0, archiveData, Header.SPK.Length + 0x18 + (i * 0x20), fileName.Length);
+
+                    /* Add the data now. */
+                    Array.Copy(data[i], 0, archiveData, fileStart[i], fileLength[i]);
+                }
+
+                return archiveData;
             }
             catch
             {
@@ -87,7 +110,7 @@ namespace pp_tools
             }
         }
 
-        /* Attempt to find filenames in the TEX archive. */
+        /* Attempt to find filenames in the SPK archive. */
         private string[] getFileNames(byte[] data, uint files)
         {
             string[] fileNames = new string[files]; // Set up an array of filenames.

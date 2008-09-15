@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class StatusMessage : Form
     {
@@ -18,8 +18,9 @@ namespace pp_tools
 
         /* Archives */
         public static string
-            extractArchive = "Extracting Archive", // Extract Archive
-            createArchive  = "Creating Archive";   // Create Archive
+            extractArchive = "Extracting Archive",    // Extract Archive
+            createArchive = "Creating Archive",       // Create Archive
+            addToArchive = "Adding file to archive"; // Add file to Archive
 
         /* Images */
         public static string
@@ -62,7 +63,7 @@ namespace pp_tools
         {
             /* Updates the status */
             mainText.Text = header;
-            subText.Text = "File " + file + " of " + totalFiles + "\n\n\n" + fileName;
+            subText.Text = (file > 0 ? ("File " + file + " of " + totalFiles) : "") + "\n\n\n" + fileName;
         }
     }
 }
