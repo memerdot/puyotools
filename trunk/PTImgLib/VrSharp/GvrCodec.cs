@@ -25,13 +25,14 @@ namespace GvrSharp
     // An enumeration of the known Gvr formats
     public enum GvrFormat : ushort
     {
-        Rgb_565_4x4 = 0x0004,
-        Rgb_5a3_4x4 = 0x0005,
-        Unknown1 = 0x000E,
-        Pal_565_8x4 = 0x1808,
-        Pal_5a3_8x4 = 0x1809,
-        P16_5a3_8x4 = 0x2809,
-        P16_5a3_8x8 = 0x2808
+        Fmt0004 = 0x0004,
+        Fmt0005 = 0x0005,
+        Fmt0006 = 0x0006,
+        Fmt000E = 0x000E,
+        Fmt1808 = 0x1808,
+        Fmt1809 = 0x1809,
+        Fmt2809 = 0x2809,
+        Fmt2808 = 0x2808
     };
 
     public abstract class GvrCodec
@@ -47,7 +48,7 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_0004();
             Encode = null;
-            Format = GvrFormat.Rgb_565_4x4;
+            Format = GvrFormat.Fmt0004;
         }
     }
     public class GvrCodec_0005 : GvrCodec
@@ -56,7 +57,16 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_0005();
             Encode = null;
-            Format = GvrFormat.Rgb_5a3_4x4;
+            Format = GvrFormat.Fmt0005;
+        }
+    }
+    public class GvrCodec_0006 : GvrCodec
+    {
+        public GvrCodec_0006()
+        {
+            Decode = new GvrDecoder_0006();
+            Encode = null;
+            Format = GvrFormat.Fmt0006;
         }
     }
     public class GvrCodec_1808 : GvrCodec
@@ -65,7 +75,7 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_1808();
             Encode = null;
-            Format = GvrFormat.Rgb_565_4x4;
+            Format = GvrFormat.Fmt1808;
         }
     }
     public class GvrCodec_1809 : GvrCodec
@@ -74,7 +84,7 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_1809();
             Encode = new GvrEncoder_1809();
-            Format = GvrFormat.Pal_565_8x4;
+            Format = GvrFormat.Fmt1809;
         }
     }
     public class GvrCodec_2808 : GvrCodec
@@ -83,7 +93,7 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_2808();
             Encode = null;
-            Format = GvrFormat.Pal_565_8x4;
+            Format = GvrFormat.Fmt2808;
         }
     }
     public class GvrCodec_2809 : GvrCodec
@@ -92,7 +102,7 @@ namespace GvrSharp
         {
             Decode = new GvrDecoder_2809();
             Encode = null;
-            Format = GvrFormat.Pal_565_8x4;
+            Format = GvrFormat.Fmt2809;
         }
     }
 
@@ -106,6 +116,7 @@ namespace GvrSharp
         {
             Register("0004", new GvrCodec_0004());
             Register("0005", new GvrCodec_0005());
+            Register("0006", new GvrCodec_0006());
             Register("1808", new GvrCodec_1808());
             Register("1809", new GvrCodec_1809());
             Register("2808", new GvrCodec_2808());
