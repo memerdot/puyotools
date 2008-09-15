@@ -8,12 +8,13 @@
     <ProjectGuid>{7578281C-3030-4640-A7E3-5AD83C598694}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>pp_tools</RootNamespace>
-    <AssemblyName>pp_tools</AssemblyName>
+    <RootNamespace>puyo_tools</RootNamespace>
+    <AssemblyName>puyo_tools</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>puyo_tools.puyo_tools</StartupObject>
+    <ApplicationIcon>
+    </ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -50,6 +51,7 @@
     <Compile Include="Modules\Archives\afs.cs" />
     <Compile Include="Conversions.cs">
     </Compile>
+    <Compile Include="Modules\Archives\spk.cs" />
     <Compile Include="Modules\Compression\cnx.cs" />
     <Compile Include="Modules\Compression\cxlz.cs" />
     <Compile Include="Global.cs">
@@ -62,7 +64,7 @@
     <Compile Include="Modules\Archives\mrg.cs" />
     <Compile Include="Modules\Archives\tex.cs" />
     <Compile Include="Modules\Archives\vdd.cs" />
-    <Compile Include="Programs\afs_creator.cs">
+    <Compile Include="Programs\archive_create.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Programs\archive_extract.cs">
@@ -72,8 +74,12 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Modules\Archives\snt.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatusMessage.cs">
       <SubType>Form</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="icon.ico" />
   </ItemGroup>
 </Project>

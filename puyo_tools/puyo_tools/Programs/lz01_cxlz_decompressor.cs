@@ -5,7 +5,7 @@ using System.Threading;
 using System.Windows.Forms;
 using System.ComponentModel;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class LZ01_CXLZ_Decompress : Form
     {

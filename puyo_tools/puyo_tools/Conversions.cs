@@ -2,7 +2,7 @@
 using System.IO;
 using System.Diagnostics;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class Conversions
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class CXLZ
     {
@@ -112,7 +112,7 @@ namespace pp_tools
                 if (decompressedSize >= Int16.MaxValue + (65536 * 0xFF) || compressedSize >= Int16.MaxValue + (65536 * 0xFF))
                     return new byte[0];
 
-                /* Set LZ01 header. */
+                /* Set CXLZ header. */
                 Array.Copy(Header.CXLZ, 0, compressedData, 0, Header.CXLZ.Length);
 
                 /* Set filesizes */

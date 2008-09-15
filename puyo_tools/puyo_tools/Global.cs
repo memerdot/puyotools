@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace pp_tools
+namespace puyo_tools
 {
     public class Header
     {
@@ -10,6 +10,7 @@ namespace pp_tools
         /* Compression headers */
         public static byte[]
             CNX  = { 0x43, 0x4E, 0x58, 0x02 }, // CNX
+            LZ00 = { 0x4C, 0x5A, 0x30, 0x30 }, // LZ01
             LZ01 = { 0x4C, 0x5A, 0x30, 0x31 }, // LZ01
             CXLZ = { 0x43, 0x58, 0x4C, 0x5A }; // CXLZ
 
@@ -28,14 +29,17 @@ namespace pp_tools
             AFS = { 0x41, 0x46, 0x53, 0x00 }, // AFS
             MRG = { 0x4D, 0x52, 0x47, 0x30 }, // MRG
             GNT = { 0x4E, 0x47, 0x49, 0x46 }, // GNT
-            SNT = { 0x4E, 0x55, 0x49, 0x46 }, // SNT
+        SNT_PS2 = { 0x4E, 0x53, 0x49, 0x46 }, // SNT (PS2)
+        SNT_PSP = { 0x4E, 0x55, 0x49, 0x46 }, // SNT (PSP)
+            SPK = { 0x53, 0x4E, 0x44, 0x30 }, // SPK
             TEX = { 0x54, 0x45, 0x58, 0x30 }; // TEX
 
 
         /* Special */
         public static byte[]
-            SNT2 = { 0x4E, 0x55, 0x54, 0x4C }, // SNT file (not SNC)
-            GNT2 = { 0x4E, 0x47, 0x54, 0x4C }; // GNT file (not GNCS)
+        SNT_SUB_PS2 = { 0x4E, 0x53, 0x54, 0x4C }, // SNT file (PS2) (not SNC)
+        SNT_SUB_PSP = { 0x4E, 0x55, 0x54, 0x4C }, // SNT file (PSP) (not SNC)
+            GNT_SUB = { 0x4E, 0x47, 0x54, 0x4C }; // GNT file (not GNCS)
 
 
         /* Checks if it is the following file format */
@@ -64,6 +68,7 @@ namespace pp_tools
             GNT = "GNT Extracted Files", // GNT Archive
             MRG = "MRG Extracted Files", // MRG Archive
             SNT = "SNT Extracted Files", // SNT Archive
+            SPK = "SPK Extracted Files", // SPK Archive
             TEX = "TEX Extracted Files", // TEX Archive
             VDD = "VDD Extracted Files"; // VDD Archive
 
@@ -109,6 +114,56 @@ namespace pp_tools
 
             return ofd.FileNames;
         }
+
+        /* Save File */
+        public static string saveFile(string title, string filter)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+
+            sfd.Title            = title;
+            sfd.RestoreDirectory = true;
+            sfd.AddExtension     = true;
+            sfd.Filter           = filter;
+            sfd.DefaultExt       = "";
+            sfd.ShowDialog();
+
+            return sfd.FileName;
+        }
     }
 
+    /* Padding for String */
+    public class PadString
+    {
+        /* Pad a string to a certain multiple and convert it to an array of bytes. */
+        public static byte[] multipleToBytes(string str, int multiple)
+        {
+            byte[] output = new byte[str.Length + (str.Length % multiple)];
+
+            for (int i = 0; i < str.Length; i++)
+                output[i] = (byte)str[i];
+
+            return output;
+        }
+
+        /* Converts a filename to byte array. */
+        public static byte[] fileNameToBytes(string str, int length)
+        {
+            byte[] output = new byte[length];
+
+            for (int i = 0; i < str.Length && i < length; i++)
+                output[i] = (byte)str[i];
+
+            return output;
+        }
+    }
+
+    /* Padding for Integer */
+    public class PadInteger
+    {
+        /* Get the length of a number padded to a multiple. */
+        public static int multipleLength(int length, int multiple)
+        {
+            return length + ((length % multiple == 0) ? 0 : multiple - (length % multiple));
+        }
+    }
 }

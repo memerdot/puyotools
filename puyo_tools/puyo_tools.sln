@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C# Express 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pp_tools", "pp_tools\pp_tools.csproj", "{7578281C-3030-4640-A7E3-5AD83C598694}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "puyo_tools", "puyo_tools\puyo_tools.csproj", "{7578281C-3030-4640-A7E3-5AD83C598694}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

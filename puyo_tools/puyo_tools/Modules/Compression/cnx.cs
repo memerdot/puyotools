@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 
-namespace pp_tools
+namespace puyo_tools
 {
-    public class LZ01
+    public class CNX
     {
         private int 
             compressedSize   = 0, // Compressed Size
@@ -23,7 +23,7 @@ namespace pp_tools
             compressedData;   // Compressed Data
 
 
-        public LZ01()
+        public CNX()
         {
         }
 
@@ -109,7 +109,7 @@ namespace pp_tools
                 if (decompressedSize >= Int32.MaxValue || compressedSize >= Int32.MaxValue)
                     return new byte[0];
 
-                /* Set LZ01 header. */
+                /* Set CNX header. */
                 Array.Copy(Header.LZ01, 0, compressedData, 0, Header.LZ01.Length);
 
                 /* Set filesizes */
