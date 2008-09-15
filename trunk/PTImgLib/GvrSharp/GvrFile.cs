@@ -151,6 +151,11 @@ namespace GvrSharp
 			// Get Format Code
             GvrPixelFormatCode = (ushort)(Compressed[0x1A] << 8 | Compressed[0x1B]);
 
+            GvrFileWidth = Compressed[0x1C] << 8 | Compressed[0x1D];
+            GvrFileHeight = Compressed[0x1E] << 8 | Compressed[0x1F];
+
+            DecompressedData = new byte[GvrFileWidth * GvrFileHeight * 4];
+
             GvrCodec = GvrCodecs.GetCodec(FormatCodeString(GvrPixelFormatCode));
             if (GvrCodec == null)
             {
@@ -161,18 +166,13 @@ namespace GvrSharp
             {
                 GvrDecoder = GvrCodec.Decode;
                 GvrEncoder = GvrCodec.Encode;
+
+                GvrDecoder.Initialize(CompressedData, GvrFileWidth, GvrFileHeight);
             }
             catch(Exception e)
             {
                 throw new GvrCodecLoadingException("The codec for format 0x" + FormatCodeString(GvrPixelFormatCode) + " could not be loaded.", e);
             }
-
-            GvrFileWidth  = Compressed[0x1C] << 8 | Compressed[0x1D];
-            GvrFileHeight = Compressed[0x1E] << 8 | Compressed[0x1F];
-
-            DecompressedData = new byte[GvrFileWidth * GvrFileHeight * 4];
-
-            GvrDecoder.Initialize(CompressedData, GvrFileWidth, GvrFileHeight);
 
             GvrCodecChunkWidth = GvrDecoder.GetChunkWidth();
             GvrCodecChunkHeight = GvrDecoder.GetChunkHeight();
