@@ -25,9 +25,11 @@ namespace GvrSharp
     // An enumeration of the known Gvr formats
     public enum GvrFormat : ushort
     {
-        Rgb_5a3_8x4 = 0x0005,
+        Rgb_565_4x4 = 0x0004,
+        Rgb_5a3_4x4 = 0x0005,
         Unknown1 = 0x000E,
-        Pal_565_8x4 = 0x1809,
+        Pal_565_8x4 = 0x1808,
+        Pal_5a3_8x4 = 0x1809,
         P16_5a3_8x4 = 0x2809,
         P16_5a3_8x8 = 0x2808
     };
@@ -39,6 +41,24 @@ namespace GvrSharp
         public GvrFormat Format;
     };
 
+    public class GvrCodec_Rgb_565_4x4 : GvrCodec
+    {
+        public GvrCodec_Rgb_565_4x4()
+        {
+            Decode = new GvrDecoder_Rgb_565_4x4();
+            Encode = null;
+            Format = GvrFormat.Rgb_565_4x4;
+        }
+    }
+    public class GvrCodec_Rgb_5a3_4x4 : GvrCodec
+    {
+        public GvrCodec_Rgb_5a3_4x4()
+        {
+            Decode = new GvrDecoder_Rgb_5a3_4x4();
+            Encode = null;
+            Format = GvrFormat.Rgb_5a3_4x4;
+        }
+    }
     public class GvrCodec_Pal_565_8x4 : GvrCodec
     {
         public GvrCodec_Pal_565_8x4()
@@ -46,6 +66,33 @@ namespace GvrSharp
             Decode = new GvrDecoder_Pal_565_8x4();
             Encode = new GvrEncoder_Pal_565_8x4();
             Format = GvrFormat.Pal_565_8x4;
+        }
+    }
+    public class GvrCodec_Pal_5a3_8x4 : GvrCodec
+    {
+        public GvrCodec_Pal_5a3_8x4()
+        {
+            //Decode = new GvrDecoder_Pal_5a3_8x4();
+            Encode = null;
+            Format = GvrFormat.Pal_565_8x4;
+        }
+    }
+    public class GvrCodec_P16_565_8x8 : GvrCodec
+    {
+        public GvrCodec_P16_565_8x8()
+        {
+            //Decode = new GvrDecoder_P16_565_8x8();
+            Encode = null;
+            Format = GvrFormat.Rgb_565_4x4;
+        }
+    }
+    public class GvrCodec_P16_5a3_8x4 : GvrCodec
+    {
+        public GvrCodec_P16_5a3_8x4()
+        {
+            //Decode = new GvrDecoder_P16_5a3_8x4();
+            Encode = null;
+            Format = GvrFormat.Rgb_565_4x4;
         }
     }
 
@@ -57,10 +104,12 @@ namespace GvrSharp
         private static bool inited = false;
         public static void Initialize()
         {
-            //hshTable.Add("0005", GvrFormat.Rgb_5a3_8x4);
-            Register("1809", new GvrCodec_Pal_565_8x4());
-            //hshTable.Add("2809", GvrFormat.P16_5a3_8x4);
-            //hshTable.Add("2808", GvrFormat.P16_5a3_8x8);
+            Register("0004", new GvrCodec_Rgb_565_4x4());
+            Register("0005", new GvrCodec_Rgb_5a3_4x4());
+            Register("1808", new GvrCodec_Pal_565_8x4());
+            Register("1809", new GvrCodec_Pal_5a3_8x4());
+            Register("2808", new GvrCodec_P16_565_8x8());
+            Register("2809", new GvrCodec_P16_5a3_8x4());
             inited = true;
         }
         public static bool Unregister(string CodecID)
