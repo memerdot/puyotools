@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual C# Express 2005
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GvrSharp", "GvrSharp\GvrSharp.csproj", "{0BE70222-C1CC-4035-B2ED-13E976A53C32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VrSharp", "VrSharp\VrSharp.csproj", "{0BE70222-C1CC-4035-B2ED-13E976A53C32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GvrConv", "GvrConv\GvrConv.csproj", "{78196D95-D34B-4C0B-A16F-A7A487AE237A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VrConv", "VrConv\VrConv.csproj", "{78196D95-D34B-4C0B-A16F-A7A487AE237A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgSharp", "ImgSharp\ImgSharp.csproj", "{889DCE80-78CB-4865-A16F-12FD2B85766B}"
 EndProject
