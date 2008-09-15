@@ -1,0 +1,27 @@
+#summary TEX Archive Format
+
+= Introduction =
+
+TEX is a container format that is only used in Puyo Puyo Fever 2. It usually only contains SVR & SVP files (PS2), or GIM files (PSP).
+
+== Header ==
+0x00 - 0x03: 'TEX0'
+ (4 bytes) Magic Code
+
+0x04 - 0x07
+ (4 bytes) Number of files in the TEX archive.
+
+== Filename, File Offsets & File Size (starting at 0x10) ==
+This is repeated for the number of files in the archive.
+
+0x00 - 0x03
+ (4 bytes) Extension part of the filename, excluding the leading dot (.)
+
+0x04 - 0x07
+ (4 bytes) Offset of the file in the archive.
+
+0x08 - 0x0B
+ (4 bytes) Size of the file in the archive.
+
+0x0C - 0x1F
+ (20 bytes) Filename for the file inside the archive, excluding the extension.
