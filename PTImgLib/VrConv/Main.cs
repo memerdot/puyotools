@@ -23,7 +23,7 @@ namespace GvrConv
 		{
             Stopwatch sw = Stopwatch.StartNew();
 
-            GvrFormat format = GvrFormat.Pal_565_8x4;
+            GvrFormat format = GvrFormat.Fmt1808;
 			switch(args.Length)
 			{
 				case 0:

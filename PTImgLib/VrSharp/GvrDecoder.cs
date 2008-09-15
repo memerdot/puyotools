@@ -160,6 +160,79 @@ namespace GvrSharp
             return true;
         }
     }
+    public class GvrDecoder_0006 : GvrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[256][];
+        private bool init = false;
+        private int width, height;
+
+        override public int GetChunkWidth()
+        {
+            return 4;
+        }
+        override public int GetChunkHeight()
+        {
+            return 2;
+        }
+        override public int GetChunkBpp()
+        {
+            return 32;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 256 * 2;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+            for (int y2 = 0; y2 < 2; y2++)
+            {
+                try
+                {
+                    Output[((y2 + y1) * width + (x1 + 0)) * 4 + 0] = Input[InPtr + 0];
+                    Output[((y2 + y1) * width + (x1 + 0)) * 4 + 1] = Input[InPtr + 1];
+                    Output[((y2 + y1) * width + (x1 + 0)) * 4 + 2] = Input[InPtr + 2];
+                    Output[((y2 + y1) * width + (x1 + 0)) * 4 + 3] = Input[InPtr + 3];
+
+                    Output[((y2 + y1) * width + (x1 + 2)) * 4 + 0] = Input[InPtr + 4];
+                    Output[((y2 + y1) * width + (x1 + 2)) * 4 + 1] = Input[InPtr + 5];
+                    Output[((y2 + y1) * width + (x1 + 2)) * 4 + 2] = Input[InPtr + 6];
+                    Output[((y2 + y1) * width + (x1 + 2)) * 4 + 3] = Input[InPtr + 7];
+
+                    Output[((y2 + y1) * width + (x1 + 1)) * 4 + 0] = Input[InPtr + 8];
+                    Output[((y2 + y1) * width + (x1 + 1)) * 4 + 1] = Input[InPtr + 9];
+                    Output[((y2 + y1) * width + (x1 + 1)) * 4 + 2] = Input[InPtr + 10];
+                    Output[((y2 + y1) * width + (x1 + 1)) * 4 + 3] = Input[InPtr + 11];
+
+                    Output[((y2 + y1) * width + (x1 + 3)) * 4 + 0] = Input[InPtr + 12];
+                    Output[((y2 + y1) * width + (x1 + 3)) * 4 + 1] = Input[InPtr + 13];
+                    Output[((y2 + y1) * width + (x1 + 3)) * 4 + 2] = Input[InPtr + 14];
+                    Output[((y2 + y1) * width + (x1 + 3)) * 4 + 3] = Input[InPtr + 15];
+                }
+                catch
+                {
+                    return true;
+                }
+
+                InPtr += 16;
+            }
+            InPtr += 32;
+            return true;
+        }
+    }
     public class GvrDecoder_1808 : GvrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
