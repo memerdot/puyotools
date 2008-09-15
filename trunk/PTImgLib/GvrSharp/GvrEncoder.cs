@@ -54,7 +54,7 @@ namespace GvrSharp
         abstract public bool EncodeChunk(ref byte[] Output, ref int OutPtr, ref byte[] Input, int x1, int y1);
     }
 
-    public class GvrEncoder_Pal_565_8x4 : GvrEncoder
+    public class GvrEncoder_1809 : GvrEncoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool Initialized = false;

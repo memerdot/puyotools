@@ -24,7 +24,7 @@ namespace GvrSharp
         // The bytes of a chunk
         public int GetChunkSize()
         {
-            return GetChunkWidth() * GetChunkHeight() * GetChunkBpp();
+            return (GetChunkWidth() * GetChunkHeight() * GetChunkBpp())/8;
         }
 
         // The format header size
@@ -45,7 +45,7 @@ namespace GvrSharp
         abstract public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1);
     }
 
-    public class GvrDecoder_Rgb_565_4x4 : GvrDecoder
+    public class GvrDecoder_0004 : GvrDecoder
     {
         private bool init = false;
         private int width, height;
@@ -97,7 +97,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_Rgb_5a3_4x4 : GvrDecoder
+    public class GvrDecoder_0005 : GvrDecoder
     {
         private bool init = false;
         private int width, height;
@@ -111,7 +111,7 @@ namespace GvrSharp
         }
         override public int GetChunkBpp()
         {
-            return 2;
+            return 16;
         }
         override public int GetFormatHeaderSize()
         {
@@ -160,7 +160,85 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_Pal_565_8x4 : GvrDecoder
+    public class GvrDecoder_1808 : GvrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[256][];
+        private bool init = false;
+        private int width, height;
+        override public int GetChunkWidth()
+        {
+            return 8;
+        }
+        override public int GetChunkHeight()
+        {
+            return 8;
+        }
+        override public int GetChunkBpp()
+        {
+            return 4;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 16 * 2;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            for (int i = 0; i < 16; i++)
+            {
+                PaletteARGB[i] = new byte[4];
+
+                // Get 16-bit palette Entry
+                ushort entry = ColorConversions.swap16((ushort)(FormatHeader[Pointer] + FormatHeader[Pointer + 1] * 256));
+                PaletteARGB[i][0] = 0xFF;
+                PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
+                PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
+                PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));
+                Pointer += 2;
+            }
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); )
+                {
+                    try
+                    {
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] >> 4][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] >> 4][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] >> 4][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] >> 4][3];
+                        x2++;
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] & 0xF][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] & 0xF][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] & 0xF][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] & 0xF][3];
+                        x2++;
+                    }
+                    catch
+                    {
+                        x2 += 2;
+                        return true;
+                    }
+                    InPtr++;
+                }
+            }
+            return true;
+        }
+    }
+    public class GvrDecoder_1809 : GvrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -202,6 +280,7 @@ namespace GvrSharp
                 PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
                 PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
                 PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));
+
                 Pointer += 2;
             }
 
@@ -224,7 +303,96 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_Pal_5a3_8x4 : GvrDecoder
+    public class GvrDecoder_2808 : GvrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[256][];
+        private bool init = false;
+        private int width, height;
+        override public int GetChunkWidth()
+        {
+            return 8;
+        }
+        override public int GetChunkHeight()
+        {
+            return 8;
+        }
+        override public int GetChunkBpp()
+        {
+            return 4;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 16 * 2;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            for (int i = 0; i < 16; i++)
+            {
+                PaletteARGB[i] = new byte[4];
+
+                // Get 16-bit palette Entry
+                ushort entry = ColorConversions.swap16((ushort)(FormatHeader[Pointer] + FormatHeader[Pointer + 1] * 256));
+
+                if ((entry & 0x8000) != 0)
+                {
+                    PaletteARGB[i][0] = (byte)0xFF;
+                    PaletteARGB[i][1] = (byte)(((entry >> 10) & 0x1f) * 255 / 32);
+                    PaletteARGB[i][2] = (byte)(((entry >> 5) & 0x1f) * 255 / 32);
+                    PaletteARGB[i][3] = (byte)(((entry >> 0) & 0x1f) * 255 / 32);
+                }
+                else
+                {
+                    PaletteARGB[i][0] = (byte)(((entry >> 12) & 0x07) * 255 / 8);
+                    PaletteARGB[i][1] = (byte)(((entry >> 8) & 0x0f) * 255 / 16);
+                    PaletteARGB[i][2] = (byte)(((entry >> 4) & 0x0f) * 255 / 16);
+                    PaletteARGB[i][3] = (byte)(((entry >> 0) & 0x0f) * 255 / 16);
+                }
+                Pointer += 2;
+            }
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); )
+                {
+                    try
+                    {
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] >> 4][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] >> 4][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] >> 4][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] >> 4][3];
+                        x2++;
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] & 0xF][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] & 0xF][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] & 0xF][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] & 0xF][3];
+                        x2++;
+                    }
+                    catch
+                    {
+                        x2 += 2;
+                        return true;
+                    }
+                    InPtr++;
+                }
+            }
+            return true;
+        }
+    }
+    public class GvrDecoder_2809 : GvrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -262,11 +430,6 @@ namespace GvrSharp
 
                 // Get 16-bit palette Entry
                 ushort entry = ColorConversions.swap16((ushort)(FormatHeader[Pointer] + FormatHeader[Pointer + 1] * 256));
-                PaletteARGB[i][0] = 0xFF;
-                PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
-                PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
-                PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));
-
 
                 if ((entry & 0x8000) != 0)
                 {

@@ -41,58 +41,58 @@ namespace GvrSharp
         public GvrFormat Format;
     };
 
-    public class GvrCodec_Rgb_565_4x4 : GvrCodec
+    public class GvrCodec_0004 : GvrCodec
     {
-        public GvrCodec_Rgb_565_4x4()
+        public GvrCodec_0004()
         {
-            Decode = new GvrDecoder_Rgb_565_4x4();
+            Decode = new GvrDecoder_0004();
             Encode = null;
             Format = GvrFormat.Rgb_565_4x4;
         }
     }
-    public class GvrCodec_Rgb_5a3_4x4 : GvrCodec
+    public class GvrCodec_0005 : GvrCodec
     {
-        public GvrCodec_Rgb_5a3_4x4()
+        public GvrCodec_0005()
         {
-            Decode = new GvrDecoder_Rgb_5a3_4x4();
+            Decode = new GvrDecoder_0005();
             Encode = null;
             Format = GvrFormat.Rgb_5a3_4x4;
         }
     }
-    public class GvrCodec_Pal_565_8x4 : GvrCodec
+    public class GvrCodec_1808 : GvrCodec
     {
-        public GvrCodec_Pal_565_8x4()
+        public GvrCodec_1808()
         {
-            Decode = new GvrDecoder_Pal_565_8x4();
-            Encode = new GvrEncoder_Pal_565_8x4();
-            Format = GvrFormat.Pal_565_8x4;
-        }
-    }
-    public class GvrCodec_Pal_5a3_8x4 : GvrCodec
-    {
-        public GvrCodec_Pal_5a3_8x4()
-        {
-            Decode = new GvrDecoder_Pal_5a3_8x4();
-            Encode = null;
-            Format = GvrFormat.Pal_565_8x4;
-        }
-    }
-    public class GvrCodec_P16_565_8x8 : GvrCodec
-    {
-        public GvrCodec_P16_565_8x8()
-        {
-            //Decode = new GvrDecoder_P16_565_8x8();
+            Decode = new GvrDecoder_1808();
             Encode = null;
             Format = GvrFormat.Rgb_565_4x4;
         }
     }
-    public class GvrCodec_P16_5a3_8x4 : GvrCodec
+    public class GvrCodec_1809 : GvrCodec
     {
-        public GvrCodec_P16_5a3_8x4()
+        public GvrCodec_1809()
         {
-            //Decode = new GvrDecoder_P16_5a3_8x4();
+            Decode = new GvrDecoder_1809();
+            Encode = new GvrEncoder_1809();
+            Format = GvrFormat.Pal_565_8x4;
+        }
+    }
+    public class GvrCodec_2808 : GvrCodec
+    {
+        public GvrCodec_2808()
+        {
+            Decode = new GvrDecoder_2808();
             Encode = null;
-            Format = GvrFormat.Rgb_565_4x4;
+            Format = GvrFormat.Pal_565_8x4;
+        }
+    }
+    public class GvrCodec_2809 : GvrCodec
+    {
+        public GvrCodec_2809()
+        {
+            Decode = new GvrDecoder_2809();
+            Encode = null;
+            Format = GvrFormat.Pal_565_8x4;
         }
     }
 
@@ -104,12 +104,12 @@ namespace GvrSharp
         private static bool inited = false;
         public static void Initialize()
         {
-            Register("0004", new GvrCodec_Rgb_565_4x4());
-            Register("0005", new GvrCodec_Rgb_5a3_4x4());
-            Register("1808", new GvrCodec_Pal_565_8x4());
-            Register("2809", new GvrCodec_Pal_5a3_8x4());
-            Register("2808", new GvrCodec_P16_565_8x8());
-            Register("1809", new GvrCodec_P16_5a3_8x4());
+            Register("0004", new GvrCodec_0004());
+            Register("0005", new GvrCodec_0005());
+            Register("1808", new GvrCodec_1808());
+            Register("1809", new GvrCodec_1809());
+            Register("2808", new GvrCodec_2808());
+            Register("2809", new GvrCodec_2809());
             inited = true;
         }
         public static bool Unregister(string CodecID)
