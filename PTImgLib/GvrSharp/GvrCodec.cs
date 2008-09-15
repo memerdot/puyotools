@@ -72,7 +72,7 @@ namespace GvrSharp
     {
         public GvrCodec_Pal_5a3_8x4()
         {
-            //Decode = new GvrDecoder_Pal_5a3_8x4();
+            Decode = new GvrDecoder_Pal_5a3_8x4();
             Encode = null;
             Format = GvrFormat.Pal_565_8x4;
         }
@@ -107,9 +107,9 @@ namespace GvrSharp
             Register("0004", new GvrCodec_Rgb_565_4x4());
             Register("0005", new GvrCodec_Rgb_5a3_4x4());
             Register("1808", new GvrCodec_Pal_565_8x4());
-            Register("1809", new GvrCodec_Pal_5a3_8x4());
+            Register("2809", new GvrCodec_Pal_5a3_8x4());
             Register("2808", new GvrCodec_P16_565_8x8());
-            Register("2809", new GvrCodec_P16_5a3_8x4());
+            Register("1809", new GvrCodec_P16_5a3_8x4());
             inited = true;
         }
         public static bool Unregister(string CodecID)
