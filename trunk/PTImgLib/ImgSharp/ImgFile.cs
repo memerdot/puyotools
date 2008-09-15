@@ -131,18 +131,19 @@ namespace ImgSharp
             unsafe
             {
                 byte* imgPtr = (byte*)(data.Scan0);
-                int ptr = 0;
+                int junk = data.Stride - data.Width * 4;
+
                 for (int y = 0; y < data.Height; y++)
                 {
                     for (int x = 0; x < data.Width; x++)
                     {
-                        imgPtr[ptr+0] = DecompressedData[(y * Width + x) * 4 + 3];
-                        imgPtr[ptr+1] = DecompressedData[(y * Width + x) * 4 + 2];
-                        imgPtr[ptr+2] = DecompressedData[(y * Width + x) * 4 + 1];
-                        imgPtr[ptr+3] = DecompressedData[(y * Width + x) * 4 + 0];
-                        ptr += 4;
+                        imgPtr[0] = DecompressedData[(y * Width + x) * 4 + 3];
+                        imgPtr[1] = DecompressedData[(y * Width + x) * 4 + 2];
+                        imgPtr[2] = DecompressedData[(y * Width + x) * 4 + 1];
+                        imgPtr[3] = DecompressedData[(y * Width + x) * 4 + 0];
+                        imgPtr += 4;
                     }
-                    ptr += data.Stride - data.Width * 4;
+                    imgPtr += junk;
                 }
             }
             TmpBmp.UnlockBits(data);

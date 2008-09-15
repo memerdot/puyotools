@@ -89,6 +89,7 @@ namespace GvrConv
                 else
                 {
                     GvrFile GvrIn = new GvrFile(InName);
+                    Console.WriteLine("Conversion Operation\nWidth: " + GvrIn.GetWidth() + " x Height: " + GvrIn.GetHeight());
 
                     System.Drawing.Imaging.ImageFormat ImgOutFmt = System.Drawing.Imaging.ImageFormat.Png;
                     ImgOutFmt = ImgFile.ImgFormatFromFilename(OutName);
