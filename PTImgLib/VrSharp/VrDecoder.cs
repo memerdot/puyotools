@@ -1,4 +1,4 @@
-// GvrDecoder.cs
+// VrDecoder.cs
 // By Nmn / For PuyoNexus.net
 // --
 // This file is released under the New BSD license. See license.txt for details.
@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GvrSharp
+namespace VrSharp
 {
-    public abstract class GvrDecoder
+    public abstract class VrDecoder
     {
         // The Width of a chunk
         abstract public int GetChunkWidth();
@@ -32,7 +32,7 @@ namespace GvrSharp
 
         // Initialization, always called first.
         // Passed to this function is the entire image header (0x20 bytes to be exact)
-        // This will allow a GvrDecoder to support multiple similar formats.
+        // This will allow a VrDecoder to support multiple similar formats.
         abstract public bool Initialize(byte[] ImageHeader, int Width, int Height);
 
         // Decode the format header
@@ -45,7 +45,7 @@ namespace GvrSharp
         abstract public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1);
     }
 
-    public class GvrDecoder_0004 : GvrDecoder
+    public class VrDecoder_00000004 : VrDecoder
     {
         private bool init = false;
         private int width, height;
@@ -97,7 +97,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_0005 : GvrDecoder
+    public class VrDecoder_00000005 : VrDecoder
     {
         private bool init = false;
         private int width, height;
@@ -160,7 +160,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_0006 : GvrDecoder
+    public class VrDecoder_00000006 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -233,7 +233,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_1808 : GvrDecoder
+    public class VrDecoder_00001808 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -311,7 +311,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_1809 : GvrDecoder
+    public class VrDecoder_00001809 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -376,7 +376,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_2808 : GvrDecoder
+    public class VrDecoder_00002808 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -465,7 +465,7 @@ namespace GvrSharp
             return true;
         }
     }
-    public class GvrDecoder_2809 : GvrDecoder
+    public class VrDecoder_00002809 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
@@ -529,6 +529,69 @@ namespace GvrSharp
             for (int y2 = 0; y2 < 4; y2++)
             {
                 for (int x2 = 0; x2 < 8; x2++)
+                {
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr]][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr]][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr]][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr]][3];
+                    InPtr++;
+                }
+            }
+            return true;
+        }
+    }
+    public class VrDecoder_096C0000 : VrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[256][];
+        private bool init = false;
+        private int width, height;
+        override public int GetChunkWidth()
+        {
+            return 4;
+        }
+        override public int GetChunkHeight()
+        {
+            return 2;
+        }
+        override public int GetChunkBpp()
+        {
+            return 1;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 256 * 4;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            for (int i = 0; i < 256; i++)
+            {
+                PaletteARGB[i] = new byte[4];
+
+                PaletteARGB[i][0] = (byte)FormatHeader[Pointer+3];
+                PaletteARGB[i][1] = (byte)FormatHeader[Pointer+0];
+                PaletteARGB[i][2] = (byte)FormatHeader[Pointer+1];
+                PaletteARGB[i][3] = (byte)FormatHeader[Pointer+2];
+
+                Pointer += 4;
+            }
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = GetChunkWidth()-1; x2 >= 0; x2--)
                 {
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr]][0];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr]][1];

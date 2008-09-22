@@ -1,18 +1,18 @@
-// GvrCodec.cs
+// VrCodec.cs
 // By Nmn / For PuyoNexus.net
 // --
 // This file is released under the New BSD license. See license.txt for details.
 // This code comes with absolutely no warrenty.
 
-// -- How to create a new GvrCodec --
+// -- How to create a new VrCodec --
 // ----
 // Quite simple really.
-// 1. Add a new entry in "GvrFormat"
-// 2. Create your derivitive of "GvrDecoder" in GvrDecoder.cs (See comments and existing implementatins for hints)
-// 3. Create your derivitive of "GvrEncoder" in GvrEncoder.cs (See comments and existing implementatins for hints)
-// 3. Create your derivitive of "GvrCodec" in GvrCodec.cs (Before you go ravaging through your tabs, you're already here ;))
-// 4. Setup code to register your "GvrCodec" in GvrCodec.cs
-// And now you have a brand new Gvr GvrCodec capable of decoding.
+// 1. Add a new entry in "VrFormat"
+// 2. Create your derivitive of "VrDecoder" in VrDecoder.cs (See comments and existing implementatins for hints)
+// 3. Create your derivitive of "VrEncoder" in VrEncoder.cs (See comments and existing implementatins for hints)
+// 3. Create your derivitive of "VrCodec" in VrCodec.cs (Before you go ravaging through your tabs, you're already here ;))
+// 4. Setup code to register your "VrCodec" in VrCodec.cs
+// And now you have a brand new Vr VrCodec capable of decoding.
 // ----
 
 using System;
@@ -20,107 +20,125 @@ using System.Collections.Generic;
 using System.Text;
 using System.Collections;
 
-namespace GvrSharp
+namespace VrSharp
 {
-    // An enumeration of the known Gvr formats
-    public enum GvrFormat : ushort
+    // An enumeration of the known Vr formats
+    public enum VrFormat : uint
     {
-        Fmt0004 = 0x0004,
-        Fmt0005 = 0x0005,
-        Fmt0006 = 0x0006,
-        Fmt000E = 0x000E,
-        Fmt1808 = 0x1808,
-        Fmt1809 = 0x1809,
-        Fmt2809 = 0x2809,
-        Fmt2808 = 0x2808
+        Fmt00000004 = 0x00000004,
+        Fmt00000005 = 0x00000005,
+        Fmt00000006 = 0x00000006,
+        Fmt0000000E = 0x0000000E,
+        Fmt00001808 = 0x00001808,
+        Fmt00001809 = 0x00001809,
+        Fmt00002809 = 0x00002809,
+        Fmt00002808 = 0x00002808,
+        Fmt096C0000 = 0x096C0000
     };
 
-    public abstract class GvrCodec
+    public enum VrType
     {
-        public GvrDecoder Decode;
-        public GvrEncoder Encode;
-        public GvrFormat Format;
+        SvrFile,
+        GvrFile,
+        PvrFile
     };
 
-    public class GvrCodec_0004 : GvrCodec
+    public abstract class VrCodec
     {
-        public GvrCodec_0004()
+        public VrDecoder Decode;
+        public VrEncoder Encode;
+        public VrFormat Format;
+    };
+
+    public class VrCodec_00000004 : VrCodec
+    {
+        public VrCodec_00000004()
         {
-            Decode = new GvrDecoder_0004();
+            Decode = new VrDecoder_00000004();
             Encode = null;
-            Format = GvrFormat.Fmt0004;
+            Format = VrFormat.Fmt00000004;
         }
     }
-    public class GvrCodec_0005 : GvrCodec
+    public class VrCodec_00000005 : VrCodec
     {
-        public GvrCodec_0005()
+        public VrCodec_00000005()
         {
-            Decode = new GvrDecoder_0005();
+            Decode = new VrDecoder_00000005();
             Encode = null;
-            Format = GvrFormat.Fmt0005;
+            Format = VrFormat.Fmt00000005;
         }
     }
-    public class GvrCodec_0006 : GvrCodec
+    public class VrCodec_00000006 : VrCodec
     {
-        public GvrCodec_0006()
+        public VrCodec_00000006()
         {
-            Decode = new GvrDecoder_0006();
+            Decode = new VrDecoder_00000006();
             Encode = null;
-            Format = GvrFormat.Fmt0006;
+            Format = VrFormat.Fmt00000006;
         }
     }
-    public class GvrCodec_1808 : GvrCodec
+    public class VrCodec_00001808 : VrCodec
     {
-        public GvrCodec_1808()
+        public VrCodec_00001808()
         {
-            Decode = new GvrDecoder_1808();
+            Decode = new VrDecoder_00001808();
             Encode = null;
-            Format = GvrFormat.Fmt1808;
+            Format = VrFormat.Fmt00001808;
         }
     }
-    public class GvrCodec_1809 : GvrCodec
+    public class VrCodec_00001809 : VrCodec
     {
-        public GvrCodec_1809()
+        public VrCodec_00001809()
         {
-            Decode = new GvrDecoder_1809();
-            Encode = new GvrEncoder_1809();
-            Format = GvrFormat.Fmt1809;
+            Decode = new VrDecoder_00001809();
+            Encode = new VrEncoder_00001809();
+            Format = VrFormat.Fmt00001809;
         }
     }
-    public class GvrCodec_2808 : GvrCodec
+    public class VrCodec_00002808 : VrCodec
     {
-        public GvrCodec_2808()
+        public VrCodec_00002808()
         {
-            Decode = new GvrDecoder_2808();
+            Decode = new VrDecoder_00002808();
             Encode = null;
-            Format = GvrFormat.Fmt2808;
+            Format = VrFormat.Fmt00002808;
         }
     }
-    public class GvrCodec_2809 : GvrCodec
+    public class VrCodec_00002809 : VrCodec
     {
-        public GvrCodec_2809()
+        public VrCodec_00002809()
         {
-            Decode = new GvrDecoder_2809();
+            Decode = new VrDecoder_00002809();
             Encode = null;
-            Format = GvrFormat.Fmt2809;
+            Format = VrFormat.Fmt00002809;
+        }
+    }
+    public class VrCodec_096C0000 : VrCodec
+    {
+        public VrCodec_096C0000()
+        {
+            Decode = new VrDecoder_096C0000();
+            Encode = null;
+            Format = VrFormat.Fmt096C0000;
         }
     }
 
-    // GvrCodecs is a static class for containing codecs
+    // VrCodecs is a static class for containing codecs
     // Register your codecs here in the initialize function.
-    public class GvrCodecs
+    public class VrCodecs
     {
         private static Hashtable hshTable = new Hashtable();
         private static bool inited = false;
         public static void Initialize()
         {
-            Register("0004", new GvrCodec_0004());
-            Register("0005", new GvrCodec_0005());
-            Register("0006", new GvrCodec_0006());
-            Register("1808", new GvrCodec_1808());
-            Register("1809", new GvrCodec_1809());
-            Register("2808", new GvrCodec_2808());
-            Register("2809", new GvrCodec_2809());
+            Register("00000004", new VrCodec_00000004());
+            Register("00000005", new VrCodec_00000005());
+            Register("00000006", new VrCodec_00000006());
+            Register("00001808", new VrCodec_00001808());
+            Register("00001809", new VrCodec_00001809());
+            Register("00002808", new VrCodec_00002808());
+            Register("00002809", new VrCodec_00002809());
+            Register("096C0000", new VrCodec_096C0000());
             inited = true;
         }
         public static bool Unregister(string CodecID)
@@ -132,7 +150,7 @@ namespace GvrSharp
             }
             return false;
         }
-        public static bool Register(string CodecID, GvrCodec Codec)
+        public static bool Register(string CodecID, VrCodec Codec)
         {
             if (hshTable.ContainsKey(CodecID))
             {
@@ -141,12 +159,12 @@ namespace GvrSharp
             hshTable.Add(CodecID, Codec);
             return true;
         }
-        public static GvrCodec GetCodec(string Codec)
+        public static VrCodec GetCodec(string Codec)
         {
             if (!inited) Initialize();
             if (hshTable.ContainsKey(Codec))
             {
-                return (GvrCodec)hshTable[Codec];
+                return (VrCodec)hshTable[Codec];
             }
             return null;
         }

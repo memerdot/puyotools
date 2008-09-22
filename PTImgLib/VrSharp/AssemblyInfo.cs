@@ -6,8 +6,8 @@
 
 using System.Reflection;
 using System.Runtime.CompilerServices;
-[assembly: AssemblyTitle("GvrSharp")]
-[assembly: AssemblyDescription("Gvr File Handling in native C#")]
+[assembly: AssemblyTitle("VrSharp")]
+[assembly: AssemblyDescription("Vr File Handling in native C#")]
 [assembly: AssemblyVersion("0.1.1.1")]
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyFile("")]

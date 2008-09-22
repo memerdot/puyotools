@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GvrSharp
+namespace VrSharp
 {
     public class ColorConversions
     {

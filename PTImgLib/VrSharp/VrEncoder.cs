@@ -1,4 +1,4 @@
-// GvrEncoder.cs
+// VrEncoder.cs
 // By Nmn / For PuyoNexus.net
 // --
 // This file is released under the New BSD license. See license.txt for details.
@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GvrSharp
+namespace VrSharp
 {
-    public abstract class GvrEncoder
+    public abstract class VrEncoder
     {
-        // The GvrFileWidth of a chunk
+        // The VrFileWidth of a chunk
         abstract public int GetChunkWidth();
 
-        // The GvrFileHeight of a chunk
+        // The VrFileHeight of a chunk
         abstract public int GetChunkHeight();
 
         // The bytes of a chunk
@@ -25,7 +25,7 @@ namespace GvrSharp
         abstract public int GetFormatHeaderSize();
 
         /// <summary>  
-        /// <para>Initializes the GvrCodec.</para> 
+        /// <para>Initializes the VrCodec.</para> 
         /// </summary>  
         /// <param name="Data">A ref to the output byte array</param>  
         /// <param name="Pointer">A ref to the output pointer</param>
@@ -42,7 +42,7 @@ namespace GvrSharp
         abstract public bool EncodeFormatHeader(ref byte[] FormatHeader, ref int Pointer);
 
         /// <summary>  
-        /// <para>Encodes a single chunk in the GvrFile. Upon success,
+        /// <para>Encodes a single chunk in the VrFile. Upon success,
         /// the output pointer will be moved and true will be returned.</para> 
         /// </summary>  
         /// <param name="Output">A ref to the output byte array</param>  
@@ -54,17 +54,17 @@ namespace GvrSharp
         abstract public bool EncodeChunk(ref byte[] Output, ref int OutPtr, ref byte[] Input, int x1, int y1);
     }
 
-    public class GvrEncoder_1809 : GvrEncoder
+    public class VrEncoder_00001809 : VrEncoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool Initialized = false;
-        private int GvrWidth, GvrHeight;
+        private int VrWidth, VrHeight;
         bool AutoQuantize = false;
         byte[] AutoQuantizeBitmap;
         public void GeneratePalette(ref byte[] Data)
         {
             AutoQuantize = true;
-            GvrColorQuantize ImgQuantize = new GvrColorQuantize(ref Data, GvrWidth, GvrHeight);
+            VrColorQuantize ImgQuantize = new VrColorQuantize(ref Data, VrWidth, VrHeight);
             for (int i = 0; i < 256; i++)
             {
                 PaletteARGB[i] = new byte[4];
@@ -118,8 +118,8 @@ namespace GvrSharp
         override public bool Initialize(ref byte[] Data, byte[] AuxData, int Width, int Height)
         {
             Initialized = true;
-            GvrWidth = Width;
-            GvrHeight = Height;
+            VrWidth = Width;
+            VrHeight = Height;
 
             if (AuxData == null)
             {
@@ -163,15 +163,15 @@ namespace GvrSharp
                     if (OutPtr >= Output.Length) break;
                     if (AutoQuantize)
                     {
-                        Output[OutPtr] = AutoQuantizeBitmap[(y2 + y1) * GvrWidth + (x1 + x2)];
+                        Output[OutPtr] = AutoQuantizeBitmap[(y2 + y1) * VrWidth + (x1 + x2)];
                         OutPtr++;
                     }
                     else
                     {
-                        int a = Input[((y2 + y1) * GvrWidth + (x1 + x2)) * 4 + 0];
-                        int r = Input[((y2 + y1) * GvrWidth + (x1 + x2)) * 4 + 1];
-                        int g = Input[((y2 + y1) * GvrWidth + (x1 + x2)) * 4 + 2];
-                        int b = Input[((y2 + y1) * GvrWidth + (x1 + x2)) * 4 + 3];
+                        int a = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 0];
+                        int r = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 1];
+                        int g = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 2];
+                        int b = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 3];
                         byte pal = GetClosestPaletteEntry(Input[a], Input[r], Input[g], Input[b]);
                         Output[OutPtr] = pal;
                         OutPtr++;
