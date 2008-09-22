@@ -8,8 +8,8 @@
     <ProjectGuid>{78196D95-D34B-4C0B-A16F-A7A487AE237A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GvrConv</RootNamespace>
-    <AssemblyName>GvrConv</AssemblyName>
+    <RootNamespace>VrConv</RootNamespace>
+    <AssemblyName>VrConv</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,7 +43,7 @@
     <Compile Include="Main.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GvrSharp\GvrSharp.csproj">
+    <ProjectReference Include="..\VrSharp\VrSharp.csproj">
       <Project>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</Project>
       <Name>GvrSharp</Name>
     </ProjectReference>

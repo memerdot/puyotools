@@ -40,12 +40,12 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColorConversions.cs" />
-    <Compile Include="GvrCodec.cs" />
-    <Compile Include="GvrColorProfile.cs" />
-    <Compile Include="GvrDecoder.cs" />
-    <Compile Include="GvrEncoder.cs" />
-    <Compile Include="GvrExceptions.cs" />
-    <Compile Include="GvrFile.cs" />
+    <Compile Include="VrCodec.cs" />
+    <Compile Include="VrColorProfile.cs" />
+    <Compile Include="VrDecoder.cs" />
+    <Compile Include="VrEncoder.cs" />
+    <Compile Include="VrExceptions.cs" />
+    <Compile Include="VrFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

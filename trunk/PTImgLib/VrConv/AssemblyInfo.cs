@@ -10,8 +10,8 @@ using System.Runtime.CompilerServices;
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
 
-[assembly: AssemblyTitle("GvrConv")]
-[assembly: AssemblyDescription("Gvr Conversion Tool For Testing GvrSharp")]
+[assembly: AssemblyTitle("VrConv")]
+[assembly: AssemblyDescription("Vr Conversion Tool For Testing VrSharp")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyDelaySign(false)]
 [assembly: AssemblyKeyFile("")]

@@ -1,4 +1,4 @@
-// GvrColorProfile.cs
+// VrColorProfile.cs
 // By Nmn / For PuyoNexus.net
 // --
 // This file is released under the New BSD license. See license.txt for details.
@@ -12,13 +12,13 @@ using System.Text;
 using BetterImageProcessorQuantization;
 using System.Drawing.Imaging;
 
-namespace GvrSharp
+namespace VrSharp
 {
-    class GvrColorQuantize
+    class VrColorQuantize
     {
         public byte[] QuantizedImage;
         public List<int> NewPalette = new List<int>(256);
-        public GvrColorQuantize(ref byte[] Data, int Width, int Height)
+        public VrColorQuantize(ref byte[] Data, int Width, int Height)
         {
             Bitmap TmpBmp = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 

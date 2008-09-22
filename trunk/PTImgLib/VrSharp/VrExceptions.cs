@@ -2,37 +2,37 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GvrSharp
+namespace VrSharp
 {
-    public class GvrNoSuitableCodecException : _ErrorException
+    public class VrNoSuitableCodecException : _ErrorException
     {
-        public GvrNoSuitableCodecException(string errorMessage) : base(errorMessage) {}
+        public VrNoSuitableCodecException(string errorMessage) : base(errorMessage) {}
 
-        public GvrNoSuitableCodecException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+        public VrNoSuitableCodecException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
-    public class GvrCodecProcessingException : _ErrorException
+    public class VrCodecProcessingException : _ErrorException
     {
-        public GvrCodecProcessingException(string errorMessage) : base(errorMessage) { }
+        public VrCodecProcessingException(string errorMessage) : base(errorMessage) { }
 
-        public GvrCodecProcessingException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+        public VrCodecProcessingException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
-    public class GvrCodecHeaderException : _ErrorException
+    public class VrCodecHeaderException : _ErrorException
     {
-        public GvrCodecHeaderException(string errorMessage) : base(errorMessage) { }
+        public VrCodecHeaderException(string errorMessage) : base(errorMessage) { }
 
-        public GvrCodecHeaderException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+        public VrCodecHeaderException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
-    public class GvrCodecLoadingException : _ErrorException
+    public class VrCodecLoadingException : _ErrorException
     {
-        public GvrCodecLoadingException(string errorMessage) : base(errorMessage) { }
+        public VrCodecLoadingException(string errorMessage) : base(errorMessage) { }
 
-        public GvrCodecLoadingException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+        public VrCodecLoadingException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
-    public class NotGvrException : _ErrorException
+    public class NotVrException : _ErrorException
     {
-        public NotGvrException(string errorMessage) : base(errorMessage) { }
+        public NotVrException(string errorMessage) : base(errorMessage) { }
 
-        public NotGvrException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+        public NotVrException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
 
     [Serializable]
