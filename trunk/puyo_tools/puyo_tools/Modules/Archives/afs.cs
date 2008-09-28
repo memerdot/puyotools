@@ -40,7 +40,7 @@ namespace puyo_tools
 
                 /* Attempt to file filenames for all of the files */
                 string[] fileNames = new string[files];
-                if (returnFileNames)
+                //if (returnFileNames)
                     fileNames = getFileNames(data, files);
 
                 /* Return all of the data now */

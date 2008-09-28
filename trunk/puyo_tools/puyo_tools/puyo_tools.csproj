@@ -47,11 +47,14 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileFormat.cs" />
+    <Compile Include="Modules\Archive.cs" />
     <Compile Include="Modules\Archives\acx.cs" />
     <Compile Include="Modules\Archives\afs.cs" />
     <Compile Include="Conversions.cs">
     </Compile>
     <Compile Include="Modules\Archives\spk.cs" />
+    <Compile Include="Modules\Compression.cs" />
     <Compile Include="Modules\Compression\cnx.cs" />
     <Compile Include="Modules\Compression\cxlz.cs" />
     <Compile Include="Global.cs">
@@ -64,13 +67,13 @@
     <Compile Include="Modules\Archives\mrg.cs" />
     <Compile Include="Modules\Archives\tex.cs" />
     <Compile Include="Modules\Archives\vdd.cs" />
-    <Compile Include="Programs\archive_create.cs">
+    <Compile Include="Programs\Archive_Creator.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Programs\archive_extract.cs">
+    <Compile Include="Programs\Archive_Extractor.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Programs\lz01_cxlz_decompressor.cs">
+    <Compile Include="Programs\Compression_Decompressor.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Modules\Archives\snt.cs" />
