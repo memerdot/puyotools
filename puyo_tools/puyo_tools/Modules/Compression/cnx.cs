@@ -4,7 +4,7 @@ namespace puyo_tools
 {
     public class CNX
     {
-        private int 
+        private uint 
             compressedSize   = 0, // Compressed Size
             decompressedSize = 0; // Decompressed Sizes.
 
@@ -12,11 +12,9 @@ namespace puyo_tools
             Cpointer = 0x10, // Compressed Pointer
             Dpointer = 0;    // Decompressed Pointer
 
-        private int
-            Coffset = 0, // Offset for compressed data.
-            Cpos    = 0, // Actual offset for compressed data.
-            Ccount  = 0, // Count for compressed data.
-            Cflag   = 0; // Control Flag.
+        private byte
+            Ccontrol = 0, // Control Byte
+            Cmode    = 0; // Mode
 
         private byte[]
             decompressedData, // Decompressed Data
@@ -33,62 +31,92 @@ namespace puyo_tools
             try
             {
                 /* Get the sizes of the compressed & decompressed files */
-                compressedSize   = BitConverter.ToInt32(compressedData, 0x4);
-                decompressedSize = BitConverter.ToInt32(compressedData, 0x8);
+                compressedSize   = Endian.swapInt(BitConverter.ToUInt32(compressedData, 0x8)) + 16;
+                decompressedSize = Endian.swapInt(BitConverter.ToUInt32(compressedData, 0xC));
 
                 decompressedData = new byte[decompressedSize];
 
                 /* Ok, let's attempt to decompress the data */
                 while (Cpointer < compressedSize)
                 {
-                    Cflag = Cpointer;
+                    /* Check for out of bounds */
+                    if (Dpointer >= decompressedSize)
+                        break;
+
+                    Ccontrol = compressedData[Cpointer];
                     Cpointer++;
 
-                    for (int i = 0; i < 8; i++)
+                    for (int i = 0; i < 4; i++)
                     {
-                        /* Check for out of bounds */
-                        if (Dpointer >= decompressedSize)
-                            break;
+                        /* Get control mode and shift bytes. */
+                        Cmode      = (byte)(Ccontrol & 3);
+                        Ccontrol >>= 2;
 
-                        /* Is the data uncompressed (Value of 1) */
-                        if ((compressedData[Cflag] & (1 << i)) > 0)
+                        /* Check for the mode */
+                        switch (Cmode)
                         {
-                            decompressedData[Dpointer] = compressedData[Cpointer];
-                            Cpointer++;
-                            Dpointer++;
-                        }
+                            /* Padding Mode
+					         * all CNX archives seem to be packed in 0x800 chunks. when nearing
+					         * a 0x800 cutoff, there usually is a padding command at the end to skip
+					         * a few bytes (to the next 0x800 chunk, i.e. 0x4800, 0x7000, etc.) */
+                            case 0:
+                                byte temp_byte;
 
-                        /* The data is compressed! */
-                        else
-                        {
-                            Coffset = (compressedData[Cpointer] + ((compressedData[Cpointer + 1] >> 4) & 0xF) * 256) + 18;
-                            Ccount  = (compressedData[Cpointer + 1] & 0xF) + 3;
+                                temp_byte = compressedData[Cpointer];
+                                Cpointer += (temp_byte & 0xFF) + 1;
 
-                            Cpointer += 2;
+                                i = 3;
+                                break;
 
-                            for (int j = 0; j < Ccount; j++)
-                            {
-                                if (Dpointer >= decompressedSize) break;
-
-                                Cpos = Coffset + (Dpointer / 0x1000) * 0x1000;
-
-                                while (Cpos >= Dpointer)
-                                    Cpos -= 0x1000;
-                                if (Cpos < 0)
-                                    decompressedData[Dpointer] = 0x0;
-                                else
-                                    decompressedData[Dpointer] = decompressedData[Cpos];
-
+                            /* Single Byte Copy Mode */
+                            case 1:
+                                decompressedData[Dpointer] = compressedData[Cpointer];
+                                Cpointer++;
                                 Dpointer++;
-                                Coffset++;
-                            }
+                                break;
+
+                            /* Copy from destination buffer to current position */
+                            case 2:
+                                uint off, len, temp_word;
+
+                                temp_word = Endian.swapShort(BitConverter.ToUInt16(compressedData, Cpointer));
+
+                                off = (temp_word >> 5) + 1;
+                                len = (temp_word & 0x1F) + 4;
+
+                                Cpointer += 2;
+
+                                for (int j = 0; j < len; j++)
+                                {
+                                    decompressedData[Dpointer] = decompressedData[Dpointer - off];
+                                    Dpointer++;
+                                }
+
+                                break;
+
+                            /* Direct Block Copy (first byte signifies length of copy) */
+                            case 3:
+                                byte block_len;
+
+                                block_len = compressedData[Cpointer];
+                                Cpointer++;
+
+                                while (block_len > 0)
+                                {
+                                    decompressedData[Dpointer] = compressedData[Cpointer];
+                                    Cpointer++;
+                                    Dpointer++;
+                                    block_len--;
+                                }
+
+                                break;
                         }
                     }
                 }
 
                 return decompressedData;
             }
-            catch (Exception)
+            catch
             {
                 return new byte[0];
             }
@@ -100,8 +128,8 @@ namespace puyo_tools
             try
             {
                 /* Set the sizes of the compressed & decompressed files */
-                decompressedSize = decompressedData.Length;
-                compressedSize   = Cpointer + decompressedSize + (int) Math.Ceiling((double) decompressedSize / 8);
+                //decompressedSize = (uint)decompressedData.Length;
+                //compressedSize   = Cpointer + decompressedSize + (int)Math.Ceiling((double) decompressedSize / 8);
 
                 compressedData = new byte[compressedSize];
 
@@ -136,7 +164,6 @@ namespace puyo_tools
             {
                 return new byte[0];
             }
-                
         }
     }
 }

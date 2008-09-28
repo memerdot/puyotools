@@ -75,13 +75,25 @@ namespace puyo_tools
 
         /* Decompression */
         public static string
-            LZ01 = "LZ01 Decompressed Files", // LZ01 Compression
-            CXLZ = "CXLZ Decompressed Files"; // CXLZ Compression
+            CNX  = "CNX Decompressed Files",  // CNX Compression
+            CXLZ = "CXLZ Decompressed Files", // CXLZ Compression
+            LZ00 = "LZ00 Decompressed Files", // LZ00 Compression
+            LZ01 = "LZ01 Decompressed Files"; // LZ01 Compression
+
     }
 
     /* Endian Swaps */
     public class Endian
     {
+        /* Swap short endian. */
+        public static ushort swapShort(ushort x)
+        {
+            x = (ushort)((x >> 8) |
+                (x << 8));
+
+            return x;
+        }
+
         /* Swap integer endian. */
         public static uint swapInt(uint x)
         {
