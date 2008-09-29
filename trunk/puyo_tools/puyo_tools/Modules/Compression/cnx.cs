@@ -4,6 +4,9 @@ namespace puyo_tools
 {
     public class CNX
     {
+        /* CNX cracked by drx (Luke Zapart)
+         * <thedrx@gmail.com> */
+
         private uint 
             compressedSize   = 0, // Compressed Size
             decompressedSize = 0; // Decompressed Sizes.
@@ -56,7 +59,7 @@ namespace puyo_tools
                         switch (Cmode)
                         {
                             /* Padding Mode
-					         * all CNX archives seem to be packed in 0x800 chunks. when nearing
+					         * All CNX archives seem to be packed in 0x800 chunks. when nearing
 					         * a 0x800 cutoff, there usually is a padding command at the end to skip
 					         * a few bytes (to the next 0x800 chunk, i.e. 0x4800, 0x7000, etc.) */
                             case 0:
@@ -96,17 +99,16 @@ namespace puyo_tools
 
                             /* Direct Block Copy (first byte signifies length of copy) */
                             case 3:
-                                byte block_len;
+                                byte blockLength;
 
-                                block_len = compressedData[Cpointer];
+                                blockLength = compressedData[Cpointer];
                                 Cpointer++;
 
-                                while (block_len > 0)
+                                for (int j = 0; j < blockLength; j++)
                                 {
                                     decompressedData[Dpointer] = compressedData[Cpointer];
                                     Cpointer++;
                                     Dpointer++;
-                                    block_len--;
                                 }
 
                                 break;

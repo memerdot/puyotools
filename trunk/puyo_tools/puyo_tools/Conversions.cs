@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace puyo_tools
 {
@@ -34,6 +36,14 @@ namespace puyo_tools
                 GvrConv = Process.Start(startInfo);
                 GvrConv.WaitForExit();
                 GvrConv.Close();
+            }
+
+            /* GMP? */
+            else if (FileFormat.getImageFormat(data, fileName) == GraphicFormat.GMP)
+            {
+                GMP gmp = new GMP();
+                Bitmap image = gmp.unpack(data);
+                image.Save(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png", ImageFormat.Png);
             }
         }
 
