@@ -1,0 +1,5 @@
+#summary GimConv
+
+= GimConv =
+
+GimConv is a program created by Sony that allows users to convert to and from GIM files, both little-endian and big-endian. Puyo Tools uses this program for GIM file conversion.
