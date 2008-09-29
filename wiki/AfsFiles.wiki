@@ -6,7 +6,7 @@ AFS is a container for any kind of files, although it usually contains only ADX 
 
 == Header ==
 0x00 - 0x03: 'AFS'
- Magic Code, 4 bytes
+ (4 bytes) Magic Code
 
 0x04 - 0x07
  (4 bytes) Number of files in the AFS archive.
