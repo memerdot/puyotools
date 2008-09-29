@@ -11,6 +11,7 @@ namespace puyo_tools
     {
         /* Options */
         private CheckBox
+            useDefinedFileNames, // Use filenames defined in the file
             autoConvertImages,   // Auto convert images to PNG
             autoDeleteConverted; // Auto delete extract files converted to PNG
 
@@ -27,7 +28,7 @@ namespace puyo_tools
         public Compression_Decompressor()
         {
             /* Set up the window. */
-            this.ClientSize      = new Size(400, 112);
+            this.ClientSize      = new Size(400, 136);
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.StartPosition   = FormStartPosition.CenterScreen;
             this.Text            = "Compression Decompressor Options";
@@ -56,10 +57,19 @@ namespace puyo_tools
         /* Show Options */
         private void showOptions()
         {
+            /* Use filenames defined in the file */
+            useDefinedFileNames          = new CheckBox();
+            useDefinedFileNames.Text     = "Use filenames defined in the file.";
+            useDefinedFileNames.Location = new Point(8, 32);
+            useDefinedFileNames.Size     = new Size(this.Width - 16, 20);
+            useDefinedFileNames.Checked  = true;
+
+            this.Controls.Add(useDefinedFileNames);
+
             /* Auto convert extracted images to PNG. */
             autoConvertImages          = new CheckBox();
             autoConvertImages.Text     = "Convert images to PNG, if possible.";
-            autoConvertImages.Location = new Point(8, 32);
+            autoConvertImages.Location = new Point(8, 56);
             autoConvertImages.Size     = new Size(this.Width - 16, 20);
 
             this.Controls.Add(autoConvertImages);
@@ -67,7 +77,7 @@ namespace puyo_tools
             /* Delete images that have been converted to PNG. */
             autoDeleteConverted          = new CheckBox();
             autoDeleteConverted.Text     = "Delete source image if conversion was sucessful.";
-            autoDeleteConverted.Location = new Point(32, 56);
+            autoDeleteConverted.Location = new Point(32, 80);
             autoDeleteConverted.Size     = new Size(this.Width - 16 - 24, 20);
 
             this.Controls.Add(autoDeleteConverted);
@@ -75,7 +85,7 @@ namespace puyo_tools
             /* Display Extract Button */
             doWorkButton          = new Button();
             doWorkButton.Text     = "Decompress Files";
-            doWorkButton.Location = new Point(8, 80);
+            doWorkButton.Location = new Point(8, 104);
             doWorkButton.Size     = new Size(128, 24);
             doWorkButton.Click   += new EventHandler(startWork);
 
@@ -123,6 +133,15 @@ namespace puyo_tools
                     Compression compression = new Compression();
                     decompressedData = compression.decompress(data);
 
+                    /* Get the output filename. */
+                    string outputFileName = String.Empty;
+
+                    if (useDefinedFileNames.Checked)
+                        outputFileName = compression.getFileName(data, Path.GetFileName(files[i]));
+
+                    if (outputFileName == String.Empty)
+                        outputFileName = Path.GetFileName(files[i]);
+
                     /* The data wasn't compressed, or it wasn't a supported compression format. */
                     if (data == decompressedData || decompressedData.Length == 0)
                         continue;
@@ -135,7 +154,7 @@ namespace puyo_tools
                         Directory.CreateDirectory(outputDir);
 
                     /* Now output the file */
-                    FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + Path.GetFileName(files[i]), FileMode.Create);
+                    FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + outputFileName, FileMode.Create);
                     outputFile.Write(decompressedData, 0, decompressedData.Length);
                     outputFile.Close();
 

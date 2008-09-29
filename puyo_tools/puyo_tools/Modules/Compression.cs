@@ -44,5 +44,17 @@ namespace puyo_tools
 
             return String.Empty;
         }
+
+        /* Get the output filename. */
+        public string getFileName(byte[] data, string fileName)
+        {
+            switch (FileFormat.getCompressionFormat(data))
+            {
+                case CompressionFormat.CNX:
+                    return Path.GetFileNameWithoutExtension(fileName) + "." + PadString.getStringFromBytes(data, 0x4, 3);
+            }
+
+            return fileName;
+        }
     }
 }

@@ -167,6 +167,22 @@ namespace puyo_tools
 
             return output;
         }
+
+        /* Get string from bytes. */
+        public static string getStringFromBytes(byte[] data, int offset, int length)
+        {
+            string fileName = String.Empty;
+
+            for (int i = 0; i < length; i++)
+            {
+                if (data[offset + i] == 0x0)
+                    break;
+
+                fileName += (char)data[offset + 1];
+            }
+
+            return fileName;
+        }
     }
 
     /* Padding for Integer */

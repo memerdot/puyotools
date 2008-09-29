@@ -57,11 +57,12 @@ namespace puyo_tools
     public enum GraphicFormat : byte
     {
         GIM  = 0x1, // GIM/MIG
-        GVR  = 0x2, // GVR
-        PVP  = 0x3, // PVP
-        PVR  = 0x4, // PVR
-        SVP  = 0x5, // SVP
-        SVR  = 0x6, // SVR
+        GMP  = 0x2, // GMP
+        GVR  = 0x3, // GVR
+        PVP  = 0x4, // PVP
+        PVR  = 0x5, // PVR
+        SVP  = 0x6, // SVP
+        SVR  = 0x7, // SVR
         NULL = 0x0  // Unknown Image Format
     }
 
@@ -69,6 +70,7 @@ namespace puyo_tools
     public enum GraphicHeader : uint
     {
         GIM  = 0x4D49472E, // (GIM) 0x2E, 0x47, 0x49, 0x4D
+        GMP  = 0x2D504D47, // (GMP) 0x47, 0x4D, 0x50, 0x2D
         GVR  = 0x58494347, // (GVR) 0x47, 0x43, 0x49, 0x58
         MIG  = 0x2E47494D, // (GIM) 0x4D, 0x49, 0x47, 0x2E (GIM, Big Endian)
         PVP  = 0x4C505650, // (PVP) 0x50, 0x56, 0x50, 0x4C (Pallete data for PVR. Also SVP)
@@ -146,6 +148,9 @@ namespace puyo_tools
 
             if (header == GraphicHeader.GIM || header == GraphicHeader.MIG)
                 return GraphicFormat.GIM; // GIM (MIG)
+
+            else if (header == GraphicHeader.GMP)
+                return GraphicFormat.GMP; // GMP
 
             else if (header == GraphicHeader.GVR)
                 return GraphicFormat.GVR; // GVR
