@@ -12,7 +12,7 @@ GMP is an image format that has been used in various DiscStation games. Aside fr
  (4 bytes) Height of the image in pixels.
 
 0x0C - 0x0F
- (4 bytes) Height of the image in pixels.
+ (4 bytes) Width of the image in pixels.
 
 0x10 - 0x13
  (4 bytes) 0000 0000 (NULL bytes)
