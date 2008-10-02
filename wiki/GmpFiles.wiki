@@ -33,9 +33,11 @@ GMP is an image format that has been used in various DiscStation games. Aside fr
 *This section assumes the GMP is an 8-bit image.*
 
 This data comes directly after the header.
-Colors in the palette are stored as:
+Colors in the palette are stored as follows:
 
- BBGG RR00
+{{{
+ | BB | GG | RR | 00
+}}}
 
 It is repeated for the number of colors in the image.
 
