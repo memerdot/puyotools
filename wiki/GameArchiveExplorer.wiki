@@ -1,4 +1,4 @@
-#summary Game Archive Explorer.
+#summary Game Archive Explorer
 
 = Game Archive Explorer =
 Game Archive Explorer allows you to view the contents of archives without having to extract them. It is meant to be used in conjunction with Puyo Tools. Currently, it only supports AFS Archives (both v1 and v2).
