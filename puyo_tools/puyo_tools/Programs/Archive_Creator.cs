@@ -42,6 +42,7 @@ namespace puyo_tools
             "AFS",
             "GNT",
             "MRG",
+            "ONE",
             "SNT (PS2)",
             "SNT (PSP)",
             "SPK",
@@ -59,11 +60,11 @@ namespace puyo_tools
         public Archive_Creator()
         {
             /* Set up the window. */
-            this.ClientSize = new Size(400, 400);
+            this.ClientSize      = new Size(400, 400);
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "Archive Creator Options";
-            this.MaximizeBox = false;
+            this.StartPosition   = FormStartPosition.CenterScreen;
+            this.Text            = "Archive Creator Options";
+            this.MaximizeBox     = false;
 
             /* Select the files. */
             files = Files.selectFiles("Select Files(s)", "All Files (*.*)|*.*");
@@ -208,11 +209,12 @@ namespace puyo_tools
                 case 1: filter = "AFS Archive (*.afs)|*.afs"; break; // AFS
                 case 2: filter = "GNT Archive (*.gnt)|*.gnt"; break; // GNT
                 case 3: filter = "MRG Archive (*.mrg)|*.mrg"; break; // MRG
-                case 4:
-                case 5: filter = "SNT Archive (*.snt)|*.snt"; break; // SNT
-                case 6: filter = "SPK Archive (*.spk)|*.spk"; break; // SPK
-                case 7: filter = "TEX Archive (*.tex)|*.tex"; break; // TEX
-                case 8: filter = "VDD Archive (*.vdd)|*.vdd"; break; // VDD
+                case 4: filter = "ONE Archive (*.one)|*.one"; break; // ONE
+                case 5:
+                case 6: filter = "SNT Archive (*.snt)|*.snt"; break; // SNT
+                case 7: filter = "SPK Archive (*.spk)|*.spk"; break; // SPK
+                case 8: filter = "TEX Archive (*.tex)|*.tex"; break; // TEX
+                case 9: filter = "VDD Archive (*.vdd)|*.vdd"; break; // VDD
             }
 
             saveFileName = Files.saveFile("Save Output Archive", filter);
@@ -251,7 +253,7 @@ namespace puyo_tools
                     status.updateStatus(StatusMessage.addToArchive, Path.GetFileName(files[i]), (i + 1));
 
                     /* Load the file. */
-                    FileStream file = new FileStream(files[i], FileMode.Open);
+                    FileStream file = new FileStream(files[i], FileMode.Open, FileAccess.Read);
                     data[i] = new byte[file.Length];
 
                     file.Read(data[i], 0, (int)file.Length);
@@ -287,27 +289,32 @@ namespace puyo_tools
                     MRG creator = new MRG();
                     archiveData = creator.create(data, files);
                 }
-                else if (archiveFormat.SelectedIndex == 4) // SNT (PS2)
+                else if (archiveFormat.SelectedIndex == 4) // ONE
+                {
+                    ONE creator = new ONE();
+                    archiveData = creator.create(data, files);
+                }
+                else if (archiveFormat.SelectedIndex == 5) // SNT (PS2)
                 {
                     SNT creator = new SNT();
                     archiveData = creator.create(data, files, addFileNames.Checked, false);
                 }
-                else if (archiveFormat.SelectedIndex == 5) // SNT (PSP)
+                else if (archiveFormat.SelectedIndex == 6) // SNT (PSP)
                 {
                     SNT creator = new SNT();
                     archiveData = creator.create(data, files, addFileNames.Checked, true);
                 }
-                else if (archiveFormat.SelectedIndex == 6) // SPK
+                else if (archiveFormat.SelectedIndex == 7) // SPK
                 {
                     SPK creator = new SPK();
                     archiveData = creator.create(data, files);
                 }
-                else if (archiveFormat.SelectedIndex == 7) // TEX
+                else if (archiveFormat.SelectedIndex == 8) // TEX
                 {
                     TEX creator = new TEX();
                     archiveData = creator.create(data, files);
                 }
-                else if (archiveFormat.SelectedIndex == 8) // VDD
+                else if (archiveFormat.SelectedIndex == 9) // VDD
                 {
                     VDD creator = new VDD();
                     archiveData = creator.create(data, files);
@@ -329,7 +336,7 @@ namespace puyo_tools
                 }
 
                 /* Output the archive. */
-                FileStream outputFile = new FileStream(saveFileName, FileMode.Create);
+                FileStream outputFile = new FileStream(saveFileName, FileMode.Create, FileAccess.Write);
                 outputFile.Write(archiveData, 0, archiveData.Length);
                 outputFile.Close();
             }

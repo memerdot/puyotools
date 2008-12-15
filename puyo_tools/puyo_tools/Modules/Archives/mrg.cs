@@ -38,9 +38,7 @@ namespace puyo_tools
                 }
 
                 /* Attempt to file filenames for all of the files */
-                string[] fileNames = new string[files];
-                //if (returnFileNames)
-                    fileNames = getFileNames(data, files);
+                string[] fileNames = getFileNames(data, files);
 
 
                 /* Return all of the data now */
@@ -128,8 +126,8 @@ namespace puyo_tools
                 {
                     if (data[pos + j] == 0x0)
                         break;
-                    else
-                        fileExt += (char)data[pos + j];
+
+                    fileExt += (char)data[pos + j];
                 }
 
                 /* Now jump to the filename. */
@@ -140,8 +138,8 @@ namespace puyo_tools
                 {
                     if (data[pos + j] == 0x0)
                         break;
-                    else
-                        fileNames[i] += (char)data[pos + j];
+
+                    fileNames[i] += (char)data[pos + j];
                 }
 
                 /* Add the file extension */

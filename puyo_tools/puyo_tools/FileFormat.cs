@@ -10,6 +10,7 @@ namespace puyo_tools
         CXLZ = 0x2, // CXLZ
         LZ00 = 0x3, // LZ00
         LZ01 = 0x4, // LZ01
+        ONZ  = 0x5, // ONZ
         NULL = 0x0  // Unknown Compression
     }
 
@@ -19,7 +20,8 @@ namespace puyo_tools
         CNX  = 0x02584E43, // (CNX)  0x43, 0x4E, 0x58, 0x02
         CXLZ = 0x5A4C5843, // (CXLZ) 0x43, 0x58, 0x4C, 0x5A
         LZ00 = 0x30305A4C, // (LZ00) 0x4C, 0x5A, 0x30, 0x30
-        LZ01 = 0x31305A4C  // (LZ01) 0x4C, 0x5A, 0x30, 0x31
+        LZ01 = 0x31305A4C, // (LZ01) 0x4C, 0x5A, 0x30, 0x31
+        ONZ  = 0x00000011  // (ONZ)  0x11
     }
 
     /* Archive format ID */
@@ -31,9 +33,10 @@ namespace puyo_tools
         MRG  = 0x4, // MRG
         NSIF = 0x5, // SNT (PS2)
         NUIF = 0x6, // SNT (PSP)
-        SPK  = 0x7, // SPK
-        TEX  = 0x8, // TEX
-        VDD  = 0x9, // VDD
+        ONE  = 0x7, // ONE
+        SPK  = 0x8, // SPK
+        TEX  = 0x9, // TEX
+        VDD  = 0xA, // VDD
         NULL = 0x0  // Unknown Archive Format
     }
 
@@ -49,6 +52,7 @@ namespace puyo_tools
         NSTL = 0x3C54534E, // (SNT) 0x4E, 0x53, 0x54, 0x3C (PS2, not SNC)
         NUIF = 0x4649554E, // (SNT) 0x4E, 0x55, 0x49, 0x46 (PSP)
         NUTL = 0x4C54554E, // (SNT) 0x4E, 0x55, 0x54, 0x4C (PSP, not SNC)
+        ONE  = 0x2E656E6F, // (ONE) 0x6F, 0x6E, 0x65, 0x2E
         SPK  = 0x30444E53, // (SPK) 0x53, 0x4E, 0x44, 0x30
         TEX  = 0x30584553  // (TEX) 0x53, 0x45, 0x58, 0x30
     }
@@ -71,6 +75,7 @@ namespace puyo_tools
     {
         GIM  = 0x4D49472E, // (GIM) 0x2E, 0x47, 0x49, 0x4D
         GMP  = 0x2D504D47, // (GMP) 0x47, 0x4D, 0x50, 0x2D
+        GMP2 = 0x00303032, // (GMP2) 0x32, 0x30, 0x30, 0x00
         GVR  = 0x58494347, // (GVR) 0x47, 0x43, 0x49, 0x58
         MIG  = 0x2E47494D, // (GIM) 0x4D, 0x49, 0x47, 0x2E (GIM, Big Endian)
         PVP  = 0x4C505650, // (PVP) 0x50, 0x56, 0x50, 0x4C (Pallete data for PVR. Also SVP)
@@ -101,6 +106,9 @@ namespace puyo_tools
 
             else if (header == ArchiveHeader.MRG)
                 return ArchiveFormat.MRG; // MRG Archive
+
+            else if (header == ArchiveHeader.ONE)
+                return ArchiveFormat.ONE; // ONE Archive
 
             else if (header == ArchiveHeader.NSIF && (ArchiveHeader)BitConverter.ToUInt32(data, 0x20) == ArchiveHeader.NSTL)
                 return ArchiveFormat.NSIF; // SNT Archive (PS2)
@@ -133,6 +141,10 @@ namespace puyo_tools
                 case CompressionHeader.LZ00: return CompressionFormat.LZ00;
                 case CompressionHeader.LZ01: return CompressionFormat.LZ01;
             }
+
+            /* Add Special case for ONZ, as it is only a 1 byte header */
+            if (data[0x0] == (byte)CompressionHeader.ONZ)
+                return CompressionFormat.ONZ;
 
             return CompressionFormat.NULL;
         }
@@ -189,6 +201,7 @@ namespace puyo_tools
                 case ArchiveFormat.MRG:  return ".mrg";
                 case ArchiveFormat.NSIF:
                 case ArchiveFormat.NUIF: return ".snt";
+                case ArchiveFormat.ONE:  return ".one";
                 case ArchiveFormat.SPK:  return ".spk";
                 case ArchiveFormat.TEX:  return ".tex";
                 case ArchiveFormat.VDD:  return ".vdd";

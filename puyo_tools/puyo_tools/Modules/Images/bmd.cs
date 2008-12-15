@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class GMP
+    public class BMD
     {
         /* GMP Images */
-        public GMP()
+        public BMD()
         {
         }
 
@@ -17,10 +18,10 @@ namespace puyo_tools
             try
             {
                 /* Set image variables */
-                int imageWidth  = BitConverter.ToInt32(data, 0xC);  // Width
-                int imageHeight = BitConverter.ToInt32(data, 0x8);  // Height
-                int bitDepth    = BitConverter.ToInt16(data, 0x1E); // Bit Depth
-                int colors      = BitConverter.ToInt16(data, 0x1C); // Pallete Entries
+                int imageWidth  = 512;  // Width
+                int imageHeight = 256;  // Height
+                int bitDepth    = 8; // Bit Depth
+                //int colors      = 256; // Pallete Entries
 
                 /* Set up the new image. */
                 Bitmap image = new Bitmap(imageWidth, imageHeight, PixelFormat.Format8bppIndexed);
@@ -31,15 +32,24 @@ namespace puyo_tools
                 /* Read the data from the GMP */
                 unsafe
                 {
-                    /* Is this an 8-bit indexed image? */
+                    /* Is this an 8-bit image? */
                     if (bitDepth == 8)
                     {
-                        /* Write the pallete. */
-                        ColorPalette palette = image.Palette;
-                        for (int i = 0; i < colors; i++)
-                            palette.Entries[i] = Color.FromArgb(data[0x20 + (i * 0x4) + 0x2], data[0x20 + (i * 0x4) + 0x1], data[0x20 + (i * 0x4)]);
+                        /* Is it the palette? */
+                        //FileStream file = new FileStream("SLPS_031.14", FileMode.Open, FileAccess.Read);
+                        //byte[] newData = new byte[0x400];
+                        //file.Position = 0x1DFC4;
+                        //file.Read(newData, 0, 0x400);
+                        //file.Close();
 
-                        image.Palette = palette;
+                        /* Write the pallete. */
+                        //ColorPalette palette = image.Palette;
+                        //for (int i = 0; i < colors; i++)
+                        //    palette.Entries[i] = Color.FromArgb(newData[(i * 0x4) + 0], newData[(i * 0x4) + 1], newData[(i * 0x4) + 2]);
+                        //palette.Entries[i] = Color.FromArgb(data[0x20 + (i * 0x4) + 0x2], data[0x20 + (i * 0x4) + 0x1], data[0x20 + (i * 0x4)]);
+
+                        //image.Palette = palette;
+                        //int pos = 0;
 
                         for (int y = 0; y < imageHeight; y++)
                         {
@@ -48,7 +58,13 @@ namespace puyo_tools
                                 byte* rowData = (byte*)imageData.Scan0 + (y * imageData.Stride);
 
                                 /* Set the image colors now. Copy bytes from GMP. */
-                                rowData[x] = data[0x20 + (colors * 0x4) + (imageWidth * imageHeight) - ((y + 1) * imageWidth) + x];
+                                //rowData[x] = data[(imageWidth * imageHeight) - ((y + 1) * imageWidth) + x];
+                                rowData[x] = data[(y * imageWidth) + x];
+                                //rowData[x]     = (byte)((data[pos] >> 2));
+                                //rowData[x + 1] = (byte)((data[pos] << 2) | (data[pos] >> 4));
+                                //rowData[x + 2] = (byte)((data[pos] << 4) | (data[pos] >> 6));
+                                //rowData[x + 3] = (byte)((data[pos] << 6) | (data[pos] >> 8));
+                                //pos += 4;
                             }
                         }
                     }
@@ -60,8 +76,9 @@ namespace puyo_tools
                 return image;
             }
 
-            catch
+            catch (Exception f)
             {
+                System.Windows.Forms.MessageBox.Show(f.ToString());
                 return new Bitmap(0, 0);
             }
         }
@@ -72,39 +89,39 @@ namespace puyo_tools
             try
             {
                 /* Set image variables */
-                int imageWidth     = image.Width;       // Width
-                int imageHeight    = image.Height;      // Height
+                int imageWidth = image.Width;  // Width
+                int imageHeight = image.Height; // Height
                 PixelFormat format = image.PixelFormat; // Pixel Format
 
-                short colors   = (short)image.Palette.Entries.Length; // Colors in Pallete
-                short bitDepth = 8;                                   // Bit Depth
+                uint headerSize = 0x20;  // Header Size
+                uint imageDataStart = 0x420; // Image Data Start
 
-                uint headerSize     = 0x20;                            // Header Size
-                uint imageDataStart = headerSize + (uint)(colors * 4); // Image Data Start
+                short colors = 256; // Colors in Pallete
+                short bitDepth = 8;   // Bit Depth
 
-                /* Is the image an 8-bit indexed image? */
+                /* Is the image an 8-bit image? */
                 if (format == PixelFormat.Format8bppIndexed)
                 {
                     /* Create the data. */
                     byte[] data = new byte[imageDataStart + (imageWidth * imageHeight)];
 
                     /* Write the header */
-                    Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP),  0x0, data, 0x0, 4); // GMP-
+                    Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP), 0x0, data, 0x0, 4); // GMP-
                     Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP2), 0x0, data, 0x4, 4); // 200
 
                     Array.Copy(BitConverter.GetBytes(imageHeight), 0x0, data, 0x8, 4); // Image Height
-                    Array.Copy(BitConverter.GetBytes(imageWidth),  0x0, data, 0xC, 4); // Image Width
+                    Array.Copy(BitConverter.GetBytes(imageWidth), 0x0, data, 0xC, 4); // Image Width
 
-                    Array.Copy(BitConverter.GetBytes(headerSize),     0x0, data, 0x14, 4); // Header Size
+                    Array.Copy(BitConverter.GetBytes(headerSize), 0x0, data, 0x14, 4); // Header Size
                     Array.Copy(BitConverter.GetBytes(imageDataStart), 0x0, data, 0x18, 4); // Image Data Start
 
-                    Array.Copy(BitConverter.GetBytes(colors),   0x0, data, 0x1C, 2); // Colors in Palette
+                    Array.Copy(BitConverter.GetBytes(colors), 0x0, data, 0x1C, 2); // Colors in Palette
                     Array.Copy(BitConverter.GetBytes(bitDepth), 0x0, data, 0x1E, 2); // Bit Depth
 
                     /* Set up the palette. */
                     for (int i = 0; i < colors; i++)
                     {
-                        data[headerSize + (i * 4)]     = image.Palette.Entries[i].B;
+                        data[headerSize + (i * 4)] = image.Palette.Entries[i].B;
                         data[headerSize + (i * 4) + 1] = image.Palette.Entries[i].G;
                         data[headerSize + (i * 4) + 2] = image.Palette.Entries[i].R;
                     }
@@ -115,7 +132,7 @@ namespace puyo_tools
                         BitmapData imageData = image.LockBits(
                             new Rectangle(0, 0, imageWidth, imageHeight),
                             ImageLockMode.ReadOnly, image.PixelFormat);
-                        
+
 
                         /* Write the new data. */
                         for (int y = 0; y < imageHeight; y++)
@@ -136,7 +153,7 @@ namespace puyo_tools
                     return data;
                 }
 
-                /* Not an 8-bit indexed image. */
+                /* Not an 8-bit image. */
                 else
                     return new byte[0];
             }

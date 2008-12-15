@@ -39,9 +39,7 @@ namespace puyo_tools
                 }
 
                 /* Attempt to file filenames for all of the files */
-                string[] fileNames = new string[files];
-                //if (returnFileNames)
-                    fileNames = getFileNames(data, files);
+                string[] fileNames = getFileNames(data, files);
 
                 /* Return all of the data now */
                 return new object[][] { returnData, fileNames };
@@ -97,7 +95,7 @@ namespace puyo_tools
                     Array.Copy(BitConverter.GetBytes(fileLength[i]), 0, archiveData, Header.AFS.Length + 0x8 + (i * 0x8), 0x4); // File Length
 
                     /* Add the filename. */
-                    byte[] fileName = PadString.fileNameToBytes(fileNames[i], 0x2C);
+                    byte[] fileName = PadString.fileNameToBytes(fileNames[i], 0x20);
                     Array.Copy(fileName, 0, archiveData, fileNameStart + (i * 0x30), fileName.Length);
 
                     /* Add random thing from header. I don't know its purpose. */
@@ -126,7 +124,7 @@ namespace puyo_tools
 
             for (int i = 0; i < files; i++)
             {
-                for (int j = 0; j < 44; j++)
+                for (int j = 0; j < 32; j++)
                 {
                     if (data[fileNameLocation + (i * 0x30) + j] == 0x0)
                         break;
