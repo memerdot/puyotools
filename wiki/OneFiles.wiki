@@ -6,7 +6,7 @@ ONE is a container for any kind of files, and is used heavily in Sonic Unleashed
 *ONE files in Shadow the Hedgehog use a different format and are not supported. However, support will likely be added in the future.*
 
 == Header ==
-0x00 - 0x03: 'one' (6F 6E 65 2E)
+0x00 - 0x03: 'one.' (6F 6E 65 2E)
  (4 bytes) Magic Code
 
 0x04 - 0x07
