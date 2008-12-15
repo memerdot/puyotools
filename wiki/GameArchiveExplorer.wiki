@@ -1,0 +1,16 @@
+#summary Game Archive Explorer.
+
+= Game Archive Explorer =
+Game Archive Explorer allows you to view the contents of archives without having to extract them. It is meant to be used in conjunction with Puyo Tools. Currently, it only supports AFS Archives (both v1 and v2).
+
+Advantages:
+  * Allows you to view the contents without extracting them.
+  * Allows you to select the files you want to extract; you don't have to extract all of them.
+  * Supports very large archives, such as ONEPS2.AFS in Sonic Unleashed PS2.
+  * Allows files to be extracted when they all contain the same filename.
+
+Disadvantages:
+  * A lot more limited compared to the Puyo Tools AFS Extractor:
+     * Doesn't have the option to decompress the archive.
+     * Doesn't have the option to extract archives in the source archive.
+     * Doesn't have the option to convert images in the archive.
