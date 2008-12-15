@@ -31,6 +31,10 @@ namespace puyo_tools
                     MRG MRG_archive = new MRG();
                     return MRG_archive.extract(data, returnFileNames);
 
+                case ArchiveFormat.ONE: // ONE Archive
+                    ONE ONE_archive = new ONE();
+                    return ONE_archive.extract(data, returnFileNames);
+
                 case ArchiveFormat.NSIF: // SNT Archive (PS2)
                 case ArchiveFormat.NUIF: // SNT Archive (PSP)
                     SNT SNT_archive = new SNT();
@@ -105,6 +109,7 @@ namespace puyo_tools
                 case ArchiveFormat.AFS:  return ExtractDir.AFS;
                 case ArchiveFormat.GNT:  return ExtractDir.GNT;
                 case ArchiveFormat.MRG:  return ExtractDir.MRG;
+                case ArchiveFormat.ONE:  return ExtractDir.ONE;
                 case ArchiveFormat.NSIF:
                 case ArchiveFormat.NUIF: return ExtractDir.SNT;
                 case ArchiveFormat.SPK:  return ExtractDir.SPK;

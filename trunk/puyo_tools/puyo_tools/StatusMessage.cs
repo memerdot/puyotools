@@ -63,7 +63,13 @@ namespace puyo_tools
         {
             /* Updates the status */
             mainText.Text = header;
-            subText.Text = (file > 0 ? ("File " + file + " of " + totalFiles) : "") + "\n\n\n" + fileName;
+            subText.Text  = (file > 0 ? ("File " + file + " of " + totalFiles) : "") + "\n\n\n" + fileName;
+        }
+
+        public void updateTotalFiles(int total)
+        {
+            /* Updates the number of tital files */
+            totalFiles = total;
         }
     }
 }

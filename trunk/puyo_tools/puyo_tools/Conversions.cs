@@ -44,7 +44,30 @@ namespace puyo_tools
                 GMP gmp = new GMP();
                 Bitmap image = gmp.unpack(data);
                 image.Save(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png", ImageFormat.Png);
+
+                /* Test image creation. */
+                image = new Bitmap(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png");
+                data = gmp.pack(image);
+                FileStream file = new FileStream(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + "_test.gmp", FileMode.Create, FileAccess.Write);
+                file.Write(data, 0, data.Length);
+                file.Close();
             }
+
+            /* BTX */
+            //else if (Path.GetExtension(fileName).ToLower() == ".btx" || Path.GetExtension(fileName).ToLower() == ".spr")
+            //{
+            //    BTX btx = new BTX();
+            //    Bitmap image = btx.unpack(data);
+            //    image.Save(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png", ImageFormat.Png);
+            //}
+
+            /* BMD */
+            //else if (Path.GetExtension(fileName).ToLower() == ".bbg")
+            //{
+            //    BMD bmd = new BMD();
+            //    Bitmap image = bmd.unpack(data);
+            //    image.Save(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png", ImageFormat.Png);
+            //}
         }
 
         /* It's time to make an ISO */

@@ -43,9 +43,7 @@ namespace puyo_tools
                 }
 
                 /* Attempt to file filenames for all of the files */
-                string[] fileNames = new string[files];
-                //if (returnFileNames)
-                    fileNames = getFileNames(data, files, headerStart, fileStart, fileLength);
+                string[] fileNames = getFileNames(data, files, headerStart, fileStart, fileLength);
 
 
                 /* Return all of the data now */
@@ -198,7 +196,13 @@ namespace puyo_tools
                 if (expectedStart < fileStart[i])
                 {
                     for (uint j = expectedStart; j < fileStart[i]; j++)
+                    {
+                        /* Is there a null byte? */
+                        if (data[j] == 0x0)
+                            break;
+
                         fileNames[i] += (char)data[j];
+                    }
                 }
                 else
                 {

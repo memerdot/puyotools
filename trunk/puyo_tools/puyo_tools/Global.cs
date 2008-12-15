@@ -29,6 +29,7 @@ namespace puyo_tools
             AFS = { 0x41, 0x46, 0x53, 0x00 }, // AFS
             MRG = { 0x4D, 0x52, 0x47, 0x30 }, // MRG
             GNT = { 0x4E, 0x47, 0x49, 0x46 }, // GNT
+            ONE = { 0x6F, 0x6E, 0x65, 0x2E }, // ONE
         SNT_PS2 = { 0x4E, 0x53, 0x49, 0x46 }, // SNT (PS2)
         SNT_PSP = { 0x4E, 0x55, 0x49, 0x46 }, // SNT (PSP)
             SPK = { 0x53, 0x4E, 0x44, 0x30 }, // SPK
@@ -67,6 +68,7 @@ namespace puyo_tools
             AFS = "AFS Extracted Files", // AFS Archive
             GNT = "GNT Extracted Files", // GNT Archive
             MRG = "MRG Extracted Files", // MRG Archive
+            ONE = "ONE Extracted Files", // ONE Archive
             SNT = "SNT Extracted Files", // SNT Archive
             SPK = "SPK Extracted Files", // SPK Archive
             TEX = "TEX Extracted Files", // TEX Archive
@@ -78,8 +80,8 @@ namespace puyo_tools
             CNX  = "CNX Decompressed Files",  // CNX Compression
             CXLZ = "CXLZ Decompressed Files", // CXLZ Compression
             LZ00 = "LZ00 Decompressed Files", // LZ00 Compression
-            LZ01 = "LZ01 Decompressed Files"; // LZ01 Compression
-
+            LZ01 = "LZ01 Decompressed Files", // LZ01 Compression
+            ONZ  = "ONZ Decompressed Files";  // ONZ Compression
     }
 
     /* Endian Swaps */
@@ -178,7 +180,7 @@ namespace puyo_tools
                 if (data[offset + i] == 0x0)
                     break;
 
-                fileName += (char)data[offset + 1];
+                fileName += (char)data[offset + i];
             }
 
             return fileName;

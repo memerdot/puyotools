@@ -122,7 +122,7 @@ namespace puyo_tools
                     status.updateStatus(StatusMessage.decompress, Path.GetFileName(files[i]), (i + 1));
 
                     /* Load the file. */
-                    FileStream file = new FileStream(files[i], FileMode.Open);
+                    FileStream file = new FileStream(files[i], FileMode.Open, FileAccess.Read);
                     byte[] data = new byte[file.Length];
                     byte[] decompressedData;
                     string outputDir;
@@ -154,7 +154,7 @@ namespace puyo_tools
                         Directory.CreateDirectory(outputDir);
 
                     /* Now output the file */
-                    FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + outputFileName, FileMode.Create);
+                    FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + outputFileName, FileMode.Create, FileAccess.Write);
                     outputFile.Write(decompressedData, 0, decompressedData.Length);
                     outputFile.Close();
 

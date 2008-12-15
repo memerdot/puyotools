@@ -26,7 +26,7 @@ namespace puyo_tools
             "Compress",                    // File Compressor
             "Extract",                     // Archive Extractor
             "Create",                      // Archive Creator
-            "GimConv\n(GIM)",              // GimConv
+            "Image Converter",             // Image Converter
             "VrConv\n(GVR, PVR, PVZ, SVR)" // VrConv
         };
 
@@ -34,7 +34,7 @@ namespace puyo_tools
         public puyo_tools()
         {
             /* Set up form options */
-            this.ClientSize      = new Size(344, 250);
+            this.ClientSize      = new Size(344, 258);
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox     = false;
             this.StartPosition   = FormStartPosition.CenterScreen;
@@ -51,7 +51,7 @@ namespace puyo_tools
 
             /* Archives */
             Label archives     = new Label();
-            archives.Text      = "Archives\n(ACX, AFS, GNT, MRG, SNT, SPK, TEX, VDD)";
+            archives.Text      = "Archives\n(ACX, AFS, GNT, MRG, ONE, SNT, SPK, TEX, VDD)";
             archives.Location  = new Point(8, 96);
             archives.Size      = new Size(this.Width - (archives.Location.X * 2), 32);
             archives.Font      = new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold);
@@ -59,13 +59,13 @@ namespace puyo_tools
             this.Controls.Add(archives);
 
             /* Image Conversion */
-            //Label imgConversion     = new Label();
-            //imgConversion.Text      = "Image Conversion";
-            //imgConversion.Location  = new Point(8, 184);
-            //imgConversion.Size      = new Size(this.Width - (imgConversion.Location.X * 2), 24);
-            //imgConversion.Font      = new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold);
-            //imgConversion.TextAlign = ContentAlignment.TopCenter;
-            //this.Controls.Add(imgConversion);
+            Label imgConversion     = new Label();
+            imgConversion.Text      = "Image Conversion\n(GIM, GMP, GVR, PNG)";
+            imgConversion.Location  = new Point(8, 184);
+            imgConversion.Size      = new Size(this.Width - (imgConversion.Location.X * 2), 32);
+            imgConversion.Font      = new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold);
+            imgConversion.TextAlign = ContentAlignment.TopCenter;
+            this.Controls.Add(imgConversion);
 
             /* Display program buttons */
             buttonPrograms[0].Text     = labelPrograms[0];
@@ -86,13 +86,13 @@ namespace puyo_tools
             buttonPrograms[3].Click   += new EventHandler(startProgram);
             this.Controls.Add(buttonPrograms[3]);
 
-            /*buttonPrograms[4].Text     = labelPrograms[4];
-            buttonPrograms[4].Location = new Point(8, 208);
+            buttonPrograms[4].Text     = labelPrograms[4];
+            buttonPrograms[4].Location = new Point(8, 216);
             buttonPrograms[4].Size     = new Size(160, 32);
             buttonPrograms[4].Click   += new EventHandler(startProgram);
             this.Controls.Add(buttonPrograms[4]);
 
-            buttonPrograms[5].Text     = labelPrograms[5];
+            /*buttonPrograms[5].Text     = labelPrograms[5];
             buttonPrograms[5].Location = new Point(176, 208);
             buttonPrograms[5].Size     = new Size(160, 32);
             buttonPrograms[5].Click   += new EventHandler(startProgram);
@@ -114,6 +114,11 @@ namespace puyo_tools
             else if (sender == buttonPrograms[3]) // Archive Creator
             {
                 Archive_Creator decompressor = new Archive_Creator();
+            }
+
+            else if (sender == buttonPrograms[4]) // Image Converter
+            {
+                Image_Converter program = new Image_Converter();
             }
         }
 

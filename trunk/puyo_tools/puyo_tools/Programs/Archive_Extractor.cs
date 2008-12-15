@@ -37,7 +37,7 @@ namespace puyo_tools
             this.MaximizeBox     = false;
 
             /* Select the files. */
-            files = Files.selectFiles("Select Archive(s)", "All Supported Archives (*.acx;*.afs;*.gnt;*.mrg;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.gnt;*.mrg;*.snt;*.spk;*.tex;*.vdd|ACX Archives (*.acx)|*.acx|AFS Archives (*.afs)|*.afs|GNT Archives (*.gnt)|*.gnt|MRG Archives (*.mrg)|*.mrg|SNT Archives (*.snt)|*.snt|SPK Archives (*.spk)|*.spk|TEX Archives (*.tex)|*.tex|VDD Archives (*.vdd)|*.vdd|All Files & Archives (*.*)|*.*");
+            files = Files.selectFiles("Select Archive(s)", "All Supported Archives (*.acx;*.afs;*.gnt;*.mrg;*.one;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.gnt;*.mrg;*.one;*.snt;*.spk;*.tex;*.vdd|ACX Archives (*.acx)|*.acx|AFS Archives (*.afs)|*.afs|GNT Archives (*.gnt)|*.gnt|MRG Archives (*.mrg)|*.mrg|ONE Archives (*.one)|*.one|SNT Archives (*.snt)|*.snt|SPK Archives (*.spk)|*.spk|TEX Archives (*.tex)|*.tex|VDD Archives (*.vdd)|*.vdd|All Files & Archives (*.*)|*.*");
 
             /* Don't continue if no files were selected. */
             if (files.Length < 1)
@@ -61,7 +61,7 @@ namespace puyo_tools
         {
             /* Decompress file containing CXLZ or LZ01 compression. */
             autoDecompress          = new CheckBox();
-            autoDecompress.Text     = "Decompress source and extracted files containing CXLZ or LZ01 compression.";
+            autoDecompress.Text     = "Decompress source and extracted files containing compression.";
             autoDecompress.Location = new Point(8, 32);
             autoDecompress.Size     = new Size(this.Width - 16, 30);
             autoDecompress.Checked  = true;
@@ -141,7 +141,7 @@ namespace puyo_tools
                     status.updateStatus(StatusMessage.extractArchive, Path.GetFileName(files[i]), (i + 1));
 
                     /* Load the file. */
-                    FileStream file = new FileStream(files[i], FileMode.Open);
+                    FileStream file = new FileStream(files[i], FileMode.Open, FileAccess.Read);
                     byte[] data     = new byte[file.Length];
 
                     file.Read(data, 0, (int)file.Length);
@@ -183,11 +183,11 @@ namespace puyo_tools
                         string outputFileName = (string)extractData[1][j];
 
                         /* Check to see if we have a filename and we don't want then. */
-                        if (!getFileNames.Checked && outputFileName != String.Empty)
+                        if (!getFileNames.Checked && outputFileName != String.Empty && outputFileName != null)
                             outputFileName = Path.GetFileNameWithoutExtension(files[i]) + "_" + j.ToString(getDigits(extractData[0].Length)) + Path.GetExtension(outputFileName);
 
                         /* Check to see if the filename is empty. */
-                        else if (outputFileName == String.Empty)
+                        else if (outputFileName == String.Empty || outputFileName == null)
                             outputFileName = Path.GetFileNameWithoutExtension(files[i]) + "_" + j.ToString(getDigits(extractData[0].Length)) + FileFormat.getFileExtension(outputData, files[i]);
 
                         /* Check to see if the file is compressed. */
@@ -200,7 +200,7 @@ namespace puyo_tools
                         status.updateStatus(StatusMessage.extractArchive, Path.GetFileName(files[i]), (i + 1));
                         
                         /* Now output the file */
-                        FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + outputFileName, FileMode.Create);
+                        FileStream outputFile = new FileStream(outputDir + Path.DirectorySeparatorChar + outputFileName, FileMode.Create, FileAccess.Write);
                         outputFile.Write(outputData, 0, outputData.Length);
                         outputFile.Close();
 
@@ -230,54 +230,17 @@ namespace puyo_tools
                             /* Was it a valid archive? */
                             if (newExtractData.Length > 0)
                             {
-                                /* Get the output dir. */
-                                newOutputDir = outputDir + Path.DirectorySeparatorChar + archive.getOutputDirectory(data, outputFileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(outputFileName);
+                                /* Add it to the files list */
+                                Array.Resize<string>(ref files, files.Length + 1);
+                                files[files.Length - 1] = outputDir + Path.DirectorySeparatorChar + outputFileName;
 
-                                /* Create the directory if neccessary. */
-                                if (newExtractData[0].Length > 0 && !Directory.Exists(newOutputDir))
-                                    Directory.CreateDirectory(newOutputDir);
-
-                                /* Write the files. */
-                                for (int k = 0; k < newExtractData[0].Length; k++)
-                                {
-                                    byte[] newOutputData     = (byte[])newExtractData[0][k];
-                                    string newOutputFileName = (string)newExtractData[1][k];
-
-                                    /* Check to see if the filename is empty. */
-                                    if (outputFileName == String.Empty || outputFileName == null)
-                                        outputFileName = Path.GetFileNameWithoutExtension(outputFileName) + "_" + j.ToString(getDigits(newExtractData[0].Length)) + getFileExt(newOutputData, outputFileName);
-
-                                    /* Check to see if the file is compressed. */
-                                    if (autoDecompress.Checked)
-                                    {
-                                        status.updateStatus(StatusMessage.decompress, Path.GetFileName(files[i]), (i + 1));
-                                        Compression compression = new Compression();
-                                        outputData = compression.decompress(outputData);
-                                    }
-                                    status.updateStatus(StatusMessage.extractArchive, Path.GetFileName(files[i]), (i + 1));
-
-                                    /* Now output the file */
-                                    outputFile = new FileStream(newOutputDir + Path.DirectorySeparatorChar + newOutputFileName, FileMode.Create);
-                                    outputFile.Write(newOutputData, 0, newOutputData.Length);
-                                    outputFile.Close();
-
-                                    /* Convert the files to PNG. */
-                                    if (autoConvertImages.Checked)
-                                    {
-                                        status.updateStatus(StatusMessage.toPng, Path.GetFileName(files[i]), (i + 1));
-                                        Conversions.toPNG(newOutputData, newOutputDir + Path.DirectorySeparatorChar + newOutputFileName);
-
-                                        /* See if the conversion was successful and we want to delete source images. */
-                                        if (autoDeleteConverted.Checked && File.Exists(newOutputDir + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(newOutputFileName) + ".png"))
-                                            File.Delete(newOutputDir + Path.DirectorySeparatorChar + newOutputFileName);
-                                    }
-                                }
+                                status.updateTotalFiles(files.Length);
                             }
                         }
                     }
 
                 }
-                catch (Exception)
+                catch
                 {
                     continue;
                 }
@@ -286,50 +249,6 @@ namespace puyo_tools
             /* Now we are done with the work. */
             status.Close();
             this.Close();
-        }
-
-        /* Get file extension for unnamed files. */
-        private string getFileExt(byte[] data, string archiveFileName)
-        {
-            /* See what extention we need to add to the end of the file. */
-            /* GVR file */
-            if (Header.isFile(data, Header.GVR, 0))
-                return ".gvr";
-
-            /* SVR file */
-            else if (Header.isFile(data, Header.SVR, 0))
-                return ".svr";
-
-            /* GIM file */
-            else if (Header.isFile(data, Header.GIM, 0) ||
-                     Header.isFile(data, Header.MIG, 0))
-                return ".gim";
-
-            /* SVP file */
-            else if (Header.isFile(data, Header.SVP, 0))
-                return ".svp";
-
-            /* TEX file. */
-            else if (Header.isFile(data, Header.TEX, 0))
-                return ".tex";
-
-            /* SNT file */
-            else if ((Header.isFile(data, Header.SNT_PS2, 0) && Header.isFile(data, Header.SNT_SUB_PS2, 0x20)) ||
-                     (Header.isFile(data, Header.SNT_PSP, 0) && Header.isFile(data, Header.SNT_SUB_PSP, 0x20)))
-                return ".snt";
-
-            /* GNT file */
-            else if (Header.isFile(data, Header.GNT, 0) &&
-                     Header.isFile(data, Header.GNT_SUB, 0x20))
-                return ".gnt";
-
-            /* ADX file extracted from ACX archive. */
-            else if (Path.GetExtension(archiveFileName).ToLower() == ".acx")
-                return ".adx";
-
-            /* Other type of file. */
-            else
-                return ".bin";
         }
 
         /* Get number of letters in the string */

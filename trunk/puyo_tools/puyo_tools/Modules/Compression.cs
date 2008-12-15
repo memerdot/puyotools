@@ -26,8 +26,11 @@ namespace puyo_tools
                 case CompressionFormat.LZ01: // LZ01 Compression
                     LZ01 LZ01_decompressor = new LZ01();
                     return LZ01_decompressor.decompress(data);
-            }
 
+                //case CompressionFormat.ONZ: // ONZ Compression
+                    //ONZ ONZ_decompressor = new ONZ();
+                    //return ONZ_decompressor.decompress(data);
+            }
             return data;
         }
 
@@ -40,6 +43,7 @@ namespace puyo_tools
                 case CompressionFormat.CXLZ: return ExtractDir.CXLZ;
                 case CompressionFormat.LZ00: return ExtractDir.LZ00;
                 case CompressionFormat.LZ01: return ExtractDir.LZ01;
+                //case CompressionFormat.ONZ:  return ExtractDir.ONZ;
             }
 
             return String.Empty;
@@ -52,6 +56,8 @@ namespace puyo_tools
             {
                 case CompressionFormat.CNX:
                     return Path.GetFileNameWithoutExtension(fileName) + "." + PadString.getStringFromBytes(data, 0x4, 3);
+                //case CompressionFormat.ONZ:
+                    //return Path.GetFileNameWithoutExtension(fileName) + ".one";
             }
 
             return fileName;
