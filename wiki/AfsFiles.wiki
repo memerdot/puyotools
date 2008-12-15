@@ -21,9 +21,8 @@ This is repeated for the number of files in the archive.
  (4 bytes) Size of the file in the archive.
 
 === Metadata Location ===
-This comes directly after the File Offsets & Length Data.
-
-*If the value at 0x00 - 0x03 is 0, this data is stored before the first file.*
+v1 AFS Archives: This comes right before the data of the first file.<br />
+v2 AFS Archives: This comes directly after the File Offsets & Length Data.
 
 0x00 - 0x03
  (4 bytes) Offset where the filenames are located.
