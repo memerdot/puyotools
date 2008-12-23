@@ -2,7 +2,7 @@
 
 = Introduction =
 
-AFS is a container for any kind of files, although it usually contains only ADX files. This is a common format that has been used in many non-Puyo Puyo games. The files and metadata are usually stored at offsets that are a multiple of 2048, and the filesize of the archive is usually a multiple of 2048.
+AFS is a container for any kind of files, although it usually contains only ADX files. This is a common format that has been used in many non-Puyo Puyo games. The header, files, and metadata are usually stored in blocks of 2048 bytes, although in Puyo Puyo! 15th Anniversary it has a block size of 2.
 
 == Header ==
 0x00 - 0x03: 'AFS' (41 46 53 00)
