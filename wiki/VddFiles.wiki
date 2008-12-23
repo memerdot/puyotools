@@ -2,9 +2,7 @@
 
 = Introduction =
 
-VDD is a container format that is only used in Puyo Puyo Box.
-
-*Files inside the archive must be stored at an offset that is divisible by 2048. The file size of the archive must be divisible by 2048.*
+VDD is a container format that is only used in Puyo Puyo Box. The header and files are stored in blocks of 2048 bytes.
 
 == Header ==
 0x00 - 0x03
