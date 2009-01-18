@@ -29,7 +29,8 @@ The header consists of two main parts, each typically consisting of 0x10 bytes.
 
 
 === 1st Header ===
-0x00 - 0x03   'GCIX'
+0x00 - 0x03   'GBIX' (Gamecube GVR files)<br />
+0x00 - 0x03   'GCIX' (Wii GVR files)
  Magic Code, 4 bytes
 
 0x04 - 0x07   Unknown
