@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class CNX
+    public class CNX : CompressionClass
     {
         /* CNX cracked by drx (Luke Zapart)
          * <thedrx@gmail.com> */
@@ -29,7 +30,108 @@ namespace puyo_tools
         }
 
         /* Decompress */
-        public byte[] decompress(byte[] compressedData)
+        public override Stream Decompress(ref Stream data)
+        {
+            try
+            {
+                /* Set variables */
+                uint compressedSize   = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x8)) + 16; // Compressed Size
+                uint decompressedSize = Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC));      // Decompressed Size
+
+                uint Cpointer = 0x10; // Compressed Pointer
+                uint Dpointer = 0x0;  // Decompressed Pointer
+
+                byte[] compressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)compressedSize); // Compressed Data
+                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+
+                /* Ok, let's decompress the data */
+                while (Cpointer < compressedSize && Dpointer < decompressedSize)
+                {
+                    byte Cflag = compressedData[Cpointer];
+                    Cpointer++;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        /* Check for the mode */
+                        switch ((Cflag >> (i * 2)) & 3)
+                        {
+                            /* Padding Mode
+					         * All CNX archives seem to be packed in 0x800 chunks. when nearing
+					         * a 0x800 cutoff, there usually is a padding command at the end to skip
+					         * a few bytes (to the next 0x800 chunk, i.e. 0x4800, 0x7000, etc.) */
+                            case 0:
+                                byte temp_byte = compressedData[Cpointer];
+                                Cpointer      += (uint)(temp_byte & 0xFF) + 1;
+
+                                i = 3;
+                                break;
+
+                            /* Single Byte Copy Mode */
+                            case 1:
+                                decompressedData[Dpointer] = compressedData[Cpointer];
+                                Cpointer++;
+                                Dpointer++;
+                                break;
+
+                            /* Copy from destination buffer to current position */
+                            case 2:
+                                uint temp_word = Endian.Swap(ObjectConverter.StreamToUShort(data, Cpointer));
+
+                                uint off = (temp_word >> 5) + 1;
+                                uint len = (temp_word & 0x1F) + 4;
+
+                                Cpointer += 2;
+
+                                for (int j = 0; j < len; j++)
+                                {
+                                    decompressedData[Dpointer] = decompressedData[Dpointer - off];
+                                    Dpointer++;
+                                }
+
+                                break;
+
+                            /* Direct Block Copy (first byte signifies length of copy) */
+                            case 3:
+                                byte blockLength = compressedData[Cpointer];
+                                Cpointer++;
+
+                                for (int j = 0; j < blockLength; j++)
+                                {
+                                    decompressedData[Dpointer] = compressedData[Cpointer];
+                                    Cpointer++;
+                                    Dpointer++;
+                                }
+
+                                break;
+                        }
+                    }
+                }
+
+                /* Finished decompression, now return the data */
+                return new MemoryStream(decompressedData);
+            }
+            catch
+            {
+                /* An error occured, return the original data */
+                //return data;
+                return null;
+            }
+        }
+
+        /* Compress */
+        public override Stream Compress(ref Stream data)
+        {
+            return null;
+        }
+
+        /* Get Filename */
+        public override string GetFilename(ref Stream data, string filename)
+        {
+            return Path.GetFileNameWithoutExtension(filename) + '.' + ObjectConverter.StreamToString(data, 0x4, 3);
+        }
+
+        /* Decompress */
+        public byte[] decompress2(byte[] compressedData)
         {
             try
             {

@@ -3,41 +3,24 @@ using System.IO;
 
 namespace puyo_tools
 {
-    /* Compression Format ID */
-    public enum CompressionFormat : byte
-    {
-        CNX  = 0x1, // CNX
-        CXLZ = 0x2, // CXLZ
-        LZ00 = 0x3, // LZ00
-        LZ01 = 0x4, // LZ01
-        ONZ  = 0x5, // ONZ
-        NULL = 0x0  // Unknown Compression
-    }
-
-    /* 4 byte header for each compression format */
-    public enum CompressionHeader : uint
-    {
-        CNX  = 0x02584E43, // (CNX)  0x43, 0x4E, 0x58, 0x02
-        CXLZ = 0x5A4C5843, // (CXLZ) 0x43, 0x58, 0x4C, 0x5A
-        LZ00 = 0x30305A4C, // (LZ00) 0x4C, 0x5A, 0x30, 0x30
-        LZ01 = 0x31305A4C, // (LZ01) 0x4C, 0x5A, 0x30, 0x31
-        ONZ  = 0x00000011  // (ONZ)  0x11
-    }
-
     /* Archive format ID */
     public enum ArchiveFormat : byte
     {
-        ACX  = 0x1, // ACX
-        AFS  = 0x2, // AFS
-        GNT  = 0x3, // GNT
-        MRG  = 0x4, // MRG
-        NSIF = 0x5, // SNT (PS2)
-        NUIF = 0x6, // SNT (PSP)
-        ONE  = 0x7, // ONE
-        SPK  = 0x8, // SPK
-        TEX  = 0x9, // TEX
-        VDD  = 0xA, // VDD
-        NULL = 0x0  // Unknown Archive Format
+        NULL, // Unknown Archive Format
+        ACX,  // ACX
+        AFS,  // AFS
+        GNT,  // GNT
+        GVM,  // GVM
+        MRG,  // MRG
+        NARC, // NARC
+        NSIF, // SNT (PS2)
+        NUIF, // SNT (PSP)
+        ONE,  // ONE
+        PVM,  // PVM
+        SNT,  // SNT
+        SPK,  // SPK
+        TEX,  // TEX
+        VDD,  // VDD
     }
 
     /* 4 byte header for each archive format */
@@ -47,40 +30,106 @@ namespace puyo_tools
         AFS  = 0x00534641, // (AFS) 0x41, 0x46, 0x53, 0x00
         MRG  = 0x3047524D, // (MRG) 0x4D, 0x52, 0x47, 0x30
         GNT  = 0x4649474E, // (GNT) 0x4E, 0x47, 0x49, 0x46
+        GVM  = 0x484D5647, // (GVM) 0x47, 0x56, 0x4D, 0x48
+        NARC = 0x4352414E, // (NARC) 0x4E, 0x41, 0x52, 0x43
         NGTL = 0x4C54474E, // (GNT) 0x4E, 0x47, 0x54, 0x4C (not GNCS)
-        NSIF = 0x4649434E, // (SNT) 0x4E, 0x43, 0x49, 0x46 (PS2)
-        NSTL = 0x3C54534E, // (SNT) 0x4E, 0x53, 0x54, 0x3C (PS2, not SNC)
+        NSIF = 0x4649534E, // (SNT) 0x4E, 0x53, 0x49, 0x46 (PS2)
+        NSTL = 0x4C54534E, // (SNT) 0x4E, 0x53, 0x54, 0x4C (PS2, not SNC)
         NUIF = 0x4649554E, // (SNT) 0x4E, 0x55, 0x49, 0x46 (PSP)
         NUTL = 0x4C54554E, // (SNT) 0x4E, 0x55, 0x54, 0x4C (PSP, not SNC)
         ONE  = 0x2E656E6F, // (ONE) 0x6F, 0x6E, 0x65, 0x2E
+        PVM  = 0x484D5650, // (PVM) 0x50, 0x56, 0x4D, 0x48
         SPK  = 0x30444E53, // (SPK) 0x53, 0x4E, 0x44, 0x30
-        TEX  = 0x30584553  // (TEX) 0x53, 0x45, 0x58, 0x30
+        TEX  = 0x30584554, // (TEX) 0x54, 0x45, 0x58, 0x30
     }
 
     /* Image Format ID */
-    public enum GraphicFormat : byte
+    /*public enum GraphicFormat : byte
     {
-        GIM  = 0x1, // GIM/MIG
-        GMP  = 0x2, // GMP
-        GVR  = 0x3, // GVR
-        PVP  = 0x4, // PVP
-        PVR  = 0x5, // PVR
-        SVP  = 0x6, // SVP
-        SVR  = 0x7, // SVR
-        NULL = 0x0  // Unknown Image Format
-    }
+        NULL, // Unknown Image Format
+        GIM,  // GIM/MIG
+        GMP,  // GMP
+        GVP,  // GVP
+        GVR,  // GVR
+        PVP,  // PVP
+        PVR,  // PVR
+        SVP,  // SVP
+        SVR,  // SVR
+        
+    }*/
 
     /* 4 bytes for each image format */
-    public enum GraphicHeader : uint
+    /*public enum GraphicHeader : uint
     {
+        GBIX = 0x58494247, // (GBIX) 0x47, 0x42, 0x49, 0x58
         GIM  = 0x4D49472E, // (GIM) 0x2E, 0x47, 0x49, 0x4D
         GMP  = 0x2D504D47, // (GMP) 0x47, 0x4D, 0x50, 0x2D
         GMP2 = 0x00303032, // (GMP2) 0x32, 0x30, 0x30, 0x00
+        GVP  = 0x4C505650, // (GVP) 0x47, 0x56, 0x50, 0x58
         GVR  = 0x58494347, // (GVR) 0x47, 0x43, 0x49, 0x58
         MIG  = 0x2E47494D, // (GIM) 0x4D, 0x49, 0x47, 0x2E (GIM, Big Endian)
         PVP  = 0x4C505650, // (PVP) 0x50, 0x56, 0x50, 0x4C (Pallete data for PVR. Also SVP)
         PVR  = 0x58494247, // (PVR) 0x47, 0x42, 0x49, 0x58 (Also SVR)
-        PVRT = 0x54525650  // (PVR) 0x50, 0x56, 0x52, 0x54 (PVRT)
+        PVRT = 0x54525650, // (PVR) 0x50, 0x56, 0x52, 0x54 (PVRT)
+    }*/
+
+    /* File Headers */
+    public class FileHeader
+    {
+        /* Compression Formats */
+        public const string
+            CNX  = "CNX\x02",
+            LZ00 = "LZ00",
+            LZ01 = "LZ01",
+            ONZ  = "\x11";
+
+        /* Archive Formats */
+        public const string
+            AFS  = "AFS",
+            GVM  = "GVMH",
+            MRG  = "MRG0",
+            NARC = "NARC",
+            NGTL = "NGTL",
+            NSTL = "NSTL",
+            NUTL = "NUTL",
+            ONE  = "one.",
+            PVM  = "PVMH",
+            SPK  = "SPK0",
+            TEX  = "TEX0";
+
+        /* Image Formats */
+        public const string
+            GBIX = "GBIX",
+            GCIX = "GCIX",
+            GIM  = ".GIM1.00",
+            GMP  = "GMP-200",
+            GVPL = "GVPL",
+            GVRT = "GVRT",
+            MIG  = "MIG.00.1",
+            PVPL = "PVPL",
+            PVRT = "PVRT";
+    }
+
+    /* Output Directories */
+    public class OutputDirectory
+    {
+        public const string
+            ACX  = "ACX Extracted",
+            AFS  = "AFS Extracted",
+            GNT  = "GNT Extracted",
+            GVM  = "GVM Extracted",
+            MRG  = "MRG Extracted",
+            NARC = "NARC Extracted",
+            ONE  = "ONE Extracted",
+            PVM  = "PVM Extracted",
+            SNT  = "SNT Extracted",
+            SPK  = "SPK Extracted",
+            TEX  = "TEX Extracted",
+            VDD  = "VDD Extracted";
+
+        public const string
+            GIM = "GIM Converted",
+            GVR = "GVR Converted";
     }
 
     /* File Formats */
@@ -128,63 +177,6 @@ namespace puyo_tools
             return ArchiveFormat.NULL;
         }
 
-        /* Return the compression format */
-        public static CompressionFormat getCompressionFormat(byte[] data)
-        {
-            /* Get the header of the compression. */
-            CompressionHeader header = (CompressionHeader)BitConverter.ToUInt32(data, 0x0);
-
-            switch (header)
-            {
-                case CompressionHeader.CNX:  return CompressionFormat.CNX;
-                case CompressionHeader.CXLZ: return CompressionFormat.CXLZ;
-                case CompressionHeader.LZ00: return CompressionFormat.LZ00;
-                case CompressionHeader.LZ01: return CompressionFormat.LZ01;
-            }
-
-            /* Add Special case for ONZ, as it is only a 1 byte header */
-            if (data[0x0] == (byte)CompressionHeader.ONZ)
-                return CompressionFormat.ONZ;
-
-            return CompressionFormat.NULL;
-        }
-
-        /* Return the image format */
-        public static GraphicFormat getImageFormat(byte[] data, string archiveExt)
-        {
-            /* Get the header of the archive. */
-            GraphicHeader header = (GraphicHeader)BitConverter.ToUInt32(data, 0x0);
-
-            /* Get the extension of the filename. */
-            archiveExt = Path.GetExtension(archiveExt).ToLower();
-
-            if (header == GraphicHeader.GIM || header == GraphicHeader.MIG)
-                return GraphicFormat.GIM; // GIM (MIG)
-
-            else if (header == GraphicHeader.GMP)
-                return GraphicFormat.GMP; // GMP
-
-            else if (header == GraphicHeader.GVR)
-                return GraphicFormat.GVR; // GVR
-
-            else if (archiveExt == ".pvp")
-                return GraphicFormat.PVP; // PVP
-
-            else if (archiveExt == ".svp")
-                return GraphicFormat.SVP; // SVP
-
-            else if (header == GraphicHeader.PVRT)
-                return GraphicFormat.PVR; // PVR
-
-            else if (header == GraphicHeader.PVR && archiveExt == ".pvr")
-                return GraphicFormat.PVR; // PVR
-
-            else if (header == GraphicHeader.PVR)
-                return GraphicFormat.SVR; // SVR
-
-            return GraphicFormat.NULL;
-        }
-
 
         /* Get the file format. */
         public static string getFileExtension(byte[] data, string archiveExt)
@@ -207,22 +199,109 @@ namespace puyo_tools
                 case ArchiveFormat.VDD:  return ".vdd";
             }
 
-            /* Image Format */
-            switch (getImageFormat(data, archiveExt))
-            {
-                case GraphicFormat.GIM: return ".gim";
-                case GraphicFormat.GVR: return ".gvr";
-                case GraphicFormat.PVP: return ".pvp";
-                case GraphicFormat.PVR: return ".pvr";
-                case GraphicFormat.SVP: return ".svp";
-                case GraphicFormat.SVR: return ".svr";
-            }
-
             /* ADX file */
             if (BitConverter.ToUInt16(data, 0x0) == 0x80 && archiveExt == ".acx")
                 return ".adx";
 
             return ".bin";
+        }
+
+        /* Get the archive format */
+        public static ArchiveFormat Archive(Stream data, string fileExt)
+        {
+            try
+            {
+                /* Let's check for archive formats based on the headers first */
+                switch ((ArchiveHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                {
+                    case ArchiveHeader.AFS:  return ArchiveFormat.AFS;  // AFS
+                    case ArchiveHeader.GVM:  return ArchiveFormat.GVM;  // GVM
+                    case ArchiveHeader.MRG:  return ArchiveFormat.MRG;  // MRG
+                    case ArchiveHeader.NARC: return ArchiveFormat.NARC; // NARC
+                    case ArchiveHeader.ONE:  return ArchiveFormat.ONE;  // ONE
+                    case ArchiveHeader.PVM:  return ArchiveFormat.PVM;  // PVM
+                    case ArchiveHeader.SPK:  return ArchiveFormat.SPK;  // SPK
+                    case ArchiveHeader.TEX:  return ArchiveFormat.TEX;  // TEX
+
+                    /* GNT and SNT check */
+                    case ArchiveHeader.GNT:
+                    case ArchiveHeader.NSIF:
+                    case ArchiveHeader.NUIF:
+                        switch ((ArchiveHeader)ObjectConverter.StreamToUInt(data, 0x20))
+                        {
+                            case ArchiveHeader.NGTL: return ArchiveFormat.GNT;  // GNT
+                            case ArchiveHeader.NSTL: return ArchiveFormat.NSIF; // SNT (PS2)
+                            case ArchiveHeader.NUTL: return ArchiveFormat.NUIF; // SNT (PSP)
+                        } break;
+                }
+
+                /* Now let's check based on file extension */
+                switch (Path.GetExtension(fileExt).Substring(1).ToLower())
+                {
+                    case "acx": return ArchiveFormat.ACX; // ACX
+                    case "vdd": return ArchiveFormat.VDD; // VDD
+                }
+
+                /* Ok, we couldn't find the archive format */
+                return ArchiveFormat.NULL;
+            }
+            catch
+            {
+                /* Ok, something went wrong */
+                return ArchiveFormat.NULL;
+            }
+        }
+
+        /* Get the image format */
+        public static GraphicFormat Image(Stream data, string fileExt)
+        {
+            try
+            {
+                /* Let's check for image formats based on the headers first */
+                switch ((GraphicHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                {
+                    case GraphicHeader.GIM: return GraphicFormat.GIM; // GIM (Big Endian)
+                    case GraphicHeader.MIG: return GraphicFormat.GIM; // GIM (Little Endian)
+                }
+
+                /* Ok, do special checks now */
+
+                /* PVR file */
+                if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x19, 1)[0] < 64)
+                    return GraphicFormat.PVR;
+                else if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x9, 1)[0] < 64)
+                    return GraphicFormat.PVR;
+
+                /* GVR File */
+                if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.GVRT)
+                    return GraphicFormat.GVR;
+                else if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GCIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.GVRT)
+                    return GraphicFormat.GVR;
+                else if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GVRT)
+                    return GraphicFormat.GVR;
+
+                return GraphicFormat.NULL;
+            }
+            catch
+            {
+                /* Ok, something went wrong */
+                return GraphicFormat.NULL;
+            }
+        }
+
+        /* Get the file extension */
+        public static string GetExtension(Stream data)
+        {
+            /* Image Format */
+            switch (Image(data, null))
+            {
+                case GraphicFormat.GIM: return ".gim";
+                case GraphicFormat.GVR: return ".gvr";
+                case GraphicFormat.PVR: return ".pvr";
+                //case GraphicFormat.SVR: return ".svr";
+            }
+
+            return String.Empty;
         }
     }
 }

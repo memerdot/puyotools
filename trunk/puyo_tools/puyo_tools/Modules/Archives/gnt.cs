@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class GNT
+    public class GNT : ArchiveClass
     {
         /*
          * GNT files are archives that contains GVR files.
@@ -12,47 +13,6 @@ namespace puyo_tools
         /* Main Method */
         public GNT()
         {
-        }
-
-        /* Extract files from the GNT archive */
-        public object[][] extract(byte[] data, bool returnFileNames)
-        {
-            try
-            {
-                uint files = Endian.swapInt(BitConverter.ToUInt32(data, 0x30)); // Number of Files
-
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[files];
-                uint[] fileLength = new uint[files];
-
-                /* Start of the header data. */
-                uint headerStart = Endian.swapInt(BitConverter.ToUInt32(data, 0x34))
-                                 + Endian.swapInt(BitConverter.ToUInt32(data, 0x38)) + 0x4;
-
-                /* Obtain the data for each file */
-                byte[][] returnData = new byte[files][];
-
-                for (int i = 0; i < files; i++)
-                {
-                    /* Get the file offset & length. */
-                    fileStart[i]  = Endian.swapInt(BitConverter.ToUInt32(data, (int)(headerStart + (i * 0x8) + 0x4))) + 0x20; // Start Offset
-                    fileLength[i] = Endian.swapInt(BitConverter.ToUInt32(data, (int)(headerStart + (i * 0x8))));              // File Length
-
-                    returnData[i] = new byte[fileLength[i]];
-                    Array.Copy(data, fileStart[i], returnData[i], 0, fileLength[i]);
-                }
-
-                /* Attempt to file filenames for all of the files */
-                string[] fileNames = getFileNames(data, files, headerStart, fileStart, fileLength);
-
-
-                /* Return all of the data now */
-                return new object[][] { returnData, fileNames };
-            }
-            catch (Exception)
-            {
-                return new object[0][];
-            }
         }
 
         /* Create GNT archive. */
@@ -174,32 +134,57 @@ namespace puyo_tools
             }
         }
 
-        /* Attempt to find filenames in the GNT archive. */
-        private string[] getFileNames(byte[] data, uint files, uint headerStart, uint[] fileStart, uint[] fileLength)
+        /* Get the offsets, lengths, and filenames of all the files */
+        public override object[][] GetFileList(ref Stream data)
         {
-            string[] fileNames = new string[files];           // Set up an array of filenames.
-            uint expectedStart = headerStart + (files * 0x8); // Set the initial expected start.
-
-            for (int i = 0; i < files; i++)
+            try
             {
-                /* Is the expected start before the actual file start? */
-                if (expectedStart < fileStart[i])
-                {
-                    for (uint j = expectedStart; j < fileStart[i]; j++)
-                    {
-                        /* Is there a null byte? */
-                        if (data[j] == 0x0)
-                            break;
+                /* Get the number of files */
+                uint files = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x30));
 
-                        fileNames[i] += (char)data[j];
-                    }
+                /* This is where the header should start */
+                uint headerStart = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x34)) + Endian.Swap(ObjectConverter.StreamToUInt(data, 0x38)) + 0x4;
+
+                /* Create the array of files now */
+                object[][] fileInfo = new object[files][];
+
+                /* Use this to find filenames */
+                uint expectedStart = NumberData.RoundUpToMultiple(headerStart + (files * 0x8), 4);
+
+                /* Now we can get the file offsets, lengths, and filenames */
+                for (uint i = 0; i < files; i++)
+                {
+                    /* Get the offset & length */
+                    uint offset = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4 + (i * 0x8) + headerStart)) + 0x20;
+                    uint length = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x0 + (i * 0x8) + headerStart));
+
+                    /* Check for filenames, if the offset of the file is bigger we expected it to be */
+                    string filename = String.Empty;
+                    if (offset > expectedStart)
+                        filename = ObjectConverter.StreamToString(data, expectedStart, (int)(offset - expectedStart));
+
+                    /* Now update the expected start. */
+                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
+
+                    fileInfo[i] = new object[] {
+                        offset,  // Offset
+                        length,  // Length
+                        filename // Filename
+                    };
                 }
 
-                expectedStart = fileStart[i] + fileLength[i]; // New initial start.
+                return fileInfo;
             }
-
-            return fileNames;
+            catch
+            {
+                /* Something went wrong, so return nothing */
+                return new object[0][];
+            }
         }
 
+        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        {
+            return null;
+        }
     }
 }

@@ -39,19 +39,19 @@ namespace puyo_tools
             }
 
             /* GMP? */
-            else if (FileFormat.getImageFormat(data, fileName) == GraphicFormat.GMP)
+            /*else if (FileFormat.getImageFormat(data, fileName) == GraphicFormat.GMP)
             {
                 GMP gmp = new GMP();
                 Bitmap image = gmp.unpack(data);
                 image.Save(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png", ImageFormat.Png);
 
                 /* Test image creation. */
-                image = new Bitmap(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png");
+                /*image = new Bitmap(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + ".png");
                 data = gmp.pack(image);
                 FileStream file = new FileStream(Path.GetDirectoryName(fileName) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(fileName) + "_test.gmp", FileMode.Create, FileAccess.Write);
                 file.Write(data, 0, data.Length);
                 file.Close();
-            }
+            }*/
 
             /* BTX */
             //else if (Path.GetExtension(fileName).ToLower() == ".btx" || Path.GetExtension(fileName).ToLower() == ".spr")

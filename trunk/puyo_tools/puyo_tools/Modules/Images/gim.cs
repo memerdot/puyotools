@@ -6,7 +6,7 @@ using System.IO;
 
 namespace puyo_tools
 {
-    public class GIM
+    public class GIM : ImageClass
     {
         /* GIM Images */
         public GIM()
@@ -14,7 +14,7 @@ namespace puyo_tools
         }
 
         /* Unpack a GIM into a Bitmap */
-        public Bitmap unpack(byte[] data)
+        public override Bitmap Unpack(ref Stream data)
         {
             try
             {
@@ -25,14 +25,14 @@ namespace puyo_tools
 
                 /* Save the data to a temporary file. */
                 string tempFileName = Path.GetTempFileName();
-                Path.ChangeExtension(tempFileName, ".gim");
+                tempFileName = Path.ChangeExtension(tempFileName, ".gim");
 
                 /* Create the temporary output file. */
                 string tempOutputFileName = Path.GetTempFileName();
-                Path.ChangeExtension(tempOutputFileName, ".png");
+                tempOutputFileName = Path.ChangeExtension(tempOutputFileName, ".png");
 
                 FileStream tempFile = new FileStream(tempFileName, FileMode.Append, FileAccess.Write);
-                tempFile.Write(data, 0, data.Length);
+                tempFile.Write(ObjectConverter.StreamToBytes(data, 0, (int)data.Length), 0, (int)data.Length);
                 tempFile.Close();
 
                 /* Now, run GimConv to convert the file to a PNG. */
@@ -42,7 +42,7 @@ namespace puyo_tools
                 startInfo.WindowStyle      = ProcessWindowStyle.Hidden;
                 startInfo.FileName         = gimConvFileName;
                 startInfo.Arguments        = String.Format("\"{0}\" -o \"{1}\"", tempFileName, tempOutputFileName);
-                    
+
                 /* Run GimConv. */
                 Process gimConv;
                 gimConv = Process.Start(startInfo);
@@ -53,7 +53,10 @@ namespace puyo_tools
                 if (File.Exists(tempOutputFileName))
                 {
                     /* Create a new Bitmap and return it. */
-                    Bitmap image = new Bitmap(tempOutputFileName);
+                    FileStream file = new FileStream(tempOutputFileName, FileMode.Open, FileAccess.Read);
+                    //Bitmap image = new Bitmap(tempOutputFileName);
+                    Bitmap image = new Bitmap(file);
+                    file.Close();
 
                     /* Delete our temporary images. */
                     File.Delete(tempFileName);
@@ -65,13 +68,18 @@ namespace puyo_tools
                 /* There was an error converting to PNG. */
                 File.Delete(tempFileName);
 
-                return new Bitmap(0, 0);
+                return null;
             }
 
             catch
             {
-                return new Bitmap(0, 0);
+                return null;
             }
+        }
+
+        public override Stream Pack(ref Bitmap data)
+        {
+            return null;
         }
 
         /* Pack a Bitmap into a GIM */

@@ -3,6 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C# Express 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "puyo_tools", "puyo_tools\puyo_tools.csproj", "{7578281C-3030-4640-A7E3-5AD83C598694}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VrSharp", "..\PTImgLib\VrSharp\VrSharp.csproj", "{0BE70222-C1CC-4035-B2ED-13E976A53C32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImgSharp", "..\PTImgLib\ImgSharp\ImgSharp.csproj", "{889DCE80-78CB-4865-A16F-12FD2B85766B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +17,14 @@ Global
 		{7578281C-3030-4640-A7E3-5AD83C598694}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7578281C-3030-4640-A7E3-5AD83C598694}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7578281C-3030-4640-A7E3-5AD83C598694}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BE70222-C1CC-4035-B2ED-13E976A53C32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BE70222-C1CC-4035-B2ED-13E976A53C32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BE70222-C1CC-4035-B2ED-13E976A53C32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BE70222-C1CC-4035-B2ED-13E976A53C32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{889DCE80-78CB-4865-A16F-12FD2B85766B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{889DCE80-78CB-4865-A16F-12FD2B85766B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{889DCE80-78CB-4865-A16F-12FD2B85766B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{889DCE80-78CB-4865-A16F-12FD2B85766B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

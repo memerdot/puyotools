@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class VDD
+    public class VDD : ArchiveClass
     {
         /*
          * VDD files are archives that contains files.
@@ -120,6 +121,90 @@ namespace puyo_tools
             }
 
             return fileNames;
+        }
+
+        /* Get the offsets, lengths, and filenames of all the files */
+        public override object[][] GetFileList(ref Stream data)
+        {
+            try
+            {
+                /* Get the number of files */
+                uint files = ObjectConverter.StreamToUInt(data, 0x0);
+
+                /* Create the array of files now */
+                object[][] fileInfo = new object[files][];
+
+                /* Now we can get the file offsets, lengths, and filenames */
+                for (uint i = 0; i < files; i++)
+                {
+                    fileInfo[i] = new object[] {
+                        ObjectConverter.StreamToUInt(data,   0x14 + (i * 0x18)) * 0x800, // Offset
+                        ObjectConverter.StreamToUInt(data,   0x18 + (i * 0x18)),         // Length
+                        ObjectConverter.StreamToString(data, 0x04 + (i * 0x18), 16)      // Filename
+                    };
+                }
+
+                return fileInfo;
+            }
+            catch
+            {
+                /* Something went wrong, so return nothing */
+                return new object[0][];
+            }
+        }
+
+        /* Add a header to a blank archive */
+        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        {
+            try
+            {
+                /* Create the header data. */
+                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x18) + 0x4, 2048)];
+
+                /* Write out the number of files. */
+                Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x0, 4); // Files
+
+                /* Set the offset */
+                uint offset = (uint)header.Length;
+
+                /* Now add the filenames, offsets and lengths */
+                for (int i = 0; i < files.Length; i++)
+                {
+                    uint length = (uint)(new FileInfo(files[i]).Length);
+
+                    /* Write the filename */
+                    Array.Copy(ObjectConverter.StringToBytes(Path.GetFileName(storedFilenames[i]), 15), 0, header, 0x4 + (i * 0x18), 15);
+
+                    /* Write the offsets and lengths */
+                    Array.Copy(BitConverter.GetBytes(offset / 0x800), 0, header, 0x14 + (i * 0x18), 4); // Offset
+                    Array.Copy(BitConverter.GetBytes(length),         0, header, 0x18 + (i * 0x18), 4); // Length
+
+                    /* Now increment the offset */
+                    offset += NumberData.RoundUpToMultiple(length, 2048);
+                }
+
+                return header;
+            }
+            catch
+            {
+                /* Something went wrong, so return nothing */
+                return new byte[0];
+            }
+        }
+
+        /* Get offset for the file */
+        public uint getOffset(byte[] header, uint file)
+        {
+            try
+            {
+                /* Return the offset that we can add the file to. */
+                return BitConverter.ToUInt32(header, (int)(0x14 + (file * 0x18)));
+            }
+            catch
+            {
+                /* Something went wrong, so return the offset 0x0 */
+                return 0x0;
+            }
         }
 
     }

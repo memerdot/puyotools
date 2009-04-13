@@ -6,61 +6,145 @@ namespace puyo_tools
 {
     public class Compression
     {
-        public Compression()
+        /* Compression format */
+        private CompressionClass Compressor = null;
+        public CompressionFormat Format     = CompressionFormat.NULL;
+        private Stream Data                 = null;
+        private string Filename             = null;
+        private string CompressionName      = null;
+
+        /* Compression Object for decompression */
+        public Compression(Stream dataStream, string dataFilename)
         {
+            /* Set up our compression information */
+            Data              = dataStream;
+            Filename          = dataFilename;
+
+            CompressionInformation(ref Data, out Format, out Compressor, out CompressionName);
         }
 
-        /* Decompress a file. */
-        public byte[] decompress(byte[] data)
+        /* Compression object for compression */
+        public Compression(Stream dataStream, string dataFilename, CompressionFormat format, CompressionClass compressor)
         {
-            switch (FileFormat.getCompressionFormat(data))
+            /* Set up our compression information */
+            Data       = dataStream;
+            Filename   = dataFilename;
+            Format     = format;
+            Compressor = compressor;
+        }
+
+        /* Decompress */
+        public Stream Decompress()
+        {
+            return Compressor.Decompress(ref Data);
+        }
+
+        /* Compress */
+        public Stream Compress()
+        {
+            return Compressor.Compress(ref Data);
+        }
+
+        /* Get filename */
+        public string GetFilename()
+        {
+            return Compressor.GetFilename(ref Data, Filename);
+        }
+
+        /* Output Directory */
+        public string OutputDirectory
+        {
+            get
             {
-                case CompressionFormat.CNX: // CNX Compression
-                    CNX CNX_decompressor = new CNX();
-                    return CNX_decompressor.decompress(data);
-
-                case CompressionFormat.CXLZ: // CXLZ Compression
-                    CXLZ CXLZ_decompressor = new CXLZ();
-                    return CXLZ_decompressor.decompress(data);
-
-                case CompressionFormat.LZ01: // LZ01 Compression
-                    LZ01 LZ01_decompressor = new LZ01();
-                    return LZ01_decompressor.decompress(data);
-
-                //case CompressionFormat.ONZ: // ONZ Compression
-                    //ONZ ONZ_decompressor = new ONZ();
-                    //return ONZ_decompressor.decompress(data);
+                return (CompressionName == null ? null : CompressionName + " Decompressed");
             }
-            return data;
         }
 
-        /* Get the output directory. */
-        public string getOutputDirectory(byte[] data)
+        /* Get compression information */
+        private void CompressionInformation(ref Stream data, out CompressionFormat format, out CompressionClass compressor, out string name)
         {
-            switch (FileFormat.getCompressionFormat(data))
+            try
             {
-                case CompressionFormat.CNX:  return ExtractDir.CNX;
-                case CompressionFormat.CXLZ: return ExtractDir.CXLZ;
-                case CompressionFormat.LZ00: return ExtractDir.LZ00;
-                case CompressionFormat.LZ01: return ExtractDir.LZ01;
-                //case CompressionFormat.ONZ:  return ExtractDir.ONZ;
+                /* Check based on the first 4 bytes */
+                switch ((CompressionHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                {
+                    case CompressionHeader.CNX: // CNX
+                        format     = CompressionFormat.CNX;
+                        compressor = new CNX();
+                        name       = "CNX";
+                        return;
+
+                    case CompressionHeader.CXLZ: // CXLZ
+                        format     = CompressionFormat.CXLZ;
+                        compressor = new CXLZ();
+                        name       = "CXLZ";
+                        return;
+
+                    case CompressionHeader.LZ01: // LZ01
+                        format     = CompressionFormat.LZ01;
+                        compressor = new LZ01();
+                        name       = "LZ01";
+                        return;
+                }
+
+                /* Check compression based on the first byte */
+                switch ((CompressionHeader)ObjectConverter.StreamToBytes(data, 0x0, 1)[0])
+                {
+                    case CompressionHeader.LZSS: // LZSS
+                        format     = CompressionFormat.LZSS;
+                        compressor = new LZSS();
+                        name       = "LZSS";
+                        return;
+                }
+
+                /* Unknown or unsupported compression */
+                throw new CompressionFormatNotSupported();
+            }
+            catch (CompressionFormatNotSupported)
+            {
+                /* Unknown or unsupported compression */
+                format     = CompressionFormat.NULL;
+                compressor = null;
+                name       = null;
+                return;
+            }
+            catch
+            {
+                /* An error occured. */
+                format     = CompressionFormat.NULL;
+                compressor = null;
+                name       = null;
+                return;
             }
 
-            return String.Empty;
         }
+    }
 
-        /* Get the output filename. */
-        public string getFileName(byte[] data, string fileName)
-        {
-            switch (FileFormat.getCompressionFormat(data))
-            {
-                case CompressionFormat.CNX:
-                    return Path.GetFileNameWithoutExtension(fileName) + "." + PadString.getStringFromBytes(data, 0x4, 3);
-                //case CompressionFormat.ONZ:
-                    //return Path.GetFileNameWithoutExtension(fileName) + ".one";
-            }
+    /* Compression Format */
+    public enum CompressionFormat : byte
+    {
+        NULL,
+        CNX,
+        CXLZ,
+        LZ01,
+        LZSS,
+    }
 
-            return fileName;
-        }
+    /* Compression Header */
+    public enum CompressionHeader : uint
+    {
+        NULL = 0x00000000,
+        CNX  = 0x02584E43,
+        CXLZ = 0x5A4C5843,
+        LZ01 = 0x31305A4C,
+        LZSS = 0x00000010,
+    }
+
+    public abstract class CompressionClass
+    {
+        /* Compression Functions */
+        public abstract Stream Decompress(ref Stream data); // Decompress Data
+        public abstract Stream Compress(ref Stream data);   // Compress Data
+        public abstract string GetFilename(ref Stream data, string filename); // Get Filname
     }
 }

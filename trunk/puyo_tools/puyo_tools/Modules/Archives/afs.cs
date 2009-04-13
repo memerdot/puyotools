@@ -1,12 +1,13 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class AFS
+    public class AFS : ArchiveClass
     {
         /*
          * AFS files are archives that contains files.
-         * File names can be up to 44 characters in length.
+         * File names can be up to 32 characters in length.
         */
 
         /* Main Method */
@@ -14,127 +15,152 @@ namespace puyo_tools
         {
         }
 
-        /* Extract files from the AFS archive */
-        public object[][] extract(byte[] data, bool returnFileNames)
+        /* Get the offsets, lengths, and filenames of all the files */
+        public override object[][] GetFileList(ref Stream data)
         {
             try
             {
-                uint files = BitConverter.ToUInt32(data, 0x4); // Number of Files
+                /* Get the number of files */
+                uint files = ObjectConverter.StreamToUInt(data, 0x4);
 
-                /* Obtain a list of file offsets, lengths, and names. */
-                uint[] fileStart  = new uint[files];
-                uint[] fileLength = new uint[files];
+                /* Create the array of files now */
+                object[][] fileInfo = new object[files][];
 
-                /* Obtain the data for each file */
-                byte[][] returnData = new byte[files][];
+                /* Find the metadata location */
+                uint metadataLocation = ObjectConverter.StreamToUInt(data, (files * 0x8) + 0x8);
+                if (metadataLocation == 0x0)
+                    metadataLocation = ObjectConverter.StreamToUInt(data, ObjectConverter.StreamToUInt(data, 0x8) - 0x8);
 
-                for (int i = 0; i < files; i++)
+                /* Now we can get the file offsets, lengths, and filenames */
+                for (uint i = 0; i < files; i++)
                 {
-                    /* Get the file offset & length. */
-                    fileStart[i]  = BitConverter.ToUInt32(data, 0x8 + (i * 0x8)); // Start Offset
-                    fileLength[i] = BitConverter.ToUInt32(data, 0xC + (i * 0x8)); // File Length
-
-                    returnData[i] = new byte[fileLength[i]];
-                    Array.Copy(data, fileStart[i], returnData[i], 0, fileLength[i]);
+                    fileInfo[i] = new object[] {
+                        ObjectConverter.StreamToUInt(data, 0x8 + (i * 0x8)), // Offset
+                        ObjectConverter.StreamToUInt(data, 0xC + (i * 0x8)), // Length
+                        ObjectConverter.StreamToString(data, metadataLocation + (i * 0x30), 32) // Filename
+                    };
                 }
 
-                /* Attempt to file filenames for all of the files */
-                string[] fileNames = getFileNames(data, files);
-
-                /* Return all of the data now */
-                return new object[][] { returnData, fileNames };
+                return fileInfo;
             }
-            catch (Exception)
+            catch
             {
+                /* Something went wrong, so return nothing */
                 return new object[0][];
             }
         }
 
-        /* Create AFS archive. */
-        public byte[] create(byte[][] data, string[] fileNames)
+        /* Add a header to a blank archive */
+        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
         {
             try
             {
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[data.Length];
-                uint[] fileLength = new uint[data.Length];
+                /* Create variables from settings */
+                bool v1        = (bool)settings[0];
 
-                /* Set initial data. */
-                int fileSize = Header.AFS.Length + 0x4 + (data.Length * 0x8) + 0x8; // Filesize of Header
+                /* Create the header data. */
+                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x8) + 0x10, blockSize)];
 
-                /* Get the size for the files that will be added in the AFS archive. */
-                for (int i = 0; i < data.Length; i++)
+                /* Write out the header and number of files. */
+                Array.Copy(ObjectConverter.StringToBytes(FileHeader.AFS, 3), 0, header, 0x0, 3); // AFS
+                Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
+
+                /* Set the offset */
+                uint offset = (uint)header.Length;
+
+                /* Now add the file offsets and lengths */
+                for (int i = 0; i < files.Length; i++)
                 {
-                    /* Set file offset and length. */
-                    fileStart[i]  = (uint)fileSize;
-                    fileLength[i] = (uint)data[i].Length;
+                    uint length = (uint)(new FileInfo(files[i]).Length);
 
-                    fileSize += PadInteger.multipleLength(data[i].Length, 2);
+                    /* Write the offsets and lengths */
+                    Array.Copy(BitConverter.GetBytes(offset), 0, header, 0x8 + (i * 0x8), 4); // Offset
+                    Array.Copy(BitConverter.GetBytes(length), 0, header, 0xC + (i * 0x8), 4); // Length;
+
+                    /* Now increment the offset */
+                    offset += NumberData.RoundUpToMultiple(length, blockSize);
                 }
 
-                /* Add the filename footer. */
-                uint fileNameStart  = (uint)fileSize;
-                uint fileNameLength = (uint)(data.Length * 0x30);
-                fileSize += (int)fileNameLength;
-
-                /* Now that we have the filesize, start writing the data. */
-                byte[] archiveData = new byte[fileSize];
-
-                /* Set up the header */
-                Array.Copy(Header.AFS, 0, archiveData, 0, Header.AFS.Length); // AFS Header
-                Array.Copy(BitConverter.GetBytes((uint)data.Length), 0, archiveData, 0x4, 0x4); // Number of Files
-
-                Array.Copy(BitConverter.GetBytes(fileNameStart),  0, archiveData, Header.AFS.Length + 0x4 + (data.Length * 0x8), 0x4); // Start of filenames
-                Array.Copy(BitConverter.GetBytes(fileNameLength), 0, archiveData, Header.AFS.Length + 0x8 + (data.Length * 0x8), 0x4); // Size of filenames
-
-                /* Add the file data and the header. */
-                for (int i = 0; i < data.Length; i++)
+                /* Now where do we write the metadata location? */
+                if (v1) // AFS v1
                 {
-                    /* Add the file size & length. */
-                    Array.Copy(BitConverter.GetBytes(fileStart[i]),  0, archiveData, Header.AFS.Length + 0x4 + (i * 0x8), 0x4); // Start Offset
-                    Array.Copy(BitConverter.GetBytes(fileLength[i]), 0, archiveData, Header.AFS.Length + 0x8 + (i * 0x8), 0x4); // File Length
-
-                    /* Add the filename. */
-                    byte[] fileName = PadString.fileNameToBytes(fileNames[i], 0x20);
-                    Array.Copy(fileName, 0, archiveData, fileNameStart + (i * 0x30), fileName.Length);
-
-                    /* Add random thing from header. I don't know its purpose. */
-                    Array.Copy(archiveData, Header.AFS.Length + (i * 0x4), archiveData, fileNameStart + (i * 0x30) + 0x2C, 0x4);
-
-                    /* Add the data now. */
-                    Array.Copy(data[i], 0, archiveData, fileStart[i], fileLength[i]);
+                    Array.Copy(BitConverter.GetBytes(offset),              0, header, header.Length - 0x8, 4); // Metadata Offset
+                    Array.Copy(BitConverter.GetBytes(files.Length * 0x30), 0, header, header.Length - 0x4, 4); // Metadata Length
+                }
+                else // AFS v2
+                {
+                    Array.Copy(BitConverter.GetBytes(offset),              0, header, 0x8 + (files.Length * 0x8), 4); // Metadata Offset
+                    Array.Copy(BitConverter.GetBytes(files.Length * 0x30), 0, header, 0xC + (files.Length * 0x8), 4); // Metadata Length
                 }
 
-                return archiveData;
+                return header;
             }
             catch
             {
+                /* Something went wrong, so return nothing */
                 return new byte[0];
             }
         }
 
-        /* Attempt to find filenames in the AFS archive. */
-        private string[] getFileNames(byte[] data, uint files)
+        /* Get offset for the file or metadata */
+        public uint getOffset(byte[] header, uint file)
         {
-            string[] fileNames    = new string[files];                                       // Set up an array of filenames.
-            uint fileNameLocation = BitConverter.ToUInt32(data, (int)(0x8 + (files * 0x8))); // Start of file name data.
-
-            if (fileNameLocation == 0x0) // This is AFS v1
-                fileNameLocation = BitConverter.ToUInt32(data, BitConverter.ToInt32(data, Header.AFS.Length + 0x4) - 0x8); // Start of file name data.
-
-            for (int i = 0; i < files; i++)
+            try
             {
-                for (int j = 0; j < 32; j++)
-                {
-                    if (data[fileNameLocation + (i * 0x30) + j] == 0x0)
-                        break;
+                /* Return the offset that we can add the file to. */
+                uint offset = BitConverter.ToUInt32(header, (int)(0x8 + (file * 0x8)));
 
-                    fileNames[i] += (char)data[fileNameLocation + (i * 0x30) + j];
-                }
+                /* See if the offset was 0 and we are trying to get the metadata */
+                if (offset == 0x0 && file == BitConverter.ToUInt32(header, 0x4))
+                    offset = BitConverter.ToUInt32(header, header.Length - 0x8);
+
+                return offset;
             }
-
-            return fileNames;
+            catch
+            {
+                /* Something went wrong, so return the offset 0x0 */
+                return 0x0;
+            }
         }
 
+        /* Create the metadata */
+        public override byte[] CreateFooter(string[] files, string[] storedFilenames, ref byte[] header, uint blockSize, object[] settings)
+        {
+            try
+            {
+                /* Create variables from settings */
+                bool v1        = (bool)settings[0];
+
+                /* Create the metadata array */
+                byte[] metadata = new byte[NumberData.RoundUpToMultiple((uint)(files.Length * 0x30), blockSize)];
+
+                /* Write the metadata for each file */
+                for (int i = 0; i < files.Length; i++)
+                {
+                    FileInfo fileInfo = new FileInfo(files[i]);
+
+                    Array.Copy(ObjectConverter.StringToBytes(storedFilenames[i], 31), 0, metadata, (i * 0x30), 31); // Filename
+
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Year),   0, metadata, (i * 0x30) + 0x20, 2); // Year of Creation
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Month),  0, metadata, (i * 0x30) + 0x22, 2); // Month of Creation
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Day),    0, metadata, (i * 0x30) + 0x24, 2); // Day of Creation
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Hour),   0, metadata, (i * 0x30) + 0x26, 2); // Hour of Creation
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Minute), 0, metadata, (i * 0x30) + 0x28, 2); // Minute of Creation
+                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Second), 0, metadata, (i * 0x30) + 0x2A, 2); // Second of Creation
+
+                    if (v1) // AFS v1
+                        Array.Copy(header, 0x8 + (i * 0x8), metadata, (i * 0x30) + 0x2C, 4);
+                    else // AFS v2
+                        Array.Copy(header, 0x4 + (i * 0x4), metadata, (i * 0x30) + 0x2C, 4);
+                }
+
+                return metadata;
+            }
+            catch
+            {
+                /* Something went wrong, so return nothing */
+                return new byte[0];
+            }
+        }
     }
 }

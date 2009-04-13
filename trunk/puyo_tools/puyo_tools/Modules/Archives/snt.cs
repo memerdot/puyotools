@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class SNT
+    public class SNT : ArchiveClass
     {
         /*
          * SNT files are archives that contains SVR or GIM files.
@@ -239,5 +240,66 @@ namespace puyo_tools
             return fileNames;
         }
 
+        /* Get the offsets, lengths, and filenames of all the files */
+        public override object[][] GetFileList(ref Stream data)
+        {
+            try
+            {
+                /* Get the number of files */
+                uint files = ObjectConverter.StreamToUInt(data, 0x30);
+
+                /* This is where the header should start */
+                uint headerStart = ObjectConverter.StreamToUInt(data, 0x34) + ObjectConverter.StreamToUInt(data, 0x38) + 0x4;
+
+                /* Create the array of files now */
+                object[][] fileInfo = new object[files][];
+
+                /* Use this to find filenames */
+                uint expectedStart = NumberData.RoundUpToMultiple(headerStart + (files * 0x8), 4);
+
+                /* Now we can get the file offsets, lengths, and filenames */
+                for (uint i = 0; i < files; i++)
+                {
+                    /* Get the offset & length */
+                    uint offset = ObjectConverter.StreamToUInt(data, 0x4 + (i * 0x8) + headerStart) + 0x20;
+                    uint length = ObjectConverter.StreamToUInt(data, 0x0 + (i * 0x8) + headerStart);
+
+                    /* Check for filenames, if the offset of the file is bigger we expected it to be */
+                    string filename = String.Empty;
+                    if (offset > expectedStart)
+                        filename = ObjectConverter.StreamToString(data, expectedStart, (int)(offset - expectedStart));
+
+                    /* For PP15 PSP, we can check the GIM file for filenames */
+                    else if (length > 40 && ObjectConverter.StreamToString(data, offset, 8) == FileHeader.MIG)
+                    {
+                        uint metadataOffset = ObjectConverter.StreamToUInt(data, offset + 0x24) + 0x30;
+                        if (metadataOffset < offset + length)
+                            filename = Path.GetFileNameWithoutExtension(ObjectConverter.StreamToString(data, offset + metadataOffset, (int)(length - metadataOffset))) + ".gim";
+                    }
+
+                    /* Now update the expected start. */
+                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
+
+                    fileInfo[i] = new object[] {
+                        offset,  // Offset
+                        length,  // Length
+                        filename // Filename
+                    };
+                }
+
+                return fileInfo;
+            }
+            catch
+            {
+                /* Something went wrong, so return nothing */
+                return new object[0][];
+            }
+        }
+
+        /* Add a header to a blank archive */
+        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        {
+            return null;
+        }
     }
 }
