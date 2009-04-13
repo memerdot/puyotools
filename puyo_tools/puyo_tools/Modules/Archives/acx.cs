@@ -1,8 +1,9 @@
 ﻿using System;
+using System.IO;
 
 namespace puyo_tools
 {
-    public class ACX
+    public class ACX : ArchiveClass
     {
         /*
          * ACX files are archives that contains ADX files.
@@ -14,132 +15,111 @@ namespace puyo_tools
         {
         }
 
-        /* Extract files from the ACX archive */
-        public object[][] extract(byte[] data, bool returnFileNames)
+        /* Get the offsets, lengths, and filenames of all the files */
+        public override object[][] GetFileList(ref Stream data)
         {
             try
             {
-                uint files = Endian.swapInt(BitConverter.ToUInt32(data, 0x4)); // Number of Files
+                /* Get the number of files */
+                uint files = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4));
 
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[files];
-                uint[] fileLength = new uint[files];
+                /* Create the array of files now */
+                object[][] fileInfo = new object[files][];
 
-                /* Obtain the data for each file */
-                byte[][] returnData = new byte[files][];
+                /* Use this to find filenames */
+                uint expectedStart = NumberData.RoundUpToMultiple((files * 0x8) + 0x8, 4);
 
-                for (int i = 0; i < files; i++)
+                /* Now we can get the file offsets, lengths, and filenames */
+                for (uint i = 0; i < files; i++)
                 {
-                    /* Get the file offset & length. */
-                    fileStart[i]  = Endian.swapInt(BitConverter.ToUInt32(data, 0x8 + (i * 0x8))); // Start Offset
-                    fileLength[i] = Endian.swapInt(BitConverter.ToUInt32(data, 0xC + (i * 0x8))); // File Length
+                    /* Get the offset & length */
+                    uint offset = Endian.Swap(ObjectConverter.StreamToUInt(data,  0x8 + (i * 0x8)));
+                    uint length = Endian.Swap(ObjectConverter.StreamToUInt(data,  0xC + (i * 0x8)));
 
-                    returnData[i] = new byte[fileLength[i]];
-                    Array.Copy(data, fileStart[i], returnData[i], 0, fileLength[i]);
+                    /* Check for filenames, if the offset of the file is bigger we expected it to be */
+                    string filename = String.Empty;
+                    if (offset > expectedStart)
+                        filename = ObjectConverter.StreamToString(data, expectedStart, (int)(offset - expectedStart));
+
+                    /* Now update the expected start. */
+                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
+
+                    fileInfo[i] = new object[] {
+                        offset,  // Offset
+                        length,  // Length
+                        filename // Filename
+                    };
                 }
 
-                /* Attempt to file filenames for all of the files */
-                string[] fileNames = getFileNames(data, files, fileStart, fileLength);
-
-
-                /* Return all of the data now */
-                return new object[][] { returnData, fileNames };
+                return fileInfo;
             }
-            catch (Exception)
+            catch
             {
+                /* Something went wrong, so return nothing */
                 return new object[0][];
             }
         }
 
-        /* Create ACX archive. */
-        public byte[] create(byte[][] data, string[] fileNames, bool addFileNames)
+        /* Add a header to a blank archive */
+        public override byte[] CreateHeader(string[] files, string[] archiveFilenames, uint blockSize, object[] settings)
         {
             try
             {
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[data.Length];
-                uint[] fileLength = new uint[data.Length];
+                /* Create variables from settings */
+                bool addFilenames = (bool)settings[0];
 
-                /* Set initial data. */
-                int fileSize = Header.ACX.Length + 0x4 + (data.Length * 0x8); // Filesize of Header
+                /* Create the header data. */
+                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x8) + 0x8, 4)];
 
-                /* Get the size for the files that will be added in the ACX archive. */
-                for (int i = 0; i < data.Length; i++)
+                /* Write out the header and number of files. */
+                Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ACX),         0, header, 0x0, 4); // ACX
+                Array.Copy(BitConverter.GetBytes(Endian.Swap((uint)files.Length)), 0, header, 0x4, 4); // Files
+
+                /* Set the offset */
+                uint offset = (uint)header.Length;
+
+                /* Now add the filenames, offsets and lengths */
+                for (int i = 0; i < files.Length; i++)
                 {
-                    /* Set file offset and length. */
-                    fileStart[i]  = (uint)fileSize;
-                    fileLength[i] = (uint)data[i].Length;
+                    uint length = (uint)(new FileInfo(files[i]).Length);
 
-                    if (addFileNames)
-                        fileSize += PadInteger.multipleLength(fileNames[i].Length, 4);
+                    /* Increment offsets for filenames */
+                    if (addFilenames)
+                        offset += NumberData.RoundUpToMultiple((uint)ObjectConverter.StringToBytes(archiveFilenames[i], 63).Length, 4);
 
-                    fileSize += PadInteger.multipleLength(data[i].Length, 4);
+                    /* Write the offsets and lengths */
+                    Array.Copy(BitConverter.GetBytes(Endian.Swap(offset)), 0, header, 0x8 + (i * 0x8), 4); // Offset
+                    Array.Copy(BitConverter.GetBytes(Endian.Swap(length)), 0, header, 0xC + (i * 0x8), 4); // Length
+
+                    /* Now increment the offset */
+                    offset += NumberData.RoundUpToMultiple(length, 4);
                 }
 
-                /* Now that we have the filesize, start writing the data. */
-                byte[] archiveData = new byte[fileSize];
-
-                /* Set up the header */
-                Array.Copy(Header.ACX, 0, archiveData, 0, Header.ACX.Length); // ACX Header
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)data.Length)), 0, archiveData, 0x4, 0x4); // Number of Files
-
-                /* Add the file data and the header. */
-                for (int i = 0; i < data.Length; i++)
-                {
-                    /* Add the file size & length. */
-                    uint headerFileStart = fileStart[i];
-                    if (addFileNames)
-                        headerFileStart += (uint)PadInteger.multipleLength(fileNames[i].Length, 4);
-
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt(headerFileStart)), 0, archiveData, Header.ACX.Length + 0x4 + (i * 0x8), 0x4); // Start Offset
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt(fileLength[i])),   0, archiveData, Header.ACX.Length + 0x8 + (i * 0x8), 0x4); // File Length
-
-                    /* Add the filename. */
-                    if (addFileNames)
-                    {
-                        byte[] fileName = PadString.multipleToBytes(fileNames[i], 4);
-                        Array.Copy(fileName, 0, archiveData, fileStart[i], fileName.Length);
-                    }
-
-                    /* Add the data now. */
-                    Array.Copy(data[i], 0, archiveData, headerFileStart, fileLength[i]);
-                }
-
-                return archiveData;
+                return header;
             }
             catch
             {
+                /* Something went wrong, so return nothing */
                 return new byte[0];
             }
         }
 
-        /* Attempt to find filenames in the ACX archive. */
-        private string[] getFileNames(byte[] data, uint files, uint[] fileStart, uint[] fileLength)
+        /* Get offset for the file and the filename */
+        public uint getOffset(byte[] header, uint file)
         {
-            string[] fileNames = new string[files];   // Set up an array of filenames.
-            uint expectedStart = 0x8 + (files * 0x8); // Set the initial expected start.
-
-            for (int i = 0; i < files; i++)
+            try
             {
-                /* Is the expected start before the actual file start? */
-                if (expectedStart < fileStart[i])
-                {
-                    for (uint j = expectedStart; j < fileStart[i]; j++)
-                    {
-                        /* Is there a null byte? */
-                        if (data[j] == 0x0)
-                            break;
-
-                        fileNames[i] += (char)data[j];
-                    }
-                }
-
-                expectedStart  = fileStart[i] + fileLength[i]; // New initial start.
-                expectedStart += expectedStart % 4;
+                /* See if it is the first file. */
+                if (file == 0)
+                    return (uint)header.Length;
+                else
+                    return NumberData.RoundUpToMultiple(Endian.Swap(BitConverter.ToUInt32(header, 0x8 + (((int)file - 1) * 0x8))) + Endian.Swap(BitConverter.ToUInt32(header, 0xC + ((int)(file - 1) * 0x8))), 4);
             }
-
-            return fileNames;
+            catch
+            {
+                /* Something went wrong, so return the offset 0x0 */
+                return 0x0;
+            }
         }
-
     }
 }

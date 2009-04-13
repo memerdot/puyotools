@@ -107,7 +107,7 @@ namespace puyo_tools
 
                     /* Write the header */
                     Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP), 0x0, data, 0x0, 4); // GMP-
-                    Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP2), 0x0, data, 0x4, 4); // 200
+                    //Array.Copy(BitConverter.GetBytes((uint)GraphicHeader.GMP2), 0x0, data, 0x4, 4); // 200
 
                     Array.Copy(BitConverter.GetBytes(imageHeight), 0x0, data, 0x8, 4); // Image Height
                     Array.Copy(BitConverter.GetBytes(imageWidth), 0x0, data, 0xC, 4); // Image Width

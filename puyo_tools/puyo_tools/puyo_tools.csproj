@@ -45,18 +45,26 @@
   -->
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions.cs" />
     <Compile Include="FileFormat.cs" />
+    <Compile Include="FormContent.cs" />
     <Compile Include="Modules\Archive.cs" />
     <Compile Include="Modules\Archives\acx.cs" />
     <Compile Include="Modules\Archives\afs.cs" />
     <Compile Include="Conversions.cs">
     </Compile>
+    <Compile Include="Modules\Archives\gvm.cs" />
+    <Compile Include="Modules\Archives\narc.cs" />
     <Compile Include="Modules\Archives\one.cs" />
+    <Compile Include="Modules\Archives\pvm.cs" />
+    <Compile Include="Modules\Compression\lzss.cs" />
     <Compile Include="Modules\Compression\onz.cs" />
+    <Compile Include="Modules\Images.cs" />
     <Compile Include="Modules\Images\bmd.cs" />
     <Compile Include="Modules\Archives\spk.cs" />
     <Compile Include="Modules\Compression.cs" />
@@ -75,22 +83,33 @@
     <Compile Include="Modules\Images\btx.cs" />
     <Compile Include="Modules\Images\gim.cs" />
     <Compile Include="Modules\Images\gmp.cs" />
-    <Compile Include="Programs\Archive_Creator.cs">
+    <Compile Include="Modules\Images\gvr.cs" />
+    <Compile Include="Programs\Archive\Create.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Programs\Archive_Extractor.cs">
+    <Compile Include="Programs\Archive\Extract.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Programs\Compression_Decompressor.cs">
+    <Compile Include="Programs\Compression\Decompress.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Modules\Archives\snt.cs" />
-    <Compile Include="Programs\Image_Converter.cs">
+    <Compile Include="Programs\Image\Convert.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatusMessage.cs">
       <SubType>Form</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\PTImgLib\ImgSharp\ImgSharp.csproj">
+      <Project>{889DCE80-78CB-4865-A16F-12FD2B85766B}</Project>
+      <Name>ImgSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\PTImgLib\VrSharp\VrSharp.csproj">
+      <Project>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</Project>
+      <Name>VrSharp</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

@@ -1,12 +1,13 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
     public class Header
     {
         /* List of headers for files */
-
         /* Compression headers */
         public static byte[]
             CNX  = { 0x43, 0x4E, 0x58, 0x02 }, // CNX
@@ -34,6 +35,7 @@ namespace puyo_tools
         SNT_PSP = { 0x4E, 0x55, 0x49, 0x46 }, // SNT (PSP)
             SPK = { 0x53, 0x4E, 0x44, 0x30 }, // SPK
             TEX = { 0x54, 0x45, 0x58, 0x30 }; // TEX
+
 
 
         /* Special */
@@ -106,6 +108,26 @@ namespace puyo_tools
 
             return x;
         }
+
+        /* Swap short endian. */
+        public static ushort Swap(ushort x)
+        {
+            x = (ushort)((x >> 8) |
+                (x << 8));
+
+            return x;
+        }
+
+        /* Swap integer endian. */
+        public static uint Swap(uint x)
+        {
+            x = (x >> 24) |
+                ((x << 8) & 0x00FF0000) |
+                ((x >> 8) & 0x0000FF00) |
+                (x << 24);
+
+            return x;
+        }
     }
 
     /* File Selections */
@@ -142,6 +164,53 @@ namespace puyo_tools
             sfd.ShowDialog();
 
             return sfd.FileName;
+        }
+
+        /* Select Directories */
+        public static string SelectDirectory(string title)
+        {
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+
+            fbd.Description         = title;
+            fbd.SelectedPath        = Directory.GetCurrentDirectory();
+            fbd.ShowNewFolderButton = false;
+            DialogResult result     = fbd.ShowDialog();
+
+            return (result == DialogResult.OK ? fbd.SelectedPath : null);
+        }
+
+        /* Return a list of files from a directory and subdirectories */
+        public static string[] FindFilesInDirectory(string initialDirectory, bool searchSubDirectories)
+        {
+            /* Create the file list and sub directory list */
+            List<string> fileList = new List<string>();
+            List<string> subDirectoryList = new List<string>();
+
+            /* Add files from initial directory */
+            foreach (string file in Directory.GetFiles(initialDirectory))
+                fileList.Add(file);
+
+            /* Search subdirectories? */
+            if (searchSubDirectories)
+            {
+                /* Get a list of subdirectories */
+                foreach (string directory in Directory.GetDirectories(initialDirectory))
+                    subDirectoryList.Add(directory);
+
+                /* Search the sub directories */
+                for (int i = 0; i < subDirectoryList.Count; i++)
+                {
+                    /* Add files from the directory */
+                    foreach (string file in Directory.GetFiles(subDirectoryList[i]))
+                        fileList.Add(file);
+
+                    /* Add the sub directories in this directory */
+                    foreach (string directory in Directory.GetDirectories(subDirectoryList[i]))
+                        subDirectoryList.Add(directory);
+                }
+            }
+
+            return fileList.ToArray();
         }
     }
 
@@ -194,6 +263,142 @@ namespace puyo_tools
         public static int multipleLength(int length, int multiple)
         {
             return length + ((length % multiple == 0) ? 0 : multiple - (length % multiple));
+        }
+    }
+
+    /* Number Data */
+    public class NumberData
+    {
+        /* Round a number up to a mutliple */
+        public static uint RoundUpToMultiple(uint number, uint multiple)
+        {
+            /* If the number is already divisible by the multiple, do nothing */
+            if (number % multiple == 0)
+                return number;
+
+            return number + (multiple - (number % multiple));
+        }
+
+        /* Get the number of digits in a number */
+        public static int Digits(int number)
+        {
+            return number.ToString().Length;
+        }
+
+        /* Format filename */
+        public static string FormatFilename(uint number, int total)
+        {
+            return number.ToString().PadLeft(NumberData.Digits(total), '0');
+        }
+    }
+
+    /* String Data */
+    public class StringData
+    {
+        /* Limit Length */
+        public static string LimitLength(string str, int length)
+        {
+            /* If the string length is smaller than we need it to be, return it */
+            if (str.Length <= length)
+                return str;
+
+            return str.Substring(0, length);
+        }
+    }
+
+    /* Object Conversions */
+    public class ObjectConverter
+    {
+        /* Return an array of bytes from a stream */
+        public static byte[] StreamToBytes(System.IO.Stream stream, uint offset, int length)
+        {
+            byte[] temp = new byte[length];
+
+            stream.Position = offset;
+            stream.Read(temp, 0, length);
+
+            return temp;
+        }
+
+        /* Convert a stream to another stream */
+        public static Stream StreamToStream(Stream stream)
+        {
+            return new MemoryStream(ObjectConverter.StreamToBytes(stream, 0x0, (int)stream.Length));
+        }
+
+        public static Stream StreamToStream(Stream stream, uint offset, long length)
+        {
+            return new MemoryStream(ObjectConverter.StreamToBytes(stream, offset, (int)length));
+        }
+
+        /* Convert a stream to an unsigned integer */
+        public static uint StreamToUInt(Stream stream, uint offset)
+        {
+            /* Convert to bytes and then to an unsigned integer */
+            return BitConverter.ToUInt32(StreamToBytes(stream, offset, 4), 0);
+        }
+
+        /* Convert a stream to an unsigned short */
+        public static ushort StreamToUShort(Stream stream, uint offset)
+        {
+            /* Convert to bytes and then to an unsigned integer */
+            return BitConverter.ToUInt16(StreamToBytes(stream, offset, 2), 0);
+        }
+
+        /* Convert stream to string */
+        public static string StreamToString(Stream stream, uint offset, int maxLength)
+        {
+            string str = String.Empty;
+            char letter;
+
+            stream.Position = offset;
+
+            for (int i = 0; i < maxLength; i++)
+            {
+                letter = (char)stream.ReadByte();
+                if (letter == 0x0)
+                    break;
+                else
+                    str += letter;
+            }
+
+            return str;
+        }
+
+        /* Convert string to bytes */
+        public static byte[] StringToBytes(string str, int maxLength)
+        {
+            /* Create the byte array */
+            byte[] bytes = new byte[maxLength];
+
+            for (int i = 0; i < maxLength && i < str.Length; i++)
+                bytes[i] = (byte)str[i];
+
+            return bytes;
+        }
+    }
+
+    /* Pad Data */
+    public class PadData
+    {
+        public static Stream FillStream(byte str, int length)
+        {
+            MemoryStream stream = new MemoryStream(length);
+
+            for (int i = 0; i < length; i++)
+                stream.WriteByte(str);
+
+            return stream;
+        }
+
+        public static byte[] Fill(byte str, int length)
+        {
+            byte[] temp = new byte[length];
+
+            for (int i = 0; i < length; i++)
+                temp[i] = str;
+
+            return temp;
         }
     }
 }

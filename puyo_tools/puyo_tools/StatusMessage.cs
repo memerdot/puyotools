@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -6,70 +7,122 @@ namespace puyo_tools
 {
     public class StatusMessage : Form
     {
-        Label mainText; // Main Text
-        Label subText;  // Sub Text
-        int totalFiles; // Number of files
+        private Label
+            displayFileLabel = new Label();
 
-        /* Status Messages */
-        /* Compression */
-        public static string
-            decompress = "Decompressing File", // Decompressing
-            compress   = "Compressing File";   // Compressing
+        private ProgressBar
+            progress      = new ProgressBar(),
+            progressLocal = new ProgressBar();
 
-        /* Archives */
-        public static string
-            extractArchive = "Extracting Archive",    // Extract Archive
-            createArchive = "Creating Archive",       // Create Archive
-            addToArchive = "Adding file to archive"; // Add file to Archive
+        private int
+            currentFile,
+            currentFileLocal,
+            totalFiles,
+            totalFilesLocal;
 
-        /* Images */
-        public static string
-            toPng = "Converting image to PNG", // Convert to PNG
-            toGim = "Converting image to GIM", // Convert to GIM
-            toGvr = "Converting image to GVR"; // Convert to GVR
+        List<string>
+            fileList = new List<string>();
 
-
-        public StatusMessage(string title, string header, int files)
+        /* Set up our form */
+        public StatusMessage(string title, string[] files)
         {
-            /* Set up the window */
-            this.ClientSize      = new Size(300, 110);
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox     = false;
-            this.StartPosition   = FormStartPosition.CenterScreen;
-            this.Text            = title;
-            this.ControlBox      = false;
+            /* Ok, first let's create the file list */
+            foreach (string i in files)
+                fileList.Add(i);
 
-            /* Display "Decompressing" */
-            mainText           = new Label();
-            mainText.Text      = header;
-            mainText.Location  = new Point(8, 30);
-            mainText.Size      = new Size(284, 16);
-            mainText.Font      = new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold);
-            mainText.TextAlign = ContentAlignment.TopCenter;
-            this.Controls.Add(mainText);
+            /* Now, get our total files */
+            totalFiles = files.Length;
 
-            subText           = new Label();
-            subText.Text      = "File 1 of " + files;
-            subText.Location  = new Point(8, 50);
-            subText.Size      = new Size(284, 64);
-            subText.TextAlign = ContentAlignment.TopCenter;
-            this.Controls.Add(subText);
+            /* Now, let's set up our form */
+            FormContent.Create(this, title, new Size(300, 96), false);
 
-            /* Set total files */
-            totalFiles = files;
+            /* Add Processing */
+            FormContent.Add(this, new Label(),
+                "Processing",
+                new Point(0, 8),
+                new Size(this.Width, 16),
+                ContentAlignment.TopCenter,
+                new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold));
+
+            /* File Number */
+            FormContent.Add(this, displayFileLabel,
+                String.Empty,
+                new Point(0, 24),
+                new Size(this.Width, 48),
+                ContentAlignment.TopCenter);
+
+            /* Add the progress bar */
+            FormContent.Add(this, progress,
+                new Point(8, 72),
+                new Size(this.Width - 22, 16),
+                totalFiles);
+
+            /* Ok, set the current file now */
+            CurrentFile = 0;
         }
 
-        public void updateStatus(string header, string fileName, int file)
+        public void addProgressBarLocal()
         {
-            /* Updates the status */
-            mainText.Text = header;
-            subText.Text  = (file > 0 ? ("File " + file + " of " + totalFiles) : "") + "\n\n\n" + fileName;
+            /* First, expand the status box */
+            this.Size = new Size(this.Size.Width, this.Size.Height + 16);
+
+            /* Next, move down the current progress bar */
+            progress.Location = new Point(progress.Location.X, progress.Location.Y + 16);
+
+            /* Now, add the local progress bar, for archives */
+            FormContent.Add(this, progressLocal,
+                new Point(8, 72),
+                new Size(this.Width - 22, 12),
+                0);
         }
 
-        public void updateTotalFiles(int total)
+        /* Set the current file label */
+        public int CurrentFile
         {
-            /* Updates the number of tital files */
-            totalFiles = total;
+            set
+            {
+                /* Update the current value */
+                currentFile = value;
+
+                /* Update the label */
+                displayFileLabel.Text = String.Format(
+                    "File {0} of {1}\n\n{2}",
+                        (currentFile + 1).ToString("#,0"),
+                        totalFiles.ToString("#,0"),
+                        System.IO.Path.GetFileName(fileList[currentFile]));
+
+                /* Update the progress bar */
+                progress.Value = currentFile;
+            }
+        }
+
+        /* Set the local current file */
+        public int CurrentFileLocal
+        {
+            set
+            {
+                /* Update the local file */
+                currentFileLocal = value;
+                progressLocal.Value = currentFileLocal;
+            }
+        }
+
+        /* Set the total files for the archive */
+        public int TotalFilesLocal
+        {
+            set
+            {
+                totalFilesLocal = value;
+                progressLocal.Maximum = totalFilesLocal;
+            }
+        }
+
+        /* Add file */
+        public void addFile(string file)
+        {
+            fileList.Add(file);
+            totalFiles++;
+            progress.Maximum = totalFiles;
         }
     }
 }
