@@ -68,7 +68,7 @@ namespace VrSharp
             for (int i = 0; i < 256; i++)
             {
                 PaletteARGB[i] = new byte[4];
-                if (i >= ImgQuantize.NewPalette.Count) { Console.WriteLine("No palette entry for " + i); continue; }
+                if (i >= ImgQuantize.NewPalette.Count) { /*Console.WriteLine("No palette entry for " + i);*/ continue; }
                 PaletteARGB[i][0] = (byte)(ImgQuantize.NewPalette[i] >> 24 & 0xFF);
                 PaletteARGB[i][1] = (byte)(ImgQuantize.NewPalette[i] >> 16 & 0xFF);
                 PaletteARGB[i][2] = (byte)(ImgQuantize.NewPalette[i] >> 8 & 0xFF);
@@ -78,26 +78,16 @@ namespace VrSharp
         }
         public byte GetClosestPaletteEntry(int a, int r, int g, int b)
         {
-            int ClosestEntryID=0;
-            int ClosestEntryDelta=1024;
-            for (int i = 0; i < PaletteARGB.Length / 4; i++)
+            for (int i = 0; i < PaletteARGB.Length; i++)
             {
-                int CurrentEntryDelta = 0;
-                CurrentEntryDelta += Math.Abs(((int)PaletteARGB[i][0]) - a);
-                CurrentEntryDelta += Math.Abs(((int)PaletteARGB[i][1]) - r);
-                CurrentEntryDelta += Math.Abs(((int)PaletteARGB[i][2]) - g);
-                CurrentEntryDelta += Math.Abs(((int)PaletteARGB[i][3]) - b);
-                if (CurrentEntryDelta < ClosestEntryDelta)
-                {
-                    ClosestEntryID = i;
-                    ClosestEntryDelta = CurrentEntryDelta;
-                }
-                if (CurrentEntryDelta == 0)
-                {
-                    break;
-                }
+                int argb1 = a << 24 | r << 16 | g << 8 | b;
+                if ((a == PaletteARGB[i][0]) &&
+                    (r == PaletteARGB[i][1]) &&
+                    (g == PaletteARGB[i][2]) &&
+                    (b == PaletteARGB[i][3]))
+                        return (byte)i;
             }
-            return (byte)ClosestEntryID;
+            return (byte)0xFF;
         }
         override public int GetChunkWidth()
         {
@@ -130,11 +120,12 @@ namespace VrSharp
                 int Pointer=0x20;
                 for (int i = 0; i < 256; i++)
                 {
-                    ushort entry = ColorConversions.swap16((ushort)(AuxData[Pointer] + AuxData[Pointer + 1] * 256));
+                    ColorConversions.GetRgb565(ref Data, Pointer, ref PaletteARGB[i], 0);
+                    /*swap16((ushort)(AuxData[Pointer] + AuxData[Pointer + 1] * 256));
                     PaletteARGB[i][0] = 0xFF;
                     PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
                     PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
-                    PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));
+                    PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));*/
                     Pointer += 2;
                 }
             }
@@ -161,21 +152,13 @@ namespace VrSharp
                 for (int x2 = 0; x2 < 8; x2++)
                 {
                     if (OutPtr >= Output.Length) break;
-                    if (AutoQuantize)
-                    {
-                        Output[OutPtr] = AutoQuantizeBitmap[(y2 + y1) * VrWidth + (x1 + x2)];
-                        OutPtr++;
-                    }
-                    else
-                    {
-                        int a = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 0];
-                        int r = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 1];
-                        int g = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 2];
-                        int b = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 3];
-                        byte pal = GetClosestPaletteEntry(Input[a], Input[r], Input[g], Input[b]);
-                        Output[OutPtr] = pal;
-                        OutPtr++;
-                    }
+                    int a = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 0];
+                    int r = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 1];
+                    int g = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 2];
+                    int b = Input[((y2 + y1) * VrWidth + (x1 + x2)) * 4 + 3];
+                    byte pal = (byte)GetClosestPaletteEntry(a, r, g, b);
+                    Output[OutPtr] = pal;
+                    OutPtr++;
                 }
             }
             return true;

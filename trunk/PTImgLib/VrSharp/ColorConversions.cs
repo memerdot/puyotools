@@ -33,10 +33,11 @@ namespace VrSharp
         }
         public static bool ToRgb565(ref byte[] Src, int SOffset, ref byte[] Dest, int DOffset)
         {
-            int r5 = Src[1] >> 3;
-            int g6 = Src[2] >> 2;
-            int b5 = Src[3] >> 3;
-            int entry = b5 + (g6<<5) + (r5<<(5+6));
+            // #define RGB565(r, g, b) ((r >> 3) << 11)| ((g >> 2) << 5)| ((b >> 3) << 0)
+            int r5 = Src[1];
+            int g6 = Src[2];
+            int b5 = Src[3];
+            uint entry = swap16((ushort)((ushort)((r5 >> 3) << 11) | (ushort)((g6 >> 2) << 5) | (ushort)((b5 >> 3) << 0)));
             Dest[DOffset + 1] = (byte)(entry >> 8 & 0xFF);
             Dest[DOffset + 0] = (byte)(entry >> 0 & 0xFF);
             return true;
