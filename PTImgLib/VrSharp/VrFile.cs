@@ -357,7 +357,11 @@ namespace VrSharp
 		public VrFormat GetFormatCode()
 		{
 			return (VrFormat)(CompressedData[0x1A] << 8 + CompressedData[0x1B]);
-		}
+        }
+        public uint GetUFormatCode()
+        {
+            return VrPixelFormatCode;
+        }
 
         public int GetHeight()
         {

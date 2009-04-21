@@ -29,7 +29,10 @@ namespace VrConv
 			{
                 default:
 				case 0:
-					Console.WriteLine("VrConv for .NET\nUsage: " + "VrConv" + " <source> [output]");
+					Console.WriteLine("VrConv for .NET\nUsage: " + "VrConv" + " <Source> [Output[:Vr Format]]");
+                    Console.WriteLine("Source: Required. Input image.");
+                    Console.WriteLine("Output: Optional. Output image.");
+                    Console.WriteLine("Vr Format: Optional. Describes the VrHeader");
 				return;
 				
 				case 1:
@@ -95,6 +98,11 @@ namespace VrConv
                     char[] delimit = new char[1];
                     delimit[0] = ':';
                     string[] namestrings = OutName.Split(delimit);
+                    if (namestrings.Length > 1)
+                    {
+                        format = VrCodecs.GetCodec(namestrings[1]).Format;
+                        OutName = namestrings[0];
+                    }
 				break;
 			}
             try

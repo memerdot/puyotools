@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using VrSharp;
 
 namespace VrSharp
 {
@@ -544,10 +545,10 @@ namespace VrSharp
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool init = false;
-        private int width, height;
+        private int width, height, outptr;
         override public int GetChunkWidth()
         {
-            return 4;
+            return 32;
         }
         override public int GetChunkHeight()
         {
@@ -576,10 +577,12 @@ namespace VrSharp
             {
                 PaletteARGB[i] = new byte[4];
 
-                PaletteARGB[i][0] = (byte)FormatHeader[Pointer+3];
-                PaletteARGB[i][1] = (byte)FormatHeader[Pointer+0];
-                PaletteARGB[i][2] = (byte)FormatHeader[Pointer+1];
-                PaletteARGB[i][3] = (byte)FormatHeader[Pointer+2];
+                uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
+
+                PaletteARGB[i][0] = (byte)(FormatHeader[Pointer+3]);
+                PaletteARGB[i][1] = (byte)(FormatHeader[Pointer+0]);
+                PaletteARGB[i][2] = (byte)(FormatHeader[Pointer+1]);
+                PaletteARGB[i][3] = (byte)(FormatHeader[Pointer+2]);
 
                 Pointer += 4;
             }
@@ -589,9 +592,11 @@ namespace VrSharp
         override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
         {
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+            PS2GsSwizzle.DoSwizzle(Input, InPtr, PS2GsSwizzle.Swizzle8x8, PS2GsSwizzle.Direction.Backward);
+            
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
-                for (int x2 = GetChunkWidth()-1; x2 >= 0; x2--)
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr]][0];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr]][1];
