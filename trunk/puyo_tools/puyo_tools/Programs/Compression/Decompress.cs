@@ -181,7 +181,7 @@ namespace puyo_tools
                             continue;
 
                         /* Set up the output directories and file names */
-                        outputDirectory = Path.GetFileName(fileList[i]) + (decompressSameDir.Checked ? String.Empty : Path.DirectorySeparatorChar + compression.OutputDirectory);
+                        outputDirectory = Path.GetDirectoryName(fileList[i]) + (decompressSameDir.Checked ? String.Empty : Path.DirectorySeparatorChar + compression.OutputDirectory);
                         outputFilename  = (useStoredFilename.Checked ? compression.GetFilename() : Path.GetFileName(fileList[i]));
 
                         /* Decompress data */
@@ -219,20 +219,25 @@ namespace puyo_tools
 
                             /* Convert image */
                             Bitmap imageData = images.Unpack();
-                            data = new MemoryStream();
-                            imageData.Save(data, ImageFormat.Png);
 
-                            /* Create the output directory if it does not exist */
-                            if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
-                                Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
+                            /* Make sure an image was written */
+                            if (imageData != null)
+                            {
+                                data = new MemoryStream();
+                                imageData.Save(data, ImageFormat.Png);
 
-                            /* Output the image */
-                            using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                data.WriteTo(outputStream);
+                                /* Create the output directory if it does not exist */
+                                if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
+                                    Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
 
-                            /* Delete the source image if we want to */
-                            if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
-                                File.Delete(inputImage);
+                                /* Output the image */
+                                using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
+                                    data.WriteTo(outputStream);
+
+                                /* Delete the source image if we want to */
+                                if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
+                                    File.Delete(inputImage);
+                            }
                         }
                     }
                 }

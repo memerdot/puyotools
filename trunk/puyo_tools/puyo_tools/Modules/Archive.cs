@@ -22,6 +22,10 @@ namespace puyo_tools
 
             ArchiveInformation(ref Data, ref Filename, out Format, out Archiver, out ArchiveName);
 
+            /* Stop if we don't have a supported archive */
+            if (Format == ArchiveFormat.NULL)
+                return;
+
             /* Translate the data before we work with it */
             Data = Archiver.TranslateData(ref Data);
         }
@@ -168,6 +172,12 @@ namespace puyo_tools
                         archiver = new TEX();
                         name     = "TEX";
                         return;
+
+                    case ArchiveHeader.TXAG: // TXAG
+                        format   = ArchiveFormat.TXAG;
+                        archiver = new TXAG();
+                        name     = "TXAG";
+                        return;
                 }
 
                 /* GNT File */
@@ -201,6 +211,17 @@ namespace puyo_tools
                     format   = ArchiveFormat.SNT;
                     archiver = new SNT();
                     name     = "SNT";
+                    return;
+                }
+
+                /* Storybook Archive */
+                if (Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4)) == 0x10 &&
+                   (Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC)) == 0xFFFFFFFF ||
+                    Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC)) == 0x00000000))
+                {
+                    format   = ArchiveFormat.SBA;
+                    archiver = new SBA();
+                    name     = "Storybook Archive";
                     return;
                 }
 

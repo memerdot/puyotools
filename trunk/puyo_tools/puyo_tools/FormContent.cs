@@ -86,6 +86,15 @@ namespace puyo_tools
             parent.Controls.Add(content);
         }
 
+        public static void Add(GroupBox parent, Label content, string text, Point position, Size size)
+        {
+            content.Text = text;
+            content.Location = position;
+            content.Size = size;
+
+            parent.Controls.Add(content);
+        }
+
         public static void Add(Form parent, Label content, string text, Point position, Size size, ContentAlignment alignment)
         {
             content.Text      = text;
@@ -128,6 +137,18 @@ namespace puyo_tools
             content.DropDownStyle    = ComboBoxStyle.DropDownList;
             content.MaxDropDownItems = choices.Length;
             content.SelectedIndex    = 0;
+
+            parent.Controls.Add(content);
+        }
+
+        public static void Add(GroupBox parent, ComboBox content, string[] choices, Point position, Size size)
+        {
+            content.Items.AddRange(choices);
+            content.Location = position;
+            content.Size = size;
+            content.DropDownStyle = ComboBoxStyle.DropDownList;
+            content.MaxDropDownItems = choices.Length;
+            content.SelectedIndex = 0;
 
             parent.Controls.Add(content);
         }

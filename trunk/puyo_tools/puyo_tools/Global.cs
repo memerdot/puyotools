@@ -338,6 +338,13 @@ namespace puyo_tools
             return BitConverter.ToUInt32(StreamToBytes(stream, offset, 4), 0);
         }
 
+        /* Convert a stream to an unsigned integer */
+        public static uint StreamToUInt(Stream stream, long offset)
+        {
+            /* Convert to bytes and then to an unsigned integer */
+            return BitConverter.ToUInt32(StreamToBytes(stream, (uint)offset, 4), 0);
+        }
+
         /* Convert a stream to an unsigned short */
         public static ushort StreamToUShort(Stream stream, uint offset)
         {
@@ -375,6 +382,44 @@ namespace puyo_tools
                 bytes[i] = (byte)str[i];
 
             return bytes;
+        }
+
+        /* Convert string to byte list */
+        public static List<byte> StringToByteList(string str, int maxLength)
+        {
+            /* Create the list */
+            List<byte> list = new List<byte>();
+
+            for (int i = 0; i < maxLength && i < str.Length; i++)
+                list.Add((byte)str[i]);
+
+            return list;
+        }
+
+        /* Convert unsigned integer to byte list */
+        public static List<byte> UIntToByteList(uint number)
+        {
+            /* Create the list */
+            List<byte> list = new List<byte>(4);
+            byte[] bytes = BitConverter.GetBytes(number);
+
+            for (int i = 0; i < bytes.Length; i++)
+                list.Add(bytes[i]);
+
+            return list;
+        }
+
+        /* Convert unsigned short to byte list */
+        public static List<byte> UShortToByteList(ushort number)
+        {
+            /* Create the list */
+            List<byte> list = new List<byte>(2);
+            byte[] bytes = BitConverter.GetBytes(number);
+
+            for (int i = 0; i < bytes.Length; i++)
+                list.Add(bytes[i]);
+
+            return list;
         }
     }
 
