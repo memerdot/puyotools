@@ -82,6 +82,16 @@ namespace puyo_tools
                     return;
                 }
 
+                /* SVR File */
+                if ((ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x19, 1)[0] > 64) ||
+                    (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x9, 1)[0] > 64))
+                {
+                    format = GraphicFormat.SVR;
+                    converter = new SVR();
+                    name = "SVR";
+                    return;
+                }
+
                 /* Unknown or unsupported compression */
                 throw new GraphicFormatNotSupported();
             }
@@ -112,6 +122,7 @@ namespace puyo_tools
         GMP,
         GVR,
         PVR,
+        SVR,
     }
 
     /* Image Header */

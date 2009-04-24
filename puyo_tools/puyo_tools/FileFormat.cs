@@ -17,9 +17,11 @@ namespace puyo_tools
         NUIF, // SNT (PSP)
         ONE,  // ONE
         PVM,  // PVM
+        SBA,  // Storybook Archive
         SNT,  // SNT
         SPK,  // SPK
         TEX,  // TEX
+        TXAG, // TXAG (Sonic Storybook TXD)
         VDD,  // VDD
     }
 
@@ -41,6 +43,7 @@ namespace puyo_tools
         PVM  = 0x484D5650, // (PVM) 0x50, 0x56, 0x4D, 0x48
         SPK  = 0x30444E53, // (SPK) 0x53, 0x4E, 0x44, 0x30
         TEX  = 0x30584554, // (TEX) 0x54, 0x45, 0x58, 0x30
+        TXAG = 0x47415854, // (TXAG) 0x54, 0x58, 0x41, 0x47
     }
 
     /* Image Format ID */
@@ -79,6 +82,7 @@ namespace puyo_tools
         /* Compression Formats */
         public const string
             CNX  = "CNX\x02",
+            CXLZ = "CXLZ",
             LZ00 = "LZ00",
             LZ01 = "LZ01",
             ONZ  = "\x11";
@@ -95,7 +99,8 @@ namespace puyo_tools
             ONE  = "one.",
             PVM  = "PVMH",
             SPK  = "SPK0",
-            TEX  = "TEX0";
+            TEX  = "TEX0",
+            TXAG = "TXAG";
 
         /* Image Formats */
         public const string

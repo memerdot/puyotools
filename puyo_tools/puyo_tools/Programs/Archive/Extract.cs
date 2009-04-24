@@ -43,14 +43,14 @@ namespace puyo_tools
         {
             /* Select the files */
             files = Files.selectFiles("Select Archives",
-                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.pvm;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.pvm;*.snt;*.spk;*.tex;*.vdd|" +
+                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.pvm;*.snt;*.spk;*.tex;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
                 "GNT Archive (*.gnt)|*.gnt|" +
                 "GVM Archive (*.gvm)|*.gvm|" +
                 "MRG Archive (*.mrg)|*.mrg|" +
                 "NARC Archive (*.narc;*.carc)|*.narc;*.carc|" +
-                "ONE Archive (*.one)|*.one|" +
+                "ONE Archive (*.one;*.onz)|*.one;*.onz|" +
                 "PVM Archive (*.pvm)|*.pvm|" +
                 "SNT Archive (*.snt)|*.snt|" +
                 "SPK Archive (*.spk)|*.spk|" +
@@ -261,7 +261,7 @@ namespace puyo_tools
                             continue;
 
                         object[][] archiveFileList = archive.GetFileList();
-                        if (archiveFileList.Length == 0)
+                        if (archiveFileList == null || archiveFileList.Length == 0)
                             continue;
 
                         /* Set the total files in the archive */
@@ -329,20 +329,25 @@ namespace puyo_tools
 
                                     /* Convert image */
                                     Bitmap imageData = images.Unpack();
-                                    outputData = new MemoryStream();
-                                    imageData.Save(outputData, ImageFormat.Png);
 
-                                    /* Create the output directory if it does not exist */
-                                    if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
-                                        Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
+                                    /* Make sure an image was written */
+                                    if (imageData != null)
+                                    {
+                                        outputData = new MemoryStream();
+                                        imageData.Save(outputData, ImageFormat.Png);
 
-                                    /* Output the image */
-                                    using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                        outputData.WriteTo(outputStream);
+                                        /* Create the output directory if it does not exist */
+                                        if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
+                                            Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
 
-                                    /* Delete the source image if we want to */
-                                    if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
-                                        File.Delete(inputImage);
+                                        /* Output the image */
+                                        using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
+                                            outputData.WriteTo(outputStream);
+
+                                        /* Delete the source image if we want to */
+                                        if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
+                                            File.Delete(inputImage);
+                                    }
                                 }
                             }
 
@@ -351,7 +356,10 @@ namespace puyo_tools
                             {
                                 Archive testArchive = new Archive(outputData, extractFilename);
                                 if (testArchive.Format != ArchiveFormat.NULL)
+                                {
                                     fileList.Add(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
+                                    status.AddFile(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
+                                }
                             }
                         }
                     }
@@ -366,10 +374,9 @@ namespace puyo_tools
                             Directory.Move(outputDirectory, outputDirectory + Path.GetExtension(fileList[i]));
                     }
                 }
-                catch (Exception f)
+                catch
                 {
                     /* Something went wrong. Continue please. */
-                    MessageBox.Show(f.ToString());
                     continue;
                 }
             }

@@ -198,6 +198,11 @@ namespace puyo_tools
 
                         /* Convert image */
                         Bitmap imageData = images.Unpack();
+
+                        /* Don't continue if an image wasn't created */
+                        if (imageData == null)
+                            continue;
+
                         data = new MemoryStream();
                         imageData.Save(data, ImageFormat.Png);
 

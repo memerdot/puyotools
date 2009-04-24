@@ -128,6 +128,7 @@ namespace puyo_tools
             {
                 //Compression_Decompressor decompressor = new Compression_Decompressor();
                 Compression_Decompress program = new Compression_Decompress(true);
+                //Compression_Compress program = new Compression_Compress();
             }
 
             else if (sender == buttonPrograms[2]) // Archive Extractor

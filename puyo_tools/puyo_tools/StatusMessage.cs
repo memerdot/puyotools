@@ -118,7 +118,7 @@ namespace puyo_tools
         }
 
         /* Add file */
-        public void addFile(string file)
+        public void AddFile(string file)
         {
             fileList.Add(file);
             totalFiles++;
