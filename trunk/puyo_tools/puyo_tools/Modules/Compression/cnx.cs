@@ -19,13 +19,13 @@ namespace puyo_tools
             try
             {
                 /* Set variables */
-                uint compressedSize   = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x8)) + 16; // Compressed Size
-                uint decompressedSize = Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC));      // Decompressed Size
+                uint compressedSize   = Endian.Swap(StreamConverter.ToUInt(data, 0x8)) + 16; // Compressed Size
+                uint decompressedSize = Endian.Swap(StreamConverter.ToUInt(data, 0xC));      // Decompressed Size
 
                 uint Cpointer = 0x10; // Compressed Pointer
                 uint Dpointer = 0x0;  // Decompressed Pointer
 
-                byte[] compressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)compressedSize); // Compressed Data
+                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */
@@ -59,7 +59,8 @@ namespace puyo_tools
 
                             /* Copy from destination buffer to current position */
                             case 2:
-                                uint temp_word = Endian.Swap(ObjectConverter.StreamToUShort(data, Cpointer));
+                                uint temp_word = Endian.Swap(compressedData[Cpointer]);
+                                //uint temp_word = Endian.Swap(ObjectConverter.StreamToUShort(data, Cpointer));
 
                                 uint off = (temp_word >> 5) + 1;
                                 uint len = (temp_word & 0x1F) + 4;

@@ -21,7 +21,7 @@ namespace puyo_tools
                 /* Check to see if GimConv exists. */
                 string gimConvFileName = "tools" + Path.DirectorySeparatorChar + "GimConv" + Path.DirectorySeparatorChar + "GimConv.exe";
                 if (!File.Exists(gimConvFileName))
-                    return new Bitmap(0, 0);
+                    return null;
 
                 /* Save the data to a temporary file. */
                 string tempFileName = Path.GetTempFileName();

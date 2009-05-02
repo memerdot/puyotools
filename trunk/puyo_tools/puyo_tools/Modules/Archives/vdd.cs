@@ -129,7 +129,7 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = ObjectConverter.StreamToUInt(data, 0x0);
+                uint files = StreamConverter.ToUInt(data, 0x0);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -138,9 +138,9 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     fileInfo[i] = new object[] {
-                        ObjectConverter.StreamToUInt(data,   0x14 + (i * 0x18)) * 0x800, // Offset
-                        ObjectConverter.StreamToUInt(data,   0x18 + (i * 0x18)),         // Length
-                        ObjectConverter.StreamToString(data, 0x04 + (i * 0x18), 16)      // Filename
+                        StreamConverter.ToUInt(data,   0x14 + (i * 0x18)) * 0x800, // Offset
+                        StreamConverter.ToUInt(data,   0x18 + (i * 0x18)),         // Length
+                        StreamConverter.ToString(data, 0x04 + (i * 0x18), 16)      // Filename
                     };
                 }
 
@@ -149,7 +149,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 

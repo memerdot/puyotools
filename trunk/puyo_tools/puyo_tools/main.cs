@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Globalization;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace puyo_tools
 {
@@ -17,7 +18,8 @@ namespace puyo_tools
             new Button(), // Archive Extractor
             new Button(), // Archive Creator
             new Button(), // GimConv
-            new Button()  // VrConv
+            new Button(), // VrConv
+            new Button(),
         };
 
         private string[] labelPrograms = // Labels for each program
@@ -36,11 +38,23 @@ namespace puyo_tools
             "Select Directory",
         };
 
+        public void puyo_tools2()
+        {
+            /* Create the form */
+            FormContent.Create(this, "Puyo Tools", new Size(344, 258));
+
+            /* Draw logo */
+            PictureBox logo = new PictureBox();
+            logo.Image = new Bitmap((Bitmap)new ComponentResourceManager(typeof(images)).GetObject("logo"));
+            logo.Location = new Point(0, 0);
+            logo.Size = new Size(316, 47);
+            this.Controls.Add(logo);
+        }
 
         public puyo_tools()
         {
             /* Set up form options */
-            this.ClientSize      = new Size(344, 258);
+            this.ClientSize      = new Size(344, 258 + 64);
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox     = false;
             this.StartPosition   = FormStartPosition.CenterScreen;
@@ -114,6 +128,12 @@ namespace puyo_tools
             buttonPrograms[5].Size     = new Size(160, 32);
             buttonPrograms[5].Click   += new EventHandler(startProgram);
             this.Controls.Add(buttonPrograms[5]);
+
+            buttonPrograms[6].Text = "Archive Explorer";
+            buttonPrograms[6].Location = new Point(8, 280);
+            buttonPrograms[6].Size = new Size(160, 32);
+            buttonPrograms[6].Click += new EventHandler(startProgram);
+            this.Controls.Add(buttonPrograms[6]);
         }
 
         private void startProgram(object sender, EventArgs e)
@@ -142,6 +162,7 @@ namespace puyo_tools
                 //Archive_Creator decompressor = new Archive_Creator();
                 //Archive_Create program = new Archive_Create();
                 Archive_Extract program = new Archive_Extract(true);
+                //Archive_Explorer program = new Archive_Explorer();
             }
 
             else if (sender == buttonPrograms[4]) // Image Converter
@@ -154,6 +175,11 @@ namespace puyo_tools
             {
                 //Image_Converter program = new Image_Converter();
                 Image_Convert program = new Image_Convert(true);
+            }
+
+            else if (sender == buttonPrograms[6]) // Image Converter
+            {
+                Archive_Explorer program = new Archive_Explorer();
             }
         }
 

@@ -20,7 +20,7 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                ushort files = ObjectConverter.StreamToUShort(data, 0x0);
+                ushort files = StreamConverter.ToUShort(data, 0x0);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -29,11 +29,11 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the filename */
-                    string filename = ObjectConverter.StreamToString(data, 0xA + (i * 0x24), 28);
+                    string filename = StreamConverter.ToString(data, 0xA + (i * 0x24), 28);
 
                     fileInfo[i] = new object[] {
-                        ObjectConverter.StreamToUInt(data, 0x2 + (i * 0x24)), // Offset
-                        ObjectConverter.StreamToUInt(data, 0x6 + (i * 0x24)), // Length
+                        StreamConverter.ToUInt(data, 0x2 + (i * 0x24)), // Offset
+                        StreamConverter.ToUInt(data, 0x6 + (i * 0x24)), // Length
                         (filename == String.Empty ? NumberData.FormatFilename(i, (int)files) : filename) + ".pvr" // Filename
                     };
                 }
@@ -43,7 +43,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 
@@ -54,8 +54,8 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files, and format type in the stream */
-                ushort files    = ObjectConverter.StreamToUShort(stream, 0xA);
-                byte formatType = ObjectConverter.StreamToBytes(stream, 0x8, 1)[0];
+                ushort files    = StreamConverter.ToUShort(stream, 0xA);
+                byte formatType = StreamConverter.ToByte(stream, 0x8);
 
                 /* Now let's see what information is contained inside the metadata */
                 bool containsMDLN        = (formatType & (1 << 4)) > 0;
@@ -78,45 +78,45 @@ namespace puyo_tools
                 Array.Copy(BitConverter.GetBytes(files), 0, header, 0x0, 2);
 
                 /* Ok, try to find out data */
-                uint offset       = ObjectConverter.StreamToUInt(stream, 0x4) + 0x8;
+                uint offset       = StreamConverter.ToUInt(stream, 0x4) + 0x8;
                 byte[][] fileData = new byte[files][];
 
                 /* Find a PVR file if the offset refers to a MDLN file */
                 if (containsMDLN)
-                    offset = NumberData.RoundUpToMultiple(offset + ObjectConverter.StreamToUInt(stream, offset + 0x4), 16);
+                    offset = NumberData.RoundUpToMultiple(offset + StreamConverter.ToUInt(stream, offset + 0x4), 16);
 
                 for (int i = 0; i < files; i++)
                 {
                     /* Ok, get the size of the PVR file */
-                    int length = (int)ObjectConverter.StreamToUInt(stream, offset + 0x4) + 24;
+                    int length = (int)StreamConverter.ToUInt(stream, offset + 0x4) + 24;
 
                     /* Create the byte array for this file */
                     fileData[i] = new byte[length];
 
                     /* Write the GBIX header */
-                    Array.Copy(ObjectConverter.StringToBytes(FileHeader.GBIX, 4), 0, fileData[i], 0x0, 4); // GBIX
+                    Array.Copy(StringConverter.ToByteArray(FileHeader.GBIX, 4), 0, fileData[i], 0x0, 4); // GBIX
                     Array.Copy(BitConverter.GetBytes((uint)8), 0, fileData[i], 0x4, 4);
 
                     if (formatType == 0x9)
-                        Array.Copy(ObjectConverter.StreamToBytes(stream, (uint)(0x2A + (i * 0x22)), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 09)
+                        Array.Copy(StreamConverter.ToByteArray(stream, 0x2A + (i * 0x22), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 09)
                     else
-                        Array.Copy(ObjectConverter.StreamToBytes(stream, (uint)(0x2E + (i * 0x26)), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 0F)
+                        Array.Copy(StreamConverter.ToByteArray(stream, 0x2E + (i * 0x26), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 0F)
 
                     /* Write out the four blank spaces (0x20) */
                     for (int j = 0; j < 4; j++)
                         fileData[i][0xC + j] = 0x20;
 
                     /* Now copy the file */
-                    Array.Copy(ObjectConverter.StreamToBytes(stream, offset, length - 16), 0, fileData[i], 0x10, length - 16);
+                    Array.Copy(StreamConverter.ToByteArray(stream, offset, length - 16), 0, fileData[i], 0x10, length - 16);
 
                     /* Now write this information to the new format */
                     Array.Copy(BitConverter.GetBytes(arcLength), 0, header, 0x2 + (i * 0x24), 4); // Offset
                     Array.Copy(BitConverter.GetBytes(length),    0, header, 0x6 + (i * 0x24), 4);
 
                     if (formatType == 0x9)
-                        Array.Copy(ObjectConverter.StreamToBytes(stream, (uint)(0xE + (i * 0x22)), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 09)
+                        Array.Copy(StreamConverter.ToByteArray(stream, (uint)(0xE + (i * 0x22)), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 09)
                     else
-                        Array.Copy(ObjectConverter.StreamToBytes(stream, (uint)(0xE + (i * 0x26)), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 0F)
+                        Array.Copy(StreamConverter.ToByteArray(stream, (uint)(0xE + (i * 0x26)), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 0F)
 
                     /* Now increase the filesize for the stream */
                     arcLength += length;

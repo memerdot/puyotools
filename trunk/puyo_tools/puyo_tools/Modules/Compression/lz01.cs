@@ -16,13 +16,13 @@ namespace puyo_tools
             try
             {
                 /* Set variables */
-                uint compressedSize   = ObjectConverter.StreamToUInt(data, 0x4); // Compressed Size
-                uint decompressedSize = ObjectConverter.StreamToUInt(data, 0x8); // Decompressed Size
+                uint compressedSize   = StreamConverter.ToUInt(data, 0x4); // Compressed Size
+                uint decompressedSize = StreamConverter.ToUInt(data, 0x8); // Decompressed Size
 
                 uint Cpointer = 0x10; // Compressed Pointer
                 uint Dpointer = 0x0;  // Decompressed Pointer
 
-                byte[] compressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)compressedSize); // Compressed Data
+                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */

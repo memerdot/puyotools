@@ -21,16 +21,16 @@ namespace puyo_tools
             try
             {
                 /* Get the offset of each section of the NARC file */
-                uint offset_fatb = ObjectConverter.StreamToUShort(data, 0xC);
-                uint offset_fntb = offset_fatb + ObjectConverter.StreamToUInt(data, offset_fatb + 0x4);
-                uint offset_fimg = offset_fntb + ObjectConverter.StreamToUInt(data, offset_fntb + 0x4);
+                uint offset_fatb = StreamConverter.ToUShort(data, 0xC);
+                uint offset_fntb = offset_fatb + StreamConverter.ToUInt(data, offset_fatb + 0x4);
+                uint offset_fimg = offset_fntb + StreamConverter.ToUInt(data, offset_fntb + 0x4);
 
                 /* Stuff for filenames */
-                bool containsFilenames = ObjectConverter.StreamToUInt(data, offset_fntb + 0x8) == 8;
+                bool containsFilenames = StreamConverter.ToUInt(data, offset_fntb + 0x8) == 8;
                 uint offset_filename   = offset_fntb + 0x10;
 
                 /* Get the number of files */
-                uint files = ObjectConverter.StreamToUInt(data, offset_fatb + 0x8);
+                uint files = StreamConverter.ToUInt(data, offset_fatb + 0x8);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -39,16 +39,16 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the offset & length */
-                    uint offset = ObjectConverter.StreamToUInt(data, offset_fatb + 0x0C + (i * 0x8));
-                    uint length = ObjectConverter.StreamToUInt(data, offset_fatb + 0x10 + (i * 0x8)) - offset;
+                    uint offset = StreamConverter.ToUInt(data, offset_fatb + 0x0C + (i * 0x8));
+                    uint length = StreamConverter.ToUInt(data, offset_fatb + 0x10 + (i * 0x8)) - offset;
 
                     /* Get the filename, if the NARC contains filenames */
                     string filename = String.Empty;
                     if (containsFilenames)
                     {
                         /* Ok, since the NARC contains filenames, let's go grab it now */
-                        byte filename_length = ObjectConverter.StreamToBytes(data, offset_filename, 1)[0];
-                        filename             = ObjectConverter.StreamToString(data, offset_filename + 1, filename_length);
+                        byte filename_length = StreamConverter.ToByte(data, offset_filename);
+                        filename             = StreamConverter.ToString(data, offset_filename + 1, filename_length);
                         offset_filename     += (uint)(filename_length + 1);
                     }
 
@@ -64,7 +64,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 

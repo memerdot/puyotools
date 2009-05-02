@@ -21,7 +21,7 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                ushort files = ObjectConverter.StreamToUShort(data, 0x0);
+                ushort files = StreamConverter.ToUShort(data, 0x0);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -30,21 +30,19 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the filename */
-                    string filename = ObjectConverter.StreamToString(data, 0xC + (i * 0x2C), 36);
+                    string filename = StreamConverter.ToString(data, 0xC + (i * 0x2C), 36);
 
                     fileInfo[i] = new object[] {
-                        ObjectConverter.StreamToUInt(data, 0x4 + (i * 0x2C)), // Offset
-                        ObjectConverter.StreamToUInt(data, 0x8 + (i * 0x2C)), // Length
+                        StreamConverter.ToUInt(data, 0x4 + (i * 0x2C)), // Offset
+                        StreamConverter.ToUInt(data, 0x8 + (i * 0x2C)), // Length
                         filename, // Filename
                     };
-                    //System.Windows.Forms.MessageBox.Show((uint)fileInfo[i][1] + "");
                 }
 
                 return fileInfo;
             }
-            catch (Exception f)
+            catch
             {
-                System.Windows.Forms.MessageBox.Show("EXTRACTION ERROR\n\n" + f.ToString());
                 return null;
             }
         }
@@ -56,7 +54,7 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = Endian.Swap(ObjectConverter.StreamToUInt(stream, 0x0));
+                uint files = Endian.Swap(StreamConverter.ToUInt(stream, 0x0));
 
                 /* Now create the header */
                 MemoryStream data = new MemoryStream();
@@ -70,12 +68,12 @@ namespace puyo_tools
 
                     data.Write(BitConverter.GetBytes(offset), 0, 4); // Offset
                     data.Write(BitConverter.GetBytes(length), 0, 4); // Length
-                    data.Write(ObjectConverter.StreamToBytes(stream, (uint)(0x10 + (i * 0x30)), 36), 0, 36); // Filename
+                    data.Write(StreamConverter.ToByteArray(stream, (uint)(0x10 + (i * 0x30)), 36), 0, 36); // Filename
 
                     /* Let's write the decompressed data */
-                    uint sourceOffset = Endian.Swap(ObjectConverter.StreamToUInt(stream, 0x34 + (i * 0x30)));
-                    uint sourceLength = Endian.Swap(ObjectConverter.StreamToUInt(stream, 0x38 + (i * 0x30)));
-                    Stream compressedData = ObjectConverter.StreamToStream(stream, sourceOffset, sourceLength);
+                    uint sourceOffset = Endian.Swap(StreamConverter.ToUInt(stream, 0x34 + (i * 0x30)));
+                    uint sourceLength = Endian.Swap(StreamConverter.ToUInt(stream, 0x38 + (i * 0x30)));
+                    Stream compressedData = StreamConverter.Copy(stream, sourceOffset, sourceLength);
 
                     /* Decompress the data */
                     SBC decompressor = new SBC();
@@ -85,8 +83,7 @@ namespace puyo_tools
 
                     /* Write the data */
                     data.Position = offset;
-                    //System.Windows.Forms.MessageBox.Show(length + "");
-                    data.Write(ObjectConverter.StreamToBytes(decompressedData, 0, (int)length), 0, (int)length);
+                    data.Write(StreamConverter.ToByteArray(decompressedData, 0, (int)length), 0, (int)length);
                     data.Position = 0x30 + (i * 0x2C);
                     decompressedData.Close();
 
@@ -95,10 +92,9 @@ namespace puyo_tools
 
                 return data;
             }
-            catch (Exception f)
+            catch
             {
-                System.Windows.Forms.MessageBox.Show("TRANSLATION ERROR\n\n" + f.ToString());
-                return null;
+                return new MemoryStream();
             }
         }
 

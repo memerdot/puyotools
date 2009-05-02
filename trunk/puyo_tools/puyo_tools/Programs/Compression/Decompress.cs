@@ -37,7 +37,11 @@ namespace puyo_tools
         public Compression_Decompress()
         {
             /* Select the files */
-            files = Files.selectFiles("Select Compressed Files", "All Files|*.*");
+            files = Files.selectFiles("Select Compressed Files",
+                "All Files (*.*)|*.*|" +
+                "CNX Compressed Files (*.cnx)|*.cnx|" +
+                "NARC Compressed Archives (*.carc)|*.carc|" +
+                "ONE Compressed Archives (*.onz)|*.onz");
 
             /* If no files were selected, don't continue */
             if (files.Length == 0)

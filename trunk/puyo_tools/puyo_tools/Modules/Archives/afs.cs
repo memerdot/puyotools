@@ -21,23 +21,23 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = ObjectConverter.StreamToUInt(data, 0x4);
+                uint files = StreamConverter.ToUInt(data, 0x4);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
 
                 /* Find the metadata location */
-                uint metadataLocation = ObjectConverter.StreamToUInt(data, (files * 0x8) + 0x8);
+                uint metadataLocation = StreamConverter.ToUInt(data, (files * 0x8) + 0x8);
                 if (metadataLocation == 0x0)
-                    metadataLocation = ObjectConverter.StreamToUInt(data, ObjectConverter.StreamToUInt(data, 0x8) - 0x8);
+                    metadataLocation = StreamConverter.ToUInt(data, StreamConverter.ToUInt(data, 0x8) - 0x8);
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
                     fileInfo[i] = new object[] {
-                        ObjectConverter.StreamToUInt(data, 0x8 + (i * 0x8)), // Offset
-                        ObjectConverter.StreamToUInt(data, 0xC + (i * 0x8)), // Length
-                        ObjectConverter.StreamToString(data, metadataLocation + (i * 0x30), 32) // Filename
+                        StreamConverter.ToUInt(data, 0x8 + (i * 0x8)), // Offset
+                        StreamConverter.ToUInt(data, 0xC + (i * 0x8)), // Length
+                        StreamConverter.ToString(data, metadataLocation + (i * 0x30), 32) // Filename
                     };
                 }
 
@@ -46,7 +46,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 

@@ -17,12 +17,12 @@ namespace puyo_tools
             {
                 /* Set variables */
                 uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x5)) >> 8; // Decompressed Size
+                uint decompressedSize = Endian.Swap(StreamConverter.ToUInt(data, 0x5)) >> 8; // Decompressed Size
 
                 uint Cpointer = 0x8; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
 
-                byte[] compressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)compressedSize); // Compressed Data
+                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */
