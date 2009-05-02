@@ -246,10 +246,10 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = ObjectConverter.StreamToUInt(data, 0x30);
+                uint files = StreamConverter.ToUInt(data, 0x30);
 
                 /* This is where the header should start */
-                uint headerStart = ObjectConverter.StreamToUInt(data, 0x34) + ObjectConverter.StreamToUInt(data, 0x38) + 0x4;
+                uint headerStart = StreamConverter.ToUInt(data, 0x34) + StreamConverter.ToUInt(data, 0x38) + 0x4;
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -261,20 +261,20 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the offset & length */
-                    uint offset = ObjectConverter.StreamToUInt(data, 0x4 + (i * 0x8) + headerStart) + 0x20;
-                    uint length = ObjectConverter.StreamToUInt(data, 0x0 + (i * 0x8) + headerStart);
+                    uint offset = StreamConverter.ToUInt(data, 0x4 + (i * 0x8) + headerStart) + 0x20;
+                    uint length = StreamConverter.ToUInt(data, 0x0 + (i * 0x8) + headerStart);
 
                     /* Check for filenames, if the offset of the file is bigger we expected it to be */
                     string filename = String.Empty;
                     if (offset > expectedStart)
-                        filename = ObjectConverter.StreamToString(data, expectedStart, (int)(offset - expectedStart));
+                        filename = StreamConverter.ToString(data, expectedStart, offset - expectedStart);
 
                     /* For PP15 PSP, we can check the GIM file for filenames */
-                    else if (length > 40 && ObjectConverter.StreamToString(data, offset, 8) == FileHeader.MIG)
+                    else if (length > 40 && StreamConverter.ToString(data, offset, 8) == FileHeader.MIG)
                     {
-                        uint metadataOffset = ObjectConverter.StreamToUInt(data, offset + 0x24) + 0x30;
+                        uint metadataOffset = StreamConverter.ToUInt(data, offset + 0x24) + 0x30;
                         if (metadataOffset < offset + length)
-                            filename = Path.GetFileNameWithoutExtension(ObjectConverter.StreamToString(data, offset + metadataOffset, (int)(length - metadataOffset))) + ".gim";
+                            filename = Path.GetFileNameWithoutExtension(StreamConverter.ToString(data, offset + metadataOffset, length - metadataOffset)) + ".gim";
                     }
 
                     /* Now update the expected start. */
@@ -292,7 +292,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 

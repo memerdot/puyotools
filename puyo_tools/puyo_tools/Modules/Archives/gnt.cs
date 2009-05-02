@@ -140,10 +140,10 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x30));
+                uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x30));
 
                 /* This is where the header should start */
-                uint headerStart = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x34)) + Endian.Swap(ObjectConverter.StreamToUInt(data, 0x38)) + 0x4;
+                uint headerStart = Endian.Swap(StreamConverter.ToUInt(data, 0x34)) + Endian.Swap(StreamConverter.ToUInt(data, 0x38)) + 0x4;
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -155,13 +155,13 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the offset & length */
-                    uint offset = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4 + (i * 0x8) + headerStart)) + 0x20;
-                    uint length = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x0 + (i * 0x8) + headerStart));
+                    uint offset = Endian.Swap(StreamConverter.ToUInt(data, 0x4 + (i * 0x8) + headerStart)) + 0x20;
+                    uint length = Endian.Swap(StreamConverter.ToUInt(data, 0x0 + (i * 0x8) + headerStart));
 
                     /* Check for filenames, if the offset of the file is bigger we expected it to be */
                     string filename = String.Empty;
                     if (offset > expectedStart)
-                        filename = ObjectConverter.StreamToString(data, expectedStart, (int)(offset - expectedStart));
+                        filename = StreamConverter.ToString(data, expectedStart, offset - expectedStart);
 
                     /* Now update the expected start. */
                     expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
@@ -178,7 +178,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new object[0][];
+                return null;
             }
         }
 

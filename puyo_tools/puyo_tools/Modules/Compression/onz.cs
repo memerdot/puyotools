@@ -17,7 +17,7 @@ namespace puyo_tools
             {
                 /* Set variables */
                 uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = (ObjectConverter.StreamToUInt(data, 0x0) >> 8); // Decompressed Size
+                uint decompressedSize = StreamConverter.ToUInt(data, 0x0) >> 8; // Decompressed Size
 
                 uint Cpointer = 0x4; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
@@ -25,11 +25,11 @@ namespace puyo_tools
                 /* Some files (Let's Tap LZ7 files) may have their decompressed size stored in a different place */
                 if (decompressedSize == 0)
                 {
-                    decompressedSize = ObjectConverter.StreamToUInt(data, 0x4);
+                    decompressedSize = StreamConverter.ToUInt(data, 0x4);
                     Cpointer = 0x8;
                 }
 
-                byte[] compressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)data.Length); // Compressed Data
+                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */

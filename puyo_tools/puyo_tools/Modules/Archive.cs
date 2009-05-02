@@ -11,7 +11,7 @@ namespace puyo_tools
         public ArchiveFormat Format   = ArchiveFormat.NULL;
         public Stream Data            = null;
         private string Filename       = null;
-        private string ArchiveName    = null;
+        public string ArchiveName     = null;
 
         /* Archive Object for extraction */
         public Archive(Stream dataStream, string dataFilename)
@@ -129,7 +129,8 @@ namespace puyo_tools
             try
             {
                 /* Let's check for archive formats based on the headers first */
-                ArchiveHeader header = (ArchiveHeader)ObjectConverter.StreamToUInt(data, 0x0);
+                //ArchiveHeader header = (ArchiveHeader)ObjectConverter.StreamToUInt(data, 0x0);
+                string header = StreamConverter.ToString(data, 0x0, 4, true);
                 switch (header)
                 {
                     case ArchiveHeader.AFS: // AFS
@@ -180,15 +181,6 @@ namespace puyo_tools
                         return;
                 }
 
-                /* GNT File */
-                if (header == ArchiveHeader.GNT && ObjectConverter.StreamToString(data, 0x20, 4) == FileHeader.NGTL)
-                {
-                    format   = ArchiveFormat.GNT;
-                    archiver = new GNT();
-                    name     = "GNT";
-                    return;
-                }
-
                 /* Check based on file extension */
                 switch (Path.GetExtension(filename).Substring(1).ToLower())
                 {
@@ -204,9 +196,27 @@ namespace puyo_tools
                         return;
                 }
 
+                /* GNT File */
+                if (header == ArchiveHeader.NGIF && StreamConverter.ToString(data, 0x20, 4) == FileHeader.NGTL)
+                {
+                    format   = ArchiveFormat.GNT;
+                    archiver = new GNT();
+                    name     = "GNT";
+                    return;
+                }
+
+                /* MDL File */
+                if (StreamConverter.ToUShort(data, 0x0) == 0x2)
+                {
+                    format   = ArchiveFormat.MDL;
+                    archiver = new MDL();
+                    name     = "MDL";
+                    return;
+                }
+
                 /* SNT File */
-                if ((header == ArchiveHeader.NSIF && ObjectConverter.StreamToString(data, 0x20, 4) == FileHeader.NSTL) ||
-                    (header == ArchiveHeader.NUIF && ObjectConverter.StreamToString(data, 0x20, 4) == FileHeader.NUTL))
+                if ((header == ArchiveHeader.NSIF && StreamConverter.ToString(data, 0x20, 4) == ArchiveHeader.NSTL) ||
+                    (header == ArchiveHeader.NUIF && StreamConverter.ToString(data, 0x20, 4) == ArchiveHeader.NUTL))
                 {
                     format   = ArchiveFormat.SNT;
                     archiver = new SNT();
@@ -215,9 +225,9 @@ namespace puyo_tools
                 }
 
                 /* Storybook Archive */
-                if (Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4)) == 0x10 &&
-                   (Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC)) == 0xFFFFFFFF ||
-                    Endian.Swap(ObjectConverter.StreamToUInt(data, 0xC)) == 0x00000000))
+                if (Endian.Swap(StreamConverter.ToUInt(data, 0x4)) == 0x10 &&
+                   (Endian.Swap(StreamConverter.ToUInt(data, 0xC)) == 0xFFFFFFFF ||
+                    Endian.Swap(StreamConverter.ToUInt(data, 0xC)) == 0x00000000))
                 {
                     format   = ArchiveFormat.SBA;
                     archiver = new SBA();
@@ -265,4 +275,52 @@ namespace puyo_tools
             return data;
         }
     }
+
+    /* Archive format ID */
+    public enum ArchiveFormat : byte
+    {
+        NULL, // Unknown Archive Format
+        ACX,  // ACX
+        AFS,  // AFS
+        GNT,  // GNT
+        GVM,  // GVM
+        MDL,  // MDL
+        MRG,  // MRG
+        NARC, // NARC
+        NSIF, // SNT (PS2)
+        NUIF, // SNT (PSP)
+        ONE,  // ONE
+        PVM,  // PVM
+        SBA,  // Storybook Archive
+        SNT,  // SNT
+        SPK,  // SPK
+        TEX,  // TEX
+        TXAG, // TXAG (Sonic Storybook TXD)
+        VDD,  // VDD
+    }
+
+    /* Archive File Header */
+    public static class ArchiveHeader
+    {
+        public const string
+            NULL = null,
+            ACX  = "\x00\x00\x00\x00",
+            AFS  = "AFS\x00",
+            GVM  = "GVMH",
+            MDL  = "\x02\x00\x00\x00",
+            MRG  = "MRG0",
+            NARC = "NARC",
+            NGIF = "NGIF",
+            NGTL = "NGTL",
+            NSIF = "NSIF",
+            NSTL = "NSTL",
+            NUIF = "NUIF",
+            NUTL = "NUTL",
+            ONE  = "one.",
+            PVM  = "PVMH",
+            SPK  = "SPK0",
+            TEX  = "TEX0",
+            TXAG = "TXAG";
+    }
+        
 }

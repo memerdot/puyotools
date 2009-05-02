@@ -3,15 +3,15 @@ using System.IO;
 
 namespace puyo_tools
 {
-    public class ACX : ArchiveClass
+    public class MDL : ArchiveClass
     {
         /*
-         * ACX files are archives that contains ADX files.
-         * No filenames are stored in the ACX file.
+         * MDL files are archives that contain PVM, NJ, and NM files.
+         * No filenames are stored in the MDL file.
         */
 
         /* Main Method */
-        public ACX()
+        public MDL()
         {
         }
 
@@ -21,20 +21,20 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x4));
+                uint files = StreamConverter.ToUShort(data, 0x2);
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
 
                 /* Use this to find filenames */
-                uint expectedStart = NumberData.RoundUpToMultiple((files * 0x8) + 0x8, 4);
+                uint expectedStart = NumberData.RoundUpToMultiple((files * 0xC) + 0x10, 4096);
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get the offset & length */
-                    uint offset = Endian.Swap(StreamConverter.ToUInt(data,  0x8 + (i * 0x8)));
-                    uint length = Endian.Swap(StreamConverter.ToUInt(data,  0xC + (i * 0x8)));
+                    uint offset = StreamConverter.ToUInt(data, 0x10 + (i * 0xC));
+                    uint length = StreamConverter.ToUInt(data, 0x0C + (i * 0xC));
 
                     /* Check for filenames, if the offset of the file is bigger we expected it to be */
                     string filename = String.Empty;
@@ -42,7 +42,7 @@ namespace puyo_tools
                         filename = StreamConverter.ToString(data, expectedStart, offset - expectedStart);
 
                     /* Now update the expected start. */
-                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
+                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4096);
 
                     fileInfo[i] = new object[] {
                         offset,  // Offset
@@ -72,7 +72,7 @@ namespace puyo_tools
                 byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x8) + 0x8, 4)];
 
                 /* Write out the header and number of files. */
-                //Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ACX),         0, header, 0x0, 4); // ACX
+                //Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ACX), 0, header, 0x0, 4); // ACX
                 //Array.Copy(BitConverter.GetBytes(Endian.Swap((uint)files.Length)), 0, header, 0x4, 4); // Files
 
                 /* Set the offset */

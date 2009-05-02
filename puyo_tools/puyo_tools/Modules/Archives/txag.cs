@@ -22,7 +22,7 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                uint files = Endian.Swap(ObjectConverter.StreamToUInt(data, 0x4));
+                uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x4));
 
                 /* Create the array of files now */
                 object[][] fileInfo = new object[files][];
@@ -31,9 +31,9 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     fileInfo[i] = new object[] {
-                        Endian.Swap(ObjectConverter.StreamToUInt(data,   0x08 + (i * 0x28))), // Offset
-                        Endian.Swap(ObjectConverter.StreamToUInt(data,   0x0C + (i * 0x28))), // Length
-                        ObjectConverter.StreamToString(data, 0x10 + (i * 0x28), 32) + ".gvr"  // Filename
+                        Endian.Swap(StreamConverter.ToUInt(data,   0x08 + (i * 0x28))), // Offset
+                        Endian.Swap(StreamConverter.ToUInt(data,   0x0C + (i * 0x28))), // Length
+                        StreamConverter.ToString(data, 0x10 + (i * 0x28), 32) + ".gvr"  // Filename
                     };
                 }
 
@@ -55,8 +55,8 @@ namespace puyo_tools
                 byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x40) + 0x8, 32)];
 
                 /* Write out the header and number of files. */
-                Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ONE), 0, header, 0x0, 4); // ONE
-                Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
+                //Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ONE), 0, header, 0x0, 4); // ONE
+                //Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
 
                 /* Set the offset */
                 uint offset = (uint)header.Length;

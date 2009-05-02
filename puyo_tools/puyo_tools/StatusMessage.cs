@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -89,7 +90,7 @@ namespace puyo_tools
                     "File {0} of {1}\n\n{2}",
                         (currentFile + 1).ToString("#,0"),
                         totalFiles.ToString("#,0"),
-                        System.IO.Path.GetFileName(fileList[currentFile]));
+                        Path.GetFileName(fileList[currentFile]));
 
                 /* Update the progress bar */
                 progress.Value = currentFile;

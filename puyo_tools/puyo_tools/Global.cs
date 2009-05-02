@@ -151,6 +151,24 @@ namespace puyo_tools
             return ofd.FileNames;
         }
 
+        /* Select File */
+        public static string SelectFile(string title, string filter)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+
+            ofd.Title            = title;
+            ofd.Multiselect      = false;
+            ofd.RestoreDirectory = true;
+            ofd.CheckFileExists  = true;
+            ofd.CheckPathExists  = true;
+            ofd.AddExtension     = true;
+            ofd.Filter           = filter;
+            ofd.DefaultExt       = String.Empty;
+            ofd.ShowDialog();
+
+            return ofd.FileName;
+        }
+
         /* Save File */
         public static string saveFile(string title, string filter)
         {

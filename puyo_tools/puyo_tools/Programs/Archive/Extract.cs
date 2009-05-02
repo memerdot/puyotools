@@ -43,7 +43,7 @@ namespace puyo_tools
         {
             /* Select the files */
             files = Files.selectFiles("Select Archives",
-                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.pvm;*.snt;*.spk;*.tex;*.vdd|" +
+                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
                 "GNT Archive (*.gnt)|*.gnt|" +
@@ -55,6 +55,7 @@ namespace puyo_tools
                 "SNT Archive (*.snt)|*.snt|" +
                 "SPK Archive (*.spk)|*.spk|" +
                 "TEX Archive (*.tex)|*.tex|" +
+                "TXAG Archive (*.txd)|*.txd|" +
                 "VDD Archive (*.vdd)|*.vdd|" +
                 "All Files (*.*)|*.*");
 
