@@ -203,7 +203,7 @@ namespace puyo_tools
         private void loadArchive(object sender, EventArgs e)
         {
             /* Select the file to open */
-            string file = Files.SelectFile("Select Archive",
+            string file = FileSelectionDialog.OpenFile("Select Archive",
                 "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
@@ -346,8 +346,8 @@ namespace puyo_tools
                     string filename = FileList[level][files[i] - (level > 0 ? 1 : 0)][2].ToString();
                     int num         = files[i] - (level > 0 ? 1 : 0);
 
-                    output_filename = (filename == String.Empty ? NumberData.FormatFilename((uint)num, FileList.Count) :
-                        (addFileNumberExtracted.Checked ? Path.GetFileNameWithoutExtension(filename) + '_' + NumberData.FormatFilename((uint)num, FileList.Count) + Path.GetExtension(filename) :
+                    output_filename = (filename == String.Empty ? num.ToString().PadLeft(Number.Digits(FileList.Count), '0') :
+                        (addFileNumberExtracted.Checked ? Path.GetFileNameWithoutExtension(filename) + '_' + num.ToString().PadLeft(Number.Digits(FileList.Count), '0') + Path.GetExtension(filename) :
                         filename));
 
                     /* Which selection dialog do we want? */

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -23,22 +24,22 @@ namespace puyo_tools
                 ushort files = StreamConverter.ToUShort(data, 0x0);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Now we can get the file offsets, lengths, and filenames */
-                for (uint i = 0; i < files; i++)
+                for (int i = 0; i < files; i++)
                 {
                     /* Get the filename */
                     string filename = StreamConverter.ToString(data, 0xA + (i * 0x24), 28);
 
-                    fileInfo[i] = new object[] {
+                    fileList[i] = new object[] {
                         StreamConverter.ToUInt(data, 0x2 + (i * 0x24)), // Offset
                         StreamConverter.ToUInt(data, 0x6 + (i * 0x24)), // Length
-                        (filename == String.Empty ? NumberData.FormatFilename(i, (int)files) : filename) + ".gvr" // Filename
+                        (filename == String.Empty ? String.Empty : filename + ".gvr") // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -55,138 +56,194 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files, and format type in the stream */
-                ushort files    = Endian.Swap(StreamConverter.ToUShort(stream, 0xA));
+                ushort files = Endian.Swap(StreamConverter.ToUShort(stream, 0xA));
                 byte formatType = StreamConverter.ToByte(stream, 0x9);
 
+                /* Now let's see what information is contained inside the metadata */
+                bool containsMDLN        = (formatType & (1 << 4)) > 0;
+                bool containsFilename    = (formatType & (1 << 3)) > 0;
+                bool containsPixelFormat = (formatType & (1 << 2)) > 0;
+                bool containsDimensions  = (formatType & (1 << 1)) > 0;
+                bool containsGlobalIndex = (formatType & (1 << 0)) > 0;
+
+                /* Let's figure out the metadata size */
+                int size_filename = 0, size_pixelFormat = 0, size_dimensions = 0, size_globalIndex = 0;
+                if (containsFilename)    size_filename = 28;
+                if (containsPixelFormat) size_pixelFormat = 2;
+                if (containsDimensions)  size_dimensions = 2;
+                if (containsGlobalIndex) size_globalIndex = 4;
+                int metaDataSize = 2 + size_filename + size_pixelFormat + size_dimensions + size_globalIndex;
+
                 /* Now create the header */
-                byte[] header   = new byte[0x2 + (files * 0x24)];
-                uint fileOffset = (uint)header.Length;
-                int arcLength   = header.Length;
-                Array.Copy(BitConverter.GetBytes(files), 0, header, 0x0, 2);
+                MemoryStream data = new MemoryStream();
+                data.Write(BitConverter.GetBytes(files), 0, 2);
 
                 /* Ok, try to find out data */
-                uint offset = StreamConverter.ToUInt(stream, 0x4) + 0x8;
-                byte[][] fileData = new byte[files][];
+                uint sourceOffset = StreamConverter.ToUInt(stream, 0x4) + 0x8;
 
+                /* Find a PVR file if the offset refers to a MDLN file */
+                if (containsMDLN)
+                    sourceOffset = Number.RoundUp(sourceOffset + StreamConverter.ToUInt(stream, sourceOffset + 0x4), 16);
+
+                /* Write each file in the header */
+                uint offset = 0x2 + ((uint)files * 0x24);
                 for (int i = 0; i < files; i++)
                 {
                     /* Ok, get the size of the GVR file */
-                    int length = (int)StreamConverter.ToUInt(stream, offset + 0x4) + 24;
+                    uint length = StreamConverter.ToUInt(stream, sourceOffset + 0x4) + 24;
 
-                    /* Create the byte array for this file */
-                    fileData[i] = new byte[length];
+                    /* Write the offset, file length, and filename */
+                    data.Write(BitConverter.GetBytes(offset), 0, 4); // Offset
+                    data.Write(BitConverter.GetBytes(length), 0, 4); // Length
 
-                    /* Write the GBIX header */
-                    Array.Copy(StringConverter.ToByteArray(FileHeader.GBIX, 4), 0, fileData[i], 0x0, 4); // GBIX
-                    Array.Copy(BitConverter.GetBytes((uint)8), 0, fileData[i], 0x4, 4);
-
-                    if (formatType == 0x9)
-                        Array.Copy(StreamConverter.ToByteArray(stream, 0x2A + (i * 0x22), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 09)
+                    if (containsFilename)
+                        data.Write(StreamConverter.ToByteArray(stream, (uint)(0xE + (i * metaDataSize)), 28), 0, 28); // Filename
                     else
-                        Array.Copy(StreamConverter.ToByteArray(stream, 0x2E + (i * 0x26), 4), 0, fileData[i], 0x8, 4); // Global Index (Type 0F)
+                        data.Position += 28;
+
+                    /* Add the GBIX header */
+                    data.Position = offset;
+                    data.Write(StringConverter.ToByteArray(GraphicHeader.GBIX, 4), 0, 4);
+                    data.Write(BitConverter.GetBytes((int)0x8), 0, 4);
+
+                    /* Copy the global index */
+                    if (containsGlobalIndex)
+                        data.Write(StreamConverter.ToByteArray(stream, 0xE + size_filename + size_pixelFormat + size_dimensions + (i * metaDataSize), 4), 0, 4);
+                    else
+                        data.Position += 4;
+
+                    /* Write out the 0x0 in the header */
+                    data.Write(new byte[] { 0x0, 0x0, 0x0, 0x0 }, 0, 4);
 
                     /* Now copy the file */
-                    Array.Copy(StreamConverter.ToByteArray(stream, (int)offset, length - 16), 0, fileData[i], 0x10, length - 16);
+                    ((MemoryStream)StreamConverter.Copy(stream, sourceOffset, length)).WriteTo(data);
+                    data.Position = 0x26 + (i * 0x24);
 
-                    /* Now write this information to the new format */
-                    Array.Copy(BitConverter.GetBytes(arcLength), 0, header, 0x2 + (i * 0x24), 4); // Offset
-                    Array.Copy(BitConverter.GetBytes(length),    0, header, 0x6 + (i * 0x24), 4); // Length
+                    sourceOffset += Number.RoundUp((length - 24), 16);
 
-                    if (formatType == 0x9)
-                        Array.Copy(StreamConverter.ToByteArray(stream, 0xE + (i * 0x22), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 09)
-                    else
-                        Array.Copy(StreamConverter.ToByteArray(stream, 0xE + (i * 0x26), 28), 0, header, 0xA + (i * 0x24), 28); // Filename (Type 0F)
-
-                    /* Now increase the filesize for the stream */
-                    arcLength += length;
-
-                    /* And finally set the new offset */
-                    offset += NumberData.RoundUpToMultiple((uint)(length - 24), 16);
+                    /* Increment the offset */
+                    offset += length;
                 }
 
-                /* Now create the memory stream and return it */
-                MemoryStream newData = new MemoryStream(arcLength);
-                newData.Write(header, 0x0, header.Length);
-
-                for (int i = 0; i < files; i++)
-                    newData.Write(fileData[i], 0x0, fileData[i].Length);
-
-                return newData;
+                return data;
             }
             catch
             {
                 /* Something went wrong, so send as blank stream */
-                return new MemoryStream();
-            }
-        }
-
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
-        {
-            try
-            {
-                /* Create the header data. */
-                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x26) + 0xC, 16)];
-
-                /* Write out the header and other information. */
-                Array.Copy(ObjectConverter.StringToBytes(FileHeader.GVM, 4), 0, header, 0x0, 4); // GVMH
-                Array.Copy(BitConverter.GetBytes(header.Length - 0x8),       0, header, 0x4, 4); // Offset of first file
-                Array.Copy(BitConverter.GetBytes(Endian.Swap((ushort)0xF)),  0, header, 0x8, 2); // What metadata is included (make it 0xF for now)
-                Array.Copy(BitConverter.GetBytes(Endian.Swap((ushort)files.Length)), 0, header, 0xA, 2); // Number of files
-
-                for (int i = 0; i < files.Length; i++)
-                {
-                    /* Write out the file number */
-                    Array.Copy(BitConverter.GetBytes(Endian.Swap((ushort)i)), 0, header, 0xC + (i * 0x26), 2); // File Number
-
-                    /* Next, let's make sure this is a PVR first */
-                    FileStream gvr;
-                    using (gvr = new FileStream(files[i], FileMode.Open, FileAccess.Read))
-                    {
-                        if (FileFormat.Image(gvr, Path.GetExtension(files[i])) != GraphicFormat.GVR)
-                            continue;
-
-                        /* Ok, we have confirmed it's a PVR. Now get some information about the PVR. */
-                        uint headerOffset = (uint)(ObjectConverter.StreamToString(gvr, 0x0, 4) == FileHeader.GVRT ? 0x0 : 0x10);
-                        int width         = (int)Math.Min(Math.Log(Endian.Swap(ObjectConverter.StreamToUShort(gvr, headerOffset + 0xC)), 2) - 2, 9);
-                        int height        = (int)Math.Min(Math.Log(Endian.Swap(ObjectConverter.StreamToUShort(gvr, headerOffset + 0xE)), 2) - 2, 9);
-                        uint globalIndex  = (headerOffset == 0x10 ? ObjectConverter.StreamToUInt(gvr, 0x8) : 0);
-
-                        /* Ok, let's write that info to the header now */
-                        Array.Copy(ObjectConverter.StringToBytes(Path.GetFileNameWithoutExtension(storedFilenames[i]), 27), 0, header, 0xC + (i * 0x26) + 0x2, 27); // Filename
-                        Array.Copy(ObjectConverter.StreamToBytes(gvr, headerOffset + 0xA, 2),           0, header, 0xC + (i * 0x26) + 0x1E, 2); // Image Format Details
-                        Array.Copy(BitConverter.GetBytes(Endian.Swap((ushort)((width << 4) | height))), 0, header, 0xC + (i * 0x26) + 0x20, 2); // Width & Height
-                        Array.Copy(BitConverter.GetBytes(globalIndex), 0, header, 0xC + (i * 0x26) + 0x22, 4); // Global Index
-                    }
-                }
-
-                return header;
-            }
-            catch
-            {
-                /* Something went wrong, so return nothing */
-                return new byte[0];
+                return null;
             }
         }
 
         /* Format File */
-        public override Stream FormatFile(ref Stream data)
+        public override Stream FormatFileToAdd(ref Stream data)
         {
             /* Check to see if this is a GVR */
             Images images = new Images(data, null);
             if (images.Format == GraphicFormat.GVR)
             {
                 /* Does the file start with GVRT? */
-                if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GVRT)
+                if (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT)
                     return data;
 
                 /* Otherwise strip off the first 16 bytes */
                 else
-                    return ObjectConverter.StreamToStream(data, 0x10, data.Length - 0x10);
+                    return StreamConverter.Copy(data, 0x10, data.Length - 0x10);
             }
 
             /* Can't add this file! */
             return null;
+        }
+
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
+        {
+            try
+            {
+                /* Let's get out settings now */
+                blockSize = 24;
+                bool addFilename    = settings[0];
+                bool addPixelFormat = settings[1];
+                bool addDimensions  = settings[2];
+                bool addGlobalIndex = settings[3];
+
+                /* Let's figure out the metadata size, so we can create the header properly */
+                int metaDataSize = 2;
+                if (addFilename)    metaDataSize += 28;
+                if (addPixelFormat) metaDataSize += 2;
+                if (addDimensions)  metaDataSize += 2;
+                if (addGlobalIndex) metaDataSize += 4;
+
+                /* Create the header now */
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(Number.RoundUp(0xC + (files.Length * metaDataSize), blockSize));
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.GVM, 4));
+                header.AddRange(NumberConverter.ToByteList(header.Capacity));
+                
+                /* Set up format type */
+                byte formatType = 0x0;
+                if (addFilename)    formatType |= (1 << 3);
+                if (addPixelFormat) formatType |= (1 << 2);
+                if (addDimensions)  formatType |= (1 << 1);
+                if (addGlobalIndex) formatType |= (1 << 0);
+                header.Add(0x0);
+                header.Add(formatType);
+
+                /* Write number of files */
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap((ushort)files.Length)));
+
+                uint offset = (uint)header.Capacity + 8;
+
+                /* Start writing the information in the header */
+                for (int i = 0; i < files.Length; i++)
+                {
+                    using (FileStream data = new FileStream(files[i], FileMode.Open, FileAccess.Read))
+                    {
+                        /* Make sure this is a GVR */
+                        Images images = new Images(data, files[i]);
+                        if (images.Format != GraphicFormat.GVR)
+                            throw new IncorrectGraphicFormat();
+
+                        /* Get the header offset */
+                        int headerOffset = (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT ? 0x0 : 0x10);
+
+                        offsetList.Add(offset);
+                        header.AddRange(NumberConverter.ToByteList(Endian.Swap((ushort)i)));
+
+                        if (addFilename)
+                            header.AddRange(StringConverter.ToByteList(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 27, 28));
+                        if (addPixelFormat)
+                            header.AddRange(StreamConverter.ToByteList(data, headerOffset + 0xA, 2));
+                        if (addDimensions)
+                        {
+                            /* Get the width and height */
+                            int width  = (int)Math.Min(Math.Log(Endian.Swap(StreamConverter.ToUShort(data, headerOffset + 0xC)), 2) - 2, 9);
+                            int height = (int)Math.Min(Math.Log(Endian.Swap(StreamConverter.ToUShort(data, headerOffset + 0xE)), 2) - 2, 9);
+                            header.Add(0x0);
+                            header.Add((byte)((width << 4) | height));
+                        }
+                        if (addGlobalIndex)
+                        {
+                            if (headerOffset == 0x0)
+                                header.AddRange(ByteConverter.ToByteList(new byte[] {0x0, 0x0, 0x0, 0x0}));
+                            else
+                                header.AddRange(StreamConverter.ToByteList(data, 0x8, 4));
+                        }
+
+                        offset += Number.RoundUp((uint)(data.Length - headerOffset), blockSize);
+                    }
+                }
+
+                return header;
+            }
+            catch (IncorrectGraphicFormat)
+            {
+                offsetList = null;
+                return null;
+            }
+            catch
+            {
+                offsetList = null;
+                return null;
+            }
         }
     }
 }

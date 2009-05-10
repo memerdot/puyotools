@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -24,7 +25,7 @@ namespace puyo_tools
                 uint files = StreamConverter.ToUInt(data, 0x4);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Find the metadata location */
                 uint metadataLocation = StreamConverter.ToUInt(data, (files * 0x8) + 0x8);
@@ -34,14 +35,14 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileInfo[i] = new object[] {
+                    fileList[i] = new object[] {
                         StreamConverter.ToUInt(data, 0x8 + (i * 0x8)), // Offset
                         StreamConverter.ToUInt(data, 0xC + (i * 0x8)), // Length
                         StreamConverter.ToString(data, metadataLocation + (i * 0x30), 32) // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -50,116 +51,106 @@ namespace puyo_tools
             }
         }
 
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        /* Create a header for an archive */
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
             try
             {
                 /* Create variables from settings */
-                bool v1        = (bool)settings[0];
+                //blockSize = 2048;
+                bool v1 = settings[0];
 
                 /* Create the header data. */
-                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x8) + 0x10, blockSize)];
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(Number.RoundUp(0x10 + (files.Length * 0x8), blockSize));
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.AFS, 4));
+                header.AddRange(NumberConverter.ToByteList(files.Length));
 
-                /* Write out the header and number of files. */
-                Array.Copy(ObjectConverter.StringToBytes(FileHeader.AFS, 3), 0, header, 0x0, 3); // AFS
-                Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
+                /* Set the intial offset */
+                uint offset = (uint)header.Capacity;
 
-                /* Set the offset */
-                uint offset = (uint)header.Length;
-
-                /* Now add the file offsets and lengths */
                 for (int i = 0; i < files.Length; i++)
                 {
-                    uint length = (uint)(new FileInfo(files[i]).Length);
+                    uint length = (uint)new FileInfo(files[i]).Length;
 
-                    /* Write the offsets and lengths */
-                    Array.Copy(BitConverter.GetBytes(offset), 0, header, 0x8 + (i * 0x8), 4); // Offset
-                    Array.Copy(BitConverter.GetBytes(length), 0, header, 0xC + (i * 0x8), 4); // Length;
+                    /* Write out the information */
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(offset)); // Offset
+                    header.AddRange(NumberConverter.ToByteList(length)); // Length
 
-                    /* Now increment the offset */
-                    offset += NumberData.RoundUpToMultiple(length, blockSize);
+                    /* Increment the offset */
+                    offset += Number.RoundUp(length, blockSize);
                 }
 
-                /* Now where do we write the metadata location? */
+                /* Add the location to the metadata */
                 if (v1) // AFS v1
                 {
-                    Array.Copy(BitConverter.GetBytes(offset),              0, header, header.Length - 0x8, 4); // Metadata Offset
-                    Array.Copy(BitConverter.GetBytes(files.Length * 0x30), 0, header, header.Length - 0x4, 4); // Metadata Length
+                    header.InsertRange(header.Capacity - 0x8, NumberConverter.ToByteList(offset));
+                    header.InsertRange(header.Capacity - 0x4, NumberConverter.ToByteList(files.Length * 0x30));
                 }
                 else // AFS v2
                 {
-                    Array.Copy(BitConverter.GetBytes(offset),              0, header, 0x8 + (files.Length * 0x8), 4); // Metadata Offset
-                    Array.Copy(BitConverter.GetBytes(files.Length * 0x30), 0, header, 0xC + (files.Length * 0x8), 4); // Metadata Length
+                    header.AddRange(NumberConverter.ToByteList(offset));
+                    header.AddRange(NumberConverter.ToByteList(files.Length * 0x30));
                 }
 
                 return header;
             }
             catch
             {
-                /* Something went wrong, so return nothing */
-                return new byte[0];
+                offsetList = null;
+                return null;
             }
         }
 
-        /* Get offset for the file or metadata */
-        public uint getOffset(byte[] header, uint file)
-        {
-            try
-            {
-                /* Return the offset that we can add the file to. */
-                uint offset = BitConverter.ToUInt32(header, (int)(0x8 + (file * 0x8)));
-
-                /* See if the offset was 0 and we are trying to get the metadata */
-                if (offset == 0x0 && file == BitConverter.ToUInt32(header, 0x4))
-                    offset = BitConverter.ToUInt32(header, header.Length - 0x8);
-
-                return offset;
-            }
-            catch
-            {
-                /* Something went wrong, so return the offset 0x0 */
-                return 0x0;
-            }
-        }
-
-        /* Create the metadata */
-        public override byte[] CreateFooter(string[] files, string[] storedFilenames, ref byte[] header, uint blockSize, object[] settings)
+        /* Create a footer for the archive */
+        public override List<byte> CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref List<byte> header)
         {
             try
             {
                 /* Create variables from settings */
-                bool v1        = (bool)settings[0];
+                //blockSize = 2048;
+                bool v1                = settings[0];
+                bool storeCreationTime = settings[1];
 
-                /* Create the metadata array */
-                byte[] metadata = new byte[NumberData.RoundUpToMultiple((uint)(files.Length * 0x30), blockSize)];
+                /* Create the footer */
+                List<byte> footer = new List<byte>(Number.RoundUp(files.Length * 0x30, blockSize));
 
-                /* Write the metadata for each file */
                 for (int i = 0; i < files.Length; i++)
                 {
-                    FileInfo fileInfo = new FileInfo(files[i]);
+                    DateTime fileDate = new FileInfo(files[i]).CreationTime;
 
-                    Array.Copy(ObjectConverter.StringToBytes(storedFilenames[i], 31), 0, metadata, (i * 0x30), 31); // Filename
+                    /* Write the filename and file info */
+                    footer.AddRange(StringConverter.ToByteList(archiveFilenames[i], 31, 32));
 
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Year),   0, metadata, (i * 0x30) + 0x20, 2); // Year of Creation
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Month),  0, metadata, (i * 0x30) + 0x22, 2); // Month of Creation
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Day),    0, metadata, (i * 0x30) + 0x24, 2); // Day of Creation
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Hour),   0, metadata, (i * 0x30) + 0x26, 2); // Hour of Creation
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Minute), 0, metadata, (i * 0x30) + 0x28, 2); // Minute of Creation
-                    Array.Copy(BitConverter.GetBytes((ushort)fileInfo.CreationTime.Second), 0, metadata, (i * 0x30) + 0x2A, 2); // Second of Creation
+                    if (storeCreationTime)
+                    {
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Year));
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Month));
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Day));
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Hour));
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Minute));
+                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Second));
+                    }
+                    else
+                    {
+                        for (int j = 0; j < 12; j++)
+                            footer.Add(0x0);
+                    }
 
+                    /* Store this useless byte for some reason */
                     if (v1) // AFS v1
-                        Array.Copy(header, 0x8 + (i * 0x8), metadata, (i * 0x30) + 0x2C, 4);
+                        footer.AddRange(header.GetRange(0x8 + (i * 0x8), 4));
                     else // AFS v2
-                        Array.Copy(header, 0x4 + (i * 0x4), metadata, (i * 0x30) + 0x2C, 4);
+                        footer.AddRange(header.GetRange(0x4 + (i * 0x4), 4));
                 }
 
-                return metadata;
+                return footer;
             }
             catch
             {
-                /* Something went wrong, so return nothing */
-                return new byte[0];
+                /* An error occured */
+                return null;
             }
         }
     }

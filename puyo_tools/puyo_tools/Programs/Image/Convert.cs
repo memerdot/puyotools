@@ -34,7 +34,7 @@ namespace puyo_tools
         public Image_Convert()
         {
             /* Select the files */
-            files = Files.selectFiles("Select Image Files",
+            files = FileSelectionDialog.OpenFiles("Select Image Files",
                 "Supported Image Formats (*.gim;*.gvr)|*.gim;*.gvr|" +
                 "GIM Images (*.gim)|*.gim|" + 
                 "GVR Images (*.gvr)|*.gvr|" + 
@@ -51,7 +51,7 @@ namespace puyo_tools
         public Image_Convert(bool selectDirectory)
         {
             /* Select the directories */
-            string directory = Files.SelectDirectory("Select a directory");
+            string directory = FileSelectionDialog.SaveDirectory("Select a directory");
 
             /* If no directory was selected, don't continue */
             if (directory == null)

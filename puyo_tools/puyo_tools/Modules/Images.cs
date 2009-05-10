@@ -12,7 +12,8 @@ namespace puyo_tools
         public GraphicFormat Format  = GraphicFormat.NULL;
         private Stream Data          = null;
         private Bitmap imageData     = null;
-        private string ImageName     = null;
+        public string ImageName      = null;
+        private string FileExt       = null;
 
         /* Image Object for unpacking */
         public Images(Stream dataStream, string dataFilename)
@@ -20,7 +21,7 @@ namespace puyo_tools
             /* Set up our image information */
             Data = dataStream;
 
-            ImageInformation(ref Data, out Format, out Converter, out ImageName);
+            ImageInformation(ref Data, out Format, out Converter, out ImageName, out FileExt);
         }
 
         /* Unpack image */
@@ -44,51 +45,67 @@ namespace puyo_tools
             }
         }
 
+        /* File Extension */
+        public string FileExtension
+        {
+            get
+            {
+                return (FileExt == null ? String.Empty : FileExt);
+            }
+        }
+
         /* Get image information */
-        private void ImageInformation(ref Stream data, out GraphicFormat format, out ImageClass converter, out string name)
+        private void ImageInformation(ref Stream data, out GraphicFormat format, out ImageClass converter, out string name, out string ext)
         {
             try
             {
-                /* Let's check for image formats based on the headers first */
-                switch ((GraphicHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                /* Let's check for image formats based on the 12 byte headers first */
+                //switch ((GraphicHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                switch (StreamConverter.ToString(data, 0x0, 12))
                 {
                     case GraphicHeader.GIM: // GIM (Big Endian)
                     case GraphicHeader.MIG: // GIM (Little Endian)
                         format    = GraphicFormat.GIM;
                         converter = new GIM();
                         name      = "GIM";
+                        ext       = ".gim";
                         return;
                 }
 
                 /* Ok, do special checks now */
 
                 /* PVR file */
-                //if ((ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x19, 1)[0] < 64) ||
-                //    (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x9, 1)[0] < 64))
-                //{
-                //    format    = GraphicFormat.PVR;
-                //    converter = new PVR();
-                //    name      = "PVR";
-                //    return;
+                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x19) < 64) ||
+                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x9) < 64))
+                {
+                    format    = GraphicFormat.PVR;
+                    //converter = new PVR();
+                    converter = null;
+                    name      = "PVR";
+                    ext       = ".pvr";
+                    return;
+                }
 
                 /* GVR File */
-                if ((ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.GVRT) ||
-                    (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GCIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.GVRT) ||
-                    (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GVRT))
+                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.GVRT) ||
+                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GCIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.GVRT) ||
+                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT))
                 {
                     format    = GraphicFormat.GVR;
                     converter = new GVR();
                     name      = "GVR";
+                    ext       = ".gvr";
                     return;
                 }
 
                 /* SVR File */
-                if ((ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GBIX && ObjectConverter.StreamToString(data, 0x10, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x19, 1)[0] > 64) ||
-                    (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.PVRT && ObjectConverter.StreamToBytes(data, 0x9, 1)[0] > 64))
+                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x19) > 64) ||
+                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x9) > 64))
                 {
-                    format = GraphicFormat.SVR;
+                    format    = GraphicFormat.SVR;
                     converter = new SVR();
-                    name = "SVR";
+                    name      = "SVR";
+                    ext       = ".svr";
                     return;
                 }
 
@@ -101,6 +118,7 @@ namespace puyo_tools
                 format     = GraphicFormat.NULL;
                 converter  = null;
                 name       = null;
+                ext        = null;
                 return;
             }
             catch
@@ -109,6 +127,7 @@ namespace puyo_tools
                 format     = GraphicFormat.NULL;
                 converter  = null;
                 name       = null;
+                ext        = null;
                 return;
             }
         }
@@ -126,15 +145,15 @@ namespace puyo_tools
     }
 
     /* Image Header */
-    public enum GraphicHeader : uint
+    public static class GraphicHeader
     {
-        NULL = 0x00000000,
-        GBIX = 0x58494247,
-        GIM = 0x4D49472E,
-        GMP = 0x2D504D47,
-        GVR = 0x58494347,
-        MIG = 0x2E47494D,
-        //PVRT = 0x54525650,
+        public const string
+            GBIX = "GBIX",
+            GCIX = "GCIX",
+            GIM  = ".GIM1.00\x00PSP",
+            GVRT = "GVRT",
+            MIG  = "MIG.00.1PSP\x00",
+            PVRT = "PVRT";
     }
 
     public abstract class ImageClass

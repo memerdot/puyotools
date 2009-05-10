@@ -36,6 +36,11 @@ namespace puyo_tools
             compress   = true;
         }
 
+        /* Blank compression class, so you can access methods */
+        public Compression()
+        {
+        }
+
         /* Decompress */
         public Stream Decompress()
         {
@@ -69,7 +74,8 @@ namespace puyo_tools
             try
             {
                 /* Check based on the first 4 bytes */
-                switch ((CompressionHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                //switch ((CompressionHeader)ObjectConverter.StreamToUInt(data, 0x0))
+                switch (StreamConverter.ToString(data, 0x0, 4))
                 {
                     case CompressionHeader.CNX: // CNX
                         format     = CompressionFormat.CNX;
@@ -91,7 +97,8 @@ namespace puyo_tools
                 }
 
                 /* Check compression based on the first byte */
-                switch ((CompressionHeader)ObjectConverter.StreamToBytes(data, 0x0, 1)[0])
+                //switch ((CompressionHeader)ObjectConverter.StreamToBytes(data, 0x0, 1)[0])
+                switch (StreamConverter.ToString(data, 0x0, 1))
                 {
                     case CompressionHeader.LZSS: // LZSS
                         format     = CompressionFormat.LZSS;
@@ -125,7 +132,26 @@ namespace puyo_tools
                 name       = null;
                 return;
             }
+        }
 
+        /* Get compression information, used for compressing */
+        public void CompressionInformation(CompressionFormat format, out CompressionClass compressor, out string name)
+        {
+            switch (format)
+            {
+                case CompressionFormat.CXLZ:
+                    compressor = new CXLZ();
+                    name       = "CXLZ";
+                    return;
+                case CompressionFormat.LZSS:
+                    compressor = new LZSS();
+                    name       = "LZSS";
+                    return;
+            }
+
+            compressor = null;
+            name       = null;
+            return;
         }
     }
 
@@ -141,14 +167,14 @@ namespace puyo_tools
     }
 
     /* Compression Header */
-    public enum CompressionHeader : uint
+    public static class CompressionHeader
     {
-        NULL = 0x00000000,
-        CNX  = 0x02584E43,
-        CXLZ = 0x5A4C5843,
-        LZ01 = 0x31305A4C,
-        LZSS = 0x00000010,
-        ONZ  = 0x00000011,
+        public const string
+            CNX  = "CNX\x02",
+            CXLZ = "CXLZ",
+            LZ01 = "LZ01",
+            LZSS = "\x10",
+            ONZ  = "\x11";
     }
 
     public abstract class CompressionClass
@@ -156,7 +182,10 @@ namespace puyo_tools
         /* Compression Functions */
         public abstract Stream Decompress(ref Stream data); // Decompress Data
         public abstract Stream Compress(ref Stream data, string filename); // Compress Data
-        public abstract string GetFilename(ref Stream data, string filename); // Get Filname
+        public virtual string GetFilename(ref Stream data, string filename) // Get Filname
+        {
+            return filename;
+        }
 
         /* Search for data that can be compressed (LZ compression formats) */
         public int[] LZsearch(ref byte[] decompressedData, uint pos, uint decompressedSize)

@@ -128,11 +128,5 @@ namespace puyo_tools
                 return null;
             }
         }
-
-        /* Get Filename */
-        public override string GetFilename(ref Stream data, string filename)
-        {
-            return filename;
-        }
     }
 }

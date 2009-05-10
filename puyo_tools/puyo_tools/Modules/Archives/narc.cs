@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -26,14 +27,14 @@ namespace puyo_tools
                 uint offset_fimg = offset_fntb + StreamConverter.ToUInt(data, offset_fntb + 0x4);
 
                 /* Stuff for filenames */
-                bool containsFilenames = StreamConverter.ToUInt(data, offset_fntb + 0x8) == 8;
+                bool containsFilenames = (StreamConverter.ToUInt(data, offset_fntb + 0x8) == 8);
                 uint offset_filename   = offset_fntb + 0x10;
 
                 /* Get the number of files */
                 uint files = StreamConverter.ToUInt(data, offset_fatb + 0x8);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
@@ -52,14 +53,14 @@ namespace puyo_tools
                         offset_filename     += (uint)(filename_length + 1);
                     }
 
-                    fileInfo[i] = new object[] {
+                    fileList[i] = new object[] {
                         offset + offset_fimg + 0x8, // Offset
                         length,  // Length
                         filename // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -69,12 +70,13 @@ namespace puyo_tools
         }
 
         /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        public override List<byte> CreateHeader(string[] files, string[] storedFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
             try
             {
                 /* Create variables from settings */
-                bool addFilenames = (bool)settings[0];
+                //blockSize         = 4;
+                bool addFilenames = settings[0];
 
                 /* Get the sizes for each section of the narc */
                 uint size_fatb = 12 + (uint)(files.Length * 8);
@@ -88,80 +90,84 @@ namespace puyo_tools
                         size_fntb += (1 + Math.Min((uint)file.Length, 255));
 
                     size_fntb++;
-                    size_fntb = NumberData.RoundUpToMultiple(size_fntb, 4);
+                    size_fntb = Number.RoundUp(size_fntb, blockSize);
                 }
 
                 /* Add the size for the files */
                 foreach (string file in files)
-                    size_fimg += NumberData.RoundUpToMultiple((uint)new FileInfo(file).Length, 4);
+                    size_fimg += Number.RoundUp((uint)new FileInfo(file).Length, blockSize);
 
                 /* Ok, get the offsets for each section */
                 uint offset_fatb = 0x10;
-                uint offset_fntb = offset_fatb + NumberData.RoundUpToMultiple(size_fatb, 4);
-                uint offset_fimg = offset_fntb + NumberData.RoundUpToMultiple(size_fntb, 4);
+                uint offset_fntb = offset_fatb + size_fatb;
+                uint offset_fimg = offset_fntb + size_fntb;
 
                 /* Create the header */
-                byte[] header = new byte[offset_fimg + 8];
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>((int)offset_fimg + 8);
 
                 /* Write out the NARC header */
-                Array.Copy(ObjectConverter.StringToBytes(FileHeader.NARC, 4), 0, header, 0x0, 4); // NARC
-                Array.Copy(new byte[] { 0xFE, 0xFF, 0x00, 0x01 }, 0, header, 0x4, 4); // Fixed Values
-                Array.Copy(BitConverter.GetBytes(0x10 + size_fatb + size_fntb + size_fimg), 0, header, 0x8, 4); // File size
-                Array.Copy(new byte[] { 0x10, 0x00, 0x30, 0x00 }, 0, header, 0xC, 4); // Fixed Values
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.NARC, 4)); // NARC
+                header.AddRange(ByteConverter.ToByteList(new byte[] { 0xFE, 0xFF, 0x00, 0x01 })); // Fixed Values
+                header.AddRange(NumberConverter.ToByteList(0x10 + size_fatb + size_fntb + size_fimg)); // File Size
+                header.AddRange(ByteConverter.ToByteList(new byte[] { 0x10, 0x00, 0x30, 0x00 })); // Fixed Values
 
                 /* Write our the FATB header */
-                Array.Copy(ObjectConverter.StringToBytes("BTAF", 4), 0, header, offset_fatb,       4); // FATB
-                Array.Copy(BitConverter.GetBytes(size_fatb),         0, header, offset_fatb + 0x4, 4); // FATB Size
-                Array.Copy(BitConverter.GetBytes(files.Length),      0, header, offset_fatb + 0x8, 4); // Number of Files
-                
+                header.AddRange(StringConverter.ToByteList("BTAF", 4)); // FATB
+                header.AddRange(NumberConverter.ToByteList(size_fatb)); // FATB Size
+                header.AddRange(NumberConverter.ToByteList(files.Length)); // Number of Files
+
                 /* Get the offset & length for the file */
-                uint offset = 0;
+                uint offset = offset_fimg + 8;
                 for (int i = 0; i < files.Length; i++)
                 {
                     uint length = (uint)new FileInfo(files[i]).Length;
 
-                    Array.Copy(BitConverter.GetBytes(offset),          0, header, offset_fatb + 0x0C + (i * 0x8), 4); // File Offset
-                    Array.Copy(BitConverter.GetBytes(offset + length), 0, header, offset_fatb + 0x10 + (i * 0x8), 4); // File Length
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(offset)); // Offset
+                    header.AddRange(NumberConverter.ToByteList(offset + length)); // Length
 
-                    offset += NumberData.RoundUpToMultiple(length, 4);
+                    offset += Number.RoundUp(length, 4);
                 }
 
                 /* Write out the FNTB header */
-                Array.Copy(ObjectConverter.StringToBytes("BTNF", 4),   0, header, offset_fntb,       4); // FNTB
-                Array.Copy(BitConverter.GetBytes(size_fntb),           0, header, offset_fntb + 0x4, 4); // FNTB Size
-                Array.Copy(BitConverter.GetBytes(addFilenames ? 8 : 4), 0, header, offset_fntb + 0x8, 4); // Determines if the NARC contains filenames.
-                Array.Copy(new byte[] { 0x00, 0x00, 0x01, 0x00 },      0, header, offset_fntb + 0xC, 4); // Fixed Values
+                header.AddRange(StringConverter.ToByteList("BTNF", 4)); // FNTB
+                header.AddRange(NumberConverter.ToByteList(size_fntb)); // FNTB Size
+                header.AddRange(NumberConverter.ToByteList((addFilenames ? 8 : 4))); // NARC contains filenames (8) or not (4)
+                header.AddRange(ByteConverter.ToByteList(new byte[] { 0x00, 0x00, 0x01, 0x00 })); // Fixed Values
 
                 /* Write out the filenames */
                 if (addFilenames)
                 {
-                    uint filename_offset = 0x10;
                     for (int i = 0; i < files.Length; i++)
                     {
-                        header[offset_fntb + filename_offset] = (byte)Math.Min(storedFilenames[i].Length, 255);
-                        Array.Copy(ObjectConverter.StringToBytes(storedFilenames[i], 255), 0, header, offset_fntb + filename_offset + 1, storedFilenames[i].Length);
-
-                        filename_offset += (1 + (uint)storedFilenames[i].Length);
+                        header.Add((byte)Math.Min(storedFilenames[i].Length, 255)); // Length of filename
+                        header.AddRange(StringConverter.ToByteList(storedFilenames[i], Math.Min(storedFilenames[i].Length, 255))); // Filename
                     }
 
-                    filename_offset++;
-
-                    /* Pad the ending if the section size isn't a multiple of 4 */
-                    if (filename_offset < size_fntb)
-                        Array.Copy(PadData.Fill(0xFF, (int)(size_fntb - filename_offset)), 0, header, offset_fntb + filename_offset, size_fntb - filename_offset);
+                    /* Pad the file if we are not at the FIMG section yet */
+                    while (header.Count < offset_fimg)
+                        header.Add(PaddingByte());
                 }
 
                 /* Write out the FIMG header */
-                Array.Copy(ObjectConverter.StringToBytes("GMIF", 4), 0, header, offset_fimg,       4); // FIMG
-                Array.Copy(BitConverter.GetBytes(size_fimg),         0, header, offset_fimg + 0x4, 4); // FIMG Size
+                header.AddRange(StringConverter.ToByteList("GMIF", 4)); // FIMG
+                header.AddRange(NumberConverter.ToByteList(size_fimg)); // FIMG Size
 
                 return header;
             }
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new byte[0];
+                offsetList = null;
+                return null;
             }
+        }
+
+        /* Padding byte */
+        public override byte PaddingByte()
+        {
+            return 0xFF;
         }
     }
 }

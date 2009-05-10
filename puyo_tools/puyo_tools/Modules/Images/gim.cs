@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Diagnostics;
 using System.IO;
+using System.Drawing;
+using System.Diagnostics;
+using System.Drawing.Imaging;
 
 namespace puyo_tools
 {
@@ -32,7 +32,7 @@ namespace puyo_tools
                 tempOutputFileName = Path.ChangeExtension(tempOutputFileName, ".png");
 
                 FileStream tempFile = new FileStream(tempFileName, FileMode.Append, FileAccess.Write);
-                tempFile.Write(ObjectConverter.StreamToBytes(data, 0, (int)data.Length), 0, (int)data.Length);
+                tempFile.Write(StreamConverter.ToByteArray(data, 0, (int)data.Length), 0, (int)data.Length);
                 tempFile.Close();
 
                 /* Now, run GimConv to convert the file to a PNG. */

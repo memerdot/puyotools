@@ -42,7 +42,7 @@ namespace puyo_tools
         public Archive_Extract()
         {
             /* Select the files */
-            files = Files.selectFiles("Select Archives",
+            files = FileSelectionDialog.OpenFiles("Select Archives",
                 "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
@@ -70,7 +70,7 @@ namespace puyo_tools
         public Archive_Extract(bool selectDirectory)
         {
             /* Select the directories */
-            string directory = Files.SelectDirectory("Select a directory");
+            string directory = FileSelectionDialog.SaveDirectory("Select a directory");
 
             /* If no directory was selected, don't continue */
             if (directory == null)
@@ -285,14 +285,14 @@ namespace puyo_tools
                             status.CurrentFileLocal = j;
 
                             /* Load the file into a MemoryStream */
-                            MemoryStream outputData = (MemoryStream)ObjectConverter.StreamToStream(archive.Data, (uint)archiveFileList[j][0], (uint)archiveFileList[j][1]);
+                            MemoryStream outputData = (MemoryStream)StreamConverter.Copy(archive.Data, (uint)archiveFileList[j][0], (uint)archiveFileList[j][1]);
 
                             /* Get the filename we will extract the data to */
                             string extractFilename;
                             if (extractFilenames.Checked && archiveFileList[j][2].ToString() != String.Empty)
                                 extractFilename = archiveFileList[j][2].ToString();
                             else
-                                extractFilename = j.ToString().PadLeft(NumberData.Digits(archiveFileList.Length), '0') + FileFormat.GetExtension(outputData);
+                                extractFilename = j.ToString().PadLeft(Number.Digits(archiveFileList.Length), '0') + FileData.GetFileExtension(ref outputData);
 
                             /* Decompress this data before we write it? */
                             if (decompressExtractedFile.Checked)

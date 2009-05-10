@@ -125,7 +125,7 @@ namespace puyo_tools
                 uint Dpointer = 0x0; // Decompressed Pointer
 
                 List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData = ObjectConverter.StreamToBytes(data, 0x0, (int)decompressedSize); // Decompressed Data
+                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
 
                 /* Add the header byte */
                 compressedData.Add(0x10);

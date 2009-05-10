@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 /* Archive Module */
 namespace puyo_tools
@@ -12,6 +13,7 @@ namespace puyo_tools
         public Stream Data            = null;
         private string Filename       = null;
         public string ArchiveName     = null;
+        public string FileExt         = null;
 
         /* Archive Object for extraction */
         public Archive(Stream dataStream, string dataFilename)
@@ -20,24 +22,30 @@ namespace puyo_tools
             Data     = dataStream;
             Filename = dataFilename;
 
-            ArchiveInformation(ref Data, ref Filename, out Format, out Archiver, out ArchiveName);
+            ArchiveInformation(ref Data, ref Filename, out Format, out Archiver, out ArchiveName, out FileExt);
 
             /* Stop if we don't have a supported archive */
             if (Format == ArchiveFormat.NULL)
                 return;
 
             /* Translate the data before we work with it */
-            Data = Archiver.TranslateData(ref Data);
+            MemoryStream translatedData = (MemoryStream)Archiver.TranslateData(ref Data);
+            if (translatedData != null)
+                Data = translatedData;
         }
 
         /* Archive object for creation */
-        public Archive(Stream dataStream, string dataFilename, ArchiveFormat format, ArchiveClass archiver)
+        public Archive(ArchiveFormat format, string dataFilename, ArchiveClass archiver)
         {
             /* Set up our compression information */
-            Data     = dataStream;
             Filename = dataFilename;
             Format   = format;
             Archiver = archiver;
+        }
+
+        /* Blank archive class, so you can access methods */
+        public Archive()
+        {
         }
 
         /* Get file list */
@@ -47,15 +55,21 @@ namespace puyo_tools
         }
 
         /* Create archive header */
-        public byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        public List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
-            return Archiver.CreateHeader(files, storedFilenames, blockSize, settings);
+            return Archiver.CreateHeader(files, archiveFilenames, blockSize, settings, out offsetList);
         }
 
         /* Create archive footer */
-        public byte[] CreateFooter(string[] files, string[] storedFilenames, ref byte[] header, uint blockSize, object[] settings)
+        public List<byte> CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref List<byte> header)
         {
-            return Archiver.CreateFooter(files, storedFilenames, ref header, blockSize, settings);
+            return Archiver.CreateFooter(files, archiveFilenames, blockSize, settings, ref header);
+        }
+
+        /* Format file to add to the archive */
+        public Stream FormatFileToAdd(ref Stream data)
+        {
+            return Archiver.FormatFileToAdd(ref data);
         }
 
         /* Output Directory */
@@ -67,69 +81,30 @@ namespace puyo_tools
             }
         }
 
-        /* Format file, for adding a file to an archive */
-        /*public Stream FormatFileToAdd(Stream data)
+        /* File Extension */
+        public string FileExtension
         {
-            switch (format)
+            get
             {
-                case ArchiveFormat.GVM: // Strip off the GBIX/GCIX header
-                    if (FileFormat.Image(data, String.Empty) == GraphicFormat.GVR)
-                    {
-                        if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.GVRT)
-                            return data;
-                        else
-                            return ObjectConverter.StreamToStream(data, 0x10, (int)data.Length - 16);
-                    }
-                    else
-                        return new MemoryStream();
-
-                case ArchiveFormat.PVM: // Strip off the GBIX header
-                    if (FileFormat.Image(data, String.Empty) == GraphicFormat.PVR)
-                    {
-                        if (ObjectConverter.StreamToString(data, 0x0, 4) == FileHeader.PVRT)
-                            return data;
-                        else
-                            return ObjectConverter.StreamToStream(data, 0x10, (int)data.Length - 16);
-                    }
-                    else
-                        return new MemoryStream();
+                return (FileExt == null ? String.Empty : FileExt);
             }
+        }
 
-            return data;
-        }*/
-
-        /* Add padding, for creating the archive */
-        /*public Stream AddPadding(uint length, int blockSize)
+        /* Padding Byte */
+        public byte PaddingByte
         {
-            switch (format)
+            get
             {
-                case ArchiveFormat.NARC: return PadData.FillStream(0xFF, blockSize - (int)(length % blockSize));
+                return Archiver.PaddingByte();
             }
-
-            return PadData.FillStream(0x0, blockSize - (int)(length % blockSize));
-        }*/
-
-        /* Does the archive contain filenames */
-        /*public bool ContainsFilenames()
-        {
-            switch (format)
-            {
-                case ArchiveFormat.ACX:
-                case ArchiveFormat.GNT:
-                case ArchiveFormat.NSIF:
-                case ArchiveFormat.NUIF: return false;
-            }
-
-            return true;
-        }*/
+        }
 
         /* Get Archive information */
-        private void ArchiveInformation(ref Stream data, ref string filename, out ArchiveFormat format, out ArchiveClass archiver, out string name)
+        private void ArchiveInformation(ref Stream data, ref string filename, out ArchiveFormat format, out ArchiveClass archiver, out string name, out string ext)
         {
             try
             {
                 /* Let's check for archive formats based on the headers first */
-                //ArchiveHeader header = (ArchiveHeader)ObjectConverter.StreamToUInt(data, 0x0);
                 string header = StreamConverter.ToString(data, 0x0, 4, true);
                 switch (header)
                 {
@@ -137,71 +112,86 @@ namespace puyo_tools
                         format   = ArchiveFormat.AFS;
                         archiver = new AFS();
                         name     = "AFS";
+                        ext      = ".afs";
                         return;
                     case ArchiveHeader.GVM: // GVM
                         format   = ArchiveFormat.GVM;
                         archiver = new GVM();
                         name     = "GVM";
+                        ext      = ".gvm";
                         return;
                     case ArchiveHeader.MRG: // MRG
                         format   = ArchiveFormat.MRG;
                         archiver = new MRG();
                         name     = "MRG";
+                        ext      = ".mrg";
                         return;
                     case ArchiveHeader.NARC: // NARC
                         format   = ArchiveFormat.NARC;
                         archiver = new NARC();
                         name     = "NARC";
+                        ext      = ".narc";
                         return;
                     case ArchiveHeader.ONE: // ONE
                         format   = ArchiveFormat.ONE;
                         archiver = new ONE();
                         name     = "ONE";
+                        ext      = ".one";
                         return;
                     case ArchiveHeader.PVM: // PVM
                         format   = ArchiveFormat.PVM;
                         archiver = new PVM();
                         name     = "PVM";
+                        ext      = ".pvm";
                         return;
                     case ArchiveHeader.SPK: // SPK
                         format   = ArchiveFormat.SPK;
                         archiver = new SPK();
                         name     = "SPK";
+                        ext      = ".spk";
                         return;
                     case ArchiveHeader.TEX:  // TEX
                         format   = ArchiveFormat.TEX;
                         archiver = new TEX();
                         name     = "TEX";
+                        ext      = ".tex";
                         return;
 
                     case ArchiveHeader.TXAG: // TXAG
                         format   = ArchiveFormat.TXAG;
                         archiver = new TXAG();
                         name     = "TXAG";
+                        ext      = ".txd";
                         return;
                 }
 
                 /* Check based on file extension */
-                switch (Path.GetExtension(filename).Substring(1).ToLower())
+                if (Path.GetExtension(filename) != String.Empty)
                 {
-                    case "acx": // ACX
-                        format   = ArchiveFormat.ACX;
-                        archiver = new ACX();
-                        name     = "ACX";
-                        return;
-                    case "vdd": // VDD
-                        format   = ArchiveFormat.VDD;
-                        archiver = new VDD();
-                        name     = "VDD";
-                        return;
+                    switch (Path.GetExtension(filename).Substring(1).ToLower())
+                    {
+                        case "acx": // ACX
+                            format   = ArchiveFormat.ACX;
+                            archiver = new ACX();
+                            name     = "ACX";
+                            ext      = ".acx";
+                            return;
+                        case "vdd": // VDD
+                            format   = ArchiveFormat.VDD;
+                            archiver = new VDD();
+                            name     = "VDD";
+                            ext      = ".vdd";
+                            return;
+                    }
                 }
 
                 /* GNT File */
-                if (header == ArchiveHeader.NGIF && StreamConverter.ToString(data, 0x20, 4) == FileHeader.NGTL)
+                if (header == ArchiveHeader.NGIF && StreamConverter.ToString(data, 0x20, 4) == ArchiveHeader.NGTL)
                 {
                     format   = ArchiveFormat.GNT;
                     archiver = new GNT();
                     name     = "GNT";
+                    ext      = ".gnt";
                     return;
                 }
 
@@ -211,6 +201,7 @@ namespace puyo_tools
                     format   = ArchiveFormat.MDL;
                     archiver = new MDL();
                     name     = "MDL";
+                    ext      = ".mdl";
                     return;
                 }
 
@@ -221,6 +212,7 @@ namespace puyo_tools
                     format   = ArchiveFormat.SNT;
                     archiver = new SNT();
                     name     = "SNT";
+                    ext      = ".snt";
                     return;
                 }
 
@@ -232,6 +224,7 @@ namespace puyo_tools
                     format   = ArchiveFormat.SBA;
                     archiver = new SBA();
                     name     = "Storybook Archive";
+                    ext      = ".one";
                     return;
                 }
 
@@ -244,6 +237,7 @@ namespace puyo_tools
                 format   = ArchiveFormat.NULL;
                 archiver = null;
                 name     = null;
+                ext      = null;
                 return;
             }
             catch
@@ -252,8 +246,122 @@ namespace puyo_tools
                 format   = ArchiveFormat.NULL;
                 archiver = null;
                 name     = null;
+                ext      = null;
                 return;
             }
+        }
+
+        /* Get Archive Information, used for archive creation */
+        public void ArchiveInformation(ArchiveFormat format, out ArchiveClass archiver, out string name, out string filter, out int[] blockSize, out int filenameLength)
+        {
+            switch (format)
+            {
+                case ArchiveFormat.ACX:
+                    archiver       = new ACX();
+                    name           = "ACX";
+                    filter         = filter = "ACX Archive (*.acx)|*.acx";
+                    blockSize      = new int[] {4, 2048};
+                    filenameLength = 63;
+                    return;
+                case ArchiveFormat.AFS:
+                    archiver       = new AFS();
+                    name           = "AFS";
+                    filter         = "AFS Archive (*.afs)|*.afs";
+                    blockSize      = new int[] {2048, 32};
+                    filenameLength = 31;
+                    return;
+                case ArchiveFormat.GNT:
+                    archiver       = new GNT();
+                    name           = "GNT";
+                    filter         = "GNT Archive (*.gnt)|*.gnt";
+                    blockSize      = new int[] {8};
+                    filenameLength = 64;
+                    return;
+                case ArchiveFormat.GVM:
+                    archiver       = new GVM();
+                    name           = "GVM";
+                    filter         = "GVM Archive (*.gvm)|*.gvm";
+                    blockSize      = new int[] {16, -1};
+                    filenameLength = 28;
+                    return;
+                case ArchiveFormat.MDL:
+                    archiver       = new MDL();
+                    name           = "MDL";
+                    filter         = "MDL Archive (*.mdl)|*.mdl";
+                    blockSize      = new int[] {4096};
+                    filenameLength = 63;
+                    return;
+                case ArchiveFormat.MRG:
+                    archiver       = new MRG();
+                    name           = "MRG";
+                    filter         = "MRG Archive (*.mrg)|*.mrg";
+                    blockSize      = new int[] { 16 };
+                    filenameLength = 32;
+                    return;
+                case ArchiveFormat.NARC:
+                    archiver       = new NARC();
+                    name           = "NARC";
+                    filter         = "NARC Archive (*.narc)|*.narc|CARC Archive (*.carc)|*.carc";
+                    blockSize      = new int[] {4};
+                    filenameLength = 255;
+                    return;
+                case ArchiveFormat.ONE:
+                    archiver       = new ONE();
+                    name           = "ONE";
+                    filter         = "ONE Archive (*.one)|*.one|ONZ Archive (*.onz)|*.onz";
+                    blockSize      = new int[] {32};
+                    filenameLength = 55;
+                    return;
+                case ArchiveFormat.PVM:
+                    archiver       = new PVM();
+                    name           = "PVM";
+                    filter         = "PVM Archive (*.pvm)|*.pvm";
+                    blockSize      = new int[] {16, -1};
+                    filenameLength = 28;
+                    return;
+                case ArchiveFormat.SNT:
+                    archiver       = new SNT();
+                    name           = "SNT";
+                    filter         = "SNT Archive (*.snt)|*.snt";
+                    blockSize      = new int[] {8};
+                    filenameLength = 64;
+                    return;
+                case ArchiveFormat.SPK:
+                    archiver       = new SPK();
+                    name           = "SPK";
+                    filter         = "SPK Archive (*.spk)|*.spk";
+                    blockSize      = new int[] { 16 };
+                    filenameLength = 20;
+                    return;
+                case ArchiveFormat.TEX:
+                    archiver       = new TEX();
+                    name           = "TEX";
+                    filter         = "TEX Archive (*.tex)|*.tex";
+                    blockSize      = new int[] { 16 };
+                    filenameLength = 20;
+                    return;
+                case ArchiveFormat.TXAG:
+                    archiver       = new TXAG();
+                    name           = "TXAG";
+                    filter         = "TXAG Archive (*.txd)|*.txd";
+                    blockSize      = new int[] {64};
+                    filenameLength = 31;
+                    return;
+                case ArchiveFormat.VDD:
+                    archiver       = new VDD();
+                    name           = "VDD";
+                    filter         = "VDD Archive (*.vdd)|*.vdd";
+                    blockSize      = new int[] { 2048, -1 };
+                    filenameLength = 15;
+                    return;
+            }
+
+            archiver       = null;
+            name           = null;
+            filter         = null;
+            blockSize      = new int[0];
+            filenameLength = 0;
+            return;
         }
     }
 
@@ -261,18 +369,22 @@ namespace puyo_tools
     {
         /* Archive Functions */
         public abstract object[][] GetFileList(ref Stream data); // Get Stored Files
-        public abstract byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings);              // Create Header
-        public virtual byte[] CreateFooter(string[] files, string[] storedFilenames, ref byte[] header, uint blockSize, object[] settings) // Create Footer
+        public abstract List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList);
+        public virtual List<byte> CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref List<byte> header)
         {
             return null;
         }
         public virtual Stream TranslateData(ref Stream data) // Translate Data
         {
-            return data;
+            return null;
         }
-        public virtual Stream FormatFile(ref Stream data) // Format Data
+        public virtual Stream FormatFileToAdd(ref Stream data) // Format File to Add
         {
-            return data;
+            return null;
+        }
+        public virtual byte PaddingByte() // Padding Byte
+        {
+            return 0x0;
         }
     }
 
@@ -287,8 +399,6 @@ namespace puyo_tools
         MDL,  // MDL
         MRG,  // MRG
         NARC, // NARC
-        NSIF, // SNT (PS2)
-        NUIF, // SNT (PSP)
         ONE,  // ONE
         PVM,  // PVM
         SBA,  // Storybook Archive
@@ -321,6 +431,5 @@ namespace puyo_tools
             SPK  = "SPK0",
             TEX  = "TEX0",
             TXAG = "TXAG";
-    }
-        
+    } 
 }

@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>puyo_tools</RootNamespace>
     <AssemblyName>puyo_tools</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>puyo_tools.puyo_tools</StartupObject>
     <ApplicationIcon>
@@ -45,6 +45,9 @@
   -->
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
@@ -52,7 +55,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions.cs" />
-    <Compile Include="FileFormat.cs" />
     <Compile Include="FileSelectionDialog.cs" />
     <Compile Include="FormContent.cs" />
     <Compile Include="icons.Designer.cs">
@@ -68,8 +70,6 @@
     <Compile Include="Modules\Archive.cs" />
     <Compile Include="Modules\Archives\acx.cs" />
     <Compile Include="Modules\Archives\afs.cs" />
-    <Compile Include="Conversions.cs">
-    </Compile>
     <Compile Include="Modules\Archives\gvm.cs" />
     <Compile Include="Modules\Archives\mdl.cs" />
     <Compile Include="Modules\Archives\narc.cs" />
@@ -169,5 +169,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\new.png" />
   </ItemGroup>
 </Project>

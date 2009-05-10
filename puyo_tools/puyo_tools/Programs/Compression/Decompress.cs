@@ -37,7 +37,7 @@ namespace puyo_tools
         public Compression_Decompress()
         {
             /* Select the files */
-            files = Files.selectFiles("Select Compressed Files",
+            files = FileSelectionDialog.OpenFiles("Select Compressed Files",
                 "All Files (*.*)|*.*|" +
                 "CNX Compressed Files (*.cnx)|*.cnx|" +
                 "NARC Compressed Archives (*.carc)|*.carc|" +
@@ -53,7 +53,7 @@ namespace puyo_tools
         public Compression_Decompress(bool selectDirectory)
         {
             /* Select the directories */
-            string directory = Files.SelectDirectory("Select a directory");
+            string directory = FileSelectionDialog.SaveDirectory("Select a directory");
 
             /* If no directory was selected, don't continue */
             if (directory == null)

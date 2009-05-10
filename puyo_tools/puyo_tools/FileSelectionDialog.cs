@@ -8,17 +8,34 @@ namespace puyo_tools
         /* Open File Selection Dialog */
         public static string OpenFile(string title, string filter)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Multiselect = false;
+            OpenFileDialog ofd   = new OpenFileDialog();
+            ofd.Multiselect      = false;
             ofd.RestoreDirectory = true;
-            ofd.CheckFileExists = true;
-            ofd.CheckPathExists = true;
-            ofd.AddExtension = true;
-            ofd.Filter = filter;
-            ofd.DefaultExt = String.Empty;
+            ofd.CheckFileExists  = true;
+            ofd.CheckPathExists  = true;
+            ofd.AddExtension     = true;
+            ofd.Filter           = filter;
+            ofd.DefaultExt       = String.Empty;
+            ofd.Title            = title;
             ofd.ShowDialog();
 
             return ofd.FileName;
+        }
+
+        public static string[] OpenFiles(string title, string filter)
+        {
+            OpenFileDialog ofd   = new OpenFileDialog();
+            ofd.Multiselect      = true;
+            ofd.RestoreDirectory = true;
+            ofd.CheckFileExists  = true;
+            ofd.CheckPathExists  = true;
+            ofd.AddExtension     = true;
+            ofd.Filter           = filter;
+            ofd.DefaultExt       = String.Empty;
+            ofd.Title            = title;
+            ofd.ShowDialog();
+
+            return ofd.FileNames;
         }
 
         /* Save File Selection Dialog */
