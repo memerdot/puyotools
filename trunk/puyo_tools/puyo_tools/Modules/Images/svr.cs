@@ -20,7 +20,7 @@ namespace puyo_tools
             /* Convert the SVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(ObjectConverter.StreamToBytes(data, 0, (int)data.Length));
+                VrFile imageInput   = new VrFile(StreamConverter.ToByteArray(data, 0, (int)data.Length));
                 ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
 
                 return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));

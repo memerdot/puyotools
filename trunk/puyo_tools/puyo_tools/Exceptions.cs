@@ -22,4 +22,11 @@ namespace puyo_tools
         {
         }
     }
+
+    class IncorrectGraphicFormat : Exception
+    {
+        public IncorrectGraphicFormat()
+        {
+        }
+    }
 }

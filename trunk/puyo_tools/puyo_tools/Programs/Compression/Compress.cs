@@ -39,7 +39,7 @@ namespace puyo_tools
         public Compression_Compress()
         {
             /* Select the files */
-            files = Files.selectFiles("Select Files to Compress", "All Files|*.*");
+            files = FileSelectionDialog.OpenFiles("Select Files to Compress", "All Files|*.*");
 
             /* If no files were selected, don't continue */
             if (files.Length == 0)
@@ -51,7 +51,7 @@ namespace puyo_tools
         public Compression_Compress(bool selectDirectory)
         {
             /* Select the directories */
-            string directory = Files.SelectDirectory("Select a directory");
+            string directory = FileSelectionDialog.SaveDirectory("Select a directory");
 
             /* If no directory was selected, don't continue */
             if (directory == null)
@@ -97,7 +97,8 @@ namespace puyo_tools
 
             /* Compression Format */
             FormContent.Add(compressionSettings, compressionFormat,
-                new string[] {"CNX", "CXLZ", "LZ01", "LZSS"},
+                //new string[] {"CNX", "CXLZ", "LZ01", "LZSS"},
+                new string[] {"CXLZ", "LZSS"},
                 new Point(8, 36),
                 new Size(120, 16));
 
@@ -158,10 +159,12 @@ namespace puyo_tools
                         CompressionFormat format    = CompressionFormat.NULL;
                         switch (compressionFormat.SelectedIndex)
                         {
-                            case 0: compressor = new CNX();  format = CompressionFormat.CNX;  break;
-                            case 1: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
-                            case 2: compressor = new LZ01(); format = CompressionFormat.LZ01; break;
-                            case 3: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
+                            case 0: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
+                            case 1: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
+                            //case 0: compressor = new CNX();  format = CompressionFormat.CNX;  break;
+                            //case 1: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
+                            //case 2: compressor = new LZ01(); format = CompressionFormat.LZ01; break;
+                            //case 3: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
                         }
 
                         /* Set up the decompressor */

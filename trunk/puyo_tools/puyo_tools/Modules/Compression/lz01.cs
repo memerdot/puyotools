@@ -100,15 +100,15 @@ namespace puyo_tools
                 uint Dpointer = 0x0; // Decompressed Pointer
 
                 List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData   = ObjectConverter.StreamToBytes(data, 0x0, (int)decompressedSize); // Decompressed Data
+                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
 
                 /* Add the header */
-                compressedData.AddRange(ObjectConverter.StringToByteList(FileHeader.LZ01, 4));
+                compressedData.AddRange(StringConverter.ToByteList(CompressionHeader.LZ01, 4));
 
                 /* Add the compressed and decompressed size. */
-                compressedData.AddRange(ObjectConverter.UIntToByteList(0)); // Set to 0 for now.
-                compressedData.AddRange(ObjectConverter.UIntToByteList(decompressedSize));
-                compressedData.AddRange(ObjectConverter.UIntToByteList(0));
+                compressedData.AddRange(NumberConverter.ToByteList(0)); // Set to 0 for now.
+                compressedData.AddRange(NumberConverter.ToByteList(decompressedSize));
+                compressedData.AddRange(NumberConverter.ToByteList(0));
 
                 /* Ok, now let's start creating the compressed data */
                 while (Dpointer < decompressedSize)
@@ -159,7 +159,7 @@ namespace puyo_tools
                 /* Let's go back and add the compressed filesize */
                 uint compressedSize = (uint)compressedData.Count;
                 compressedData.RemoveRange(0x4, 4);
-                compressedData.InsertRange(0x4, ObjectConverter.UIntToByteList(compressedSize));
+                compressedData.InsertRange(0x4, NumberConverter.ToByteList(compressedSize));
 
                 return new MemoryStream(compressedData.ToArray());
             }
@@ -169,11 +169,5 @@ namespace puyo_tools
                 return null;
             }
         }
-
-        /* Get Filename */
-        public override string GetFilename(ref Stream data, string filename)
-        {
-            return filename;
-        }  
     }
 }

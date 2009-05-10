@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -21,25 +22,22 @@ namespace puyo_tools
             try
             {
                 /* Get the number of files */
-                ushort files = StreamConverter.ToUShort(data, 0x0);
+                uint files = StreamConverter.ToUInt(data, 0x0);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    /* Get the filename */
-                    string filename = StreamConverter.ToString(data, 0xC + (i * 0x2C), 36);
-
-                    fileInfo[i] = new object[] {
+                    fileList[i] = new object[] {
                         StreamConverter.ToUInt(data, 0x4 + (i * 0x2C)), // Offset
                         StreamConverter.ToUInt(data, 0x8 + (i * 0x2C)), // Length
-                        filename, // Filename
+                        StreamConverter.ToString(data, 0xC + (i * 0x2C), 36) // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -64,15 +62,15 @@ namespace puyo_tools
                 uint offset = 0xC + (files * 0x2C);
                 for (int i = 0; i < files; i++)
                 {
-                    uint length = Endian.Swap(ObjectConverter.StreamToUInt(stream, (uint)(0x3C + (i * 0x30))));
+                    uint length = Endian.Swap(StreamConverter.ToUInt(stream, 0x3C + (i * 0x30)));
 
                     data.Write(BitConverter.GetBytes(offset), 0, 4); // Offset
                     data.Write(BitConverter.GetBytes(length), 0, 4); // Length
                     data.Write(StreamConverter.ToByteArray(stream, (uint)(0x10 + (i * 0x30)), 36), 0, 36); // Filename
 
                     /* Let's write the decompressed data */
-                    uint sourceOffset = Endian.Swap(StreamConverter.ToUInt(stream, 0x34 + (i * 0x30)));
-                    uint sourceLength = Endian.Swap(StreamConverter.ToUInt(stream, 0x38 + (i * 0x30)));
+                    uint sourceOffset     = Endian.Swap(StreamConverter.ToUInt(stream, 0x34 + (i * 0x30)));
+                    uint sourceLength     = Endian.Swap(StreamConverter.ToUInt(stream, 0x38 + (i * 0x30)));
                     Stream compressedData = StreamConverter.Copy(stream, sourceOffset, sourceLength);
 
                     /* Decompress the data */
@@ -83,7 +81,7 @@ namespace puyo_tools
 
                     /* Write the data */
                     data.Position = offset;
-                    data.Write(StreamConverter.ToByteArray(decompressedData, 0, (int)length), 0, (int)length);
+                    decompressedData.WriteTo(data);
                     data.Position = 0x30 + (i * 0x2C);
                     decompressedData.Close();
 
@@ -94,21 +92,14 @@ namespace puyo_tools
             }
             catch
             {
-                return new MemoryStream();
+                return null;
             }
         }
 
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
-            try
-            {
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
+            offsetList = null;
+            return null;
         }
     }
 }

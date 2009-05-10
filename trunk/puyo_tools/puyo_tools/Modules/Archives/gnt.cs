@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -15,125 +16,6 @@ namespace puyo_tools
         {
         }
 
-        /* Create GNT archive. */
-        public byte[] create(byte[][] data, string[] fileNames, bool addFileNames)
-        {
-            try
-            {
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[data.Length];
-                uint[] fileLength = new uint[data.Length];
-
-                /* Set initial data. */
-                int headerFileSize = Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + ((data.Length - 1) * 0x14) + 0x8 + (data.Length * 0x8); // Filesize of Header
-                int fileSize = headerFileSize;
-
-                /* Get the size for the files that will be added in the GNT archive. */
-                for (int i = 0; i < data.Length; i++)
-                {
-                    /* Set file offset and length. */
-                    fileStart[i]  = (uint)fileSize;
-                    fileLength[i] = (uint)data[i].Length;
-
-                    if (addFileNames)
-                        fileSize += PadInteger.multipleLength(fileNames[i].Length, 2);
-
-                    fileSize += PadInteger.multipleLength(data[i].Length, 2);
-                }
-
-                fileSize = PadInteger.multipleLength(fileSize, 16);
-
-                /* Size of the footer. */
-                int footerStart    = fileSize;
-                int footerFileSize = PadInteger.multipleLength(0x4 + 0x10 + (data.Length * 0x4) + 0x4, 16) + 0x10;
-
-                fileSize += footerFileSize;
-
-                /* Now that we have the filesize, start writing the data. */
-                byte[] archiveData = new byte[fileSize];
-
-                /* Set up the header */
-                Array.Copy(Header.GNT,     0, archiveData, 0x0,  Header.GNT.Length);     // GNT Header
-                Array.Copy(Header.GNT_SUB, 0, archiveData, 0x20, Header.GNT_SUB.Length); // Sub GNT Header
-
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)(fileSize - footerFileSize - 0x20))),       0, archiveData, 0x10, 0x4); // Data between NGTL and NOF0 (+ 4 bytes)
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)(fileSize - footerFileSize))),              0, archiveData, 0x14, 0x4); // Data from start of archive to NOF0 (+ 4 bytes)
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)((data.Length * 4) + 24))),                 0, archiveData, 0x18, 0x4); // (Number of Files * 4) + 24
-                Array.Copy(BitConverter.GetBytes((uint)(fileSize - footerFileSize - 0x28)),                       0, archiveData, 0x24, 0x4); // Data from 0x28 to NOF0
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)data.Length)),                              0, archiveData, 0x30, 0x4); // Number of Files
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)(headerFileSize - footerFileSize - 0x20))), 0, archiveData, 0x38, 0x4); // Header Size - Footer Size - 0x20
-
-                archiveData[0x4] = 0x18;
-                archiveData[0xB] = 0x1;
-                archiveData[0xF] = 0x20;
-
-                archiveData[0x1F] = 0x1;
-
-                archiveData[0x2B] = 0x10;
-
-                archiveData[0x37] = 0x1C;
-
-                archiveData[0x45] = 0x1;
-                archiveData[0x47] = 0x1;
-
-                for (int i = 0; i < data.Length - 1; i++)
-                {
-                    /* Add some things. */
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)i)), 0, archiveData, Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + (i * 0x14), 0x4); // i as a 4 byte array
-                    archiveData[Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + (i * 0x14) + 0x11] = 0x1;
-                    archiveData[Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + (i * 0x14) + 0x13] = 0x1;
-                }
-
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)(data.Length - 1))), 0, archiveData, Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + ((data.Length - 1) * 0x14), 0x4); // i as a 4 byte array
-
-                /* Add the footer. */
-                byte[] footer     = { 0x4E, 0x4F, 0x46, 0x30 };
-                byte[] footer_sub = { 0x4E, 0x45, 0x4E, 0x44 };
-
-                Array.Copy(footer, 0, archiveData, footerStart, footer.Length); // Start of footer
-                Array.Copy(BitConverter.GetBytes((uint)((data.Length * 4) + (data.Length % 2 == 0 ? 16 : 28))), 0, archiveData, footerStart + 0x4, 0x4); // Files * 4 + (16 if files is even, 28 if files is odd)
-                Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)data.Length + 2)), 0, archiveData, footerStart + 0x8, 0x4); // Number of files + 2
-
-                archiveData[footerStart + 0x13] = 0x14;
-
-                for (int i = 0; i < data.Length; i++)
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt((uint)((data.Length * 20) + 0x20 + (i * 8)))), 0, archiveData, footerStart + 0x14 + (i * 0x4), 0x4); // (Files in archive + 20) + 32 + (i * 8)
-
-                archiveData[footerStart + 0x4 + 0x10 + (data.Length * 0x4) + 0x3] = 0x18;
-
-                /* End of the footer. */
-                Array.Copy(footer_sub, 0, archiveData, footerStart + footerFileSize - 0x10, 0x4);
-
-                /* Add the file data and the header. */
-                for (int i = 0; i < data.Length; i++)
-                {
-                    /* Add the file size & length. */
-                    uint headerFileStart = fileStart[i];
-                    if (addFileNames)
-                        headerFileStart += (uint)PadInteger.multipleLength(fileNames[i].Length, 4);
-
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt(headerFileStart - 0x20)), 0, archiveData, Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + ((data.Length - 1) * 0x14) + 0x8 + (i * 0x8) + 0x4, 0x4); // Start Offset
-                    Array.Copy(BitConverter.GetBytes(Endian.swapInt(fileLength[i])),          0, archiveData, Header.GNT.Length + 0x1C + Header.GNT_SUB.Length + 0x24 + ((data.Length - 1) * 0x14) + 0x8 + (i * 0x8), 0x4);       // File Length
-
-                    /* Add the filename. */
-                    if (addFileNames)
-                    {
-                        byte[] fileName = PadString.multipleToBytes(fileNames[i], 4);
-                        Array.Copy(fileName, 0, archiveData, fileStart[i], fileName.Length);
-                    }
-
-                    /* Add the data now. */
-                    Array.Copy(data[i], 0, archiveData, headerFileStart, fileLength[i]);
-                }
-
-                return archiveData;
-            }
-            catch
-            {
-                return new byte[0];
-            }
-        }
-
         /* Get the offsets, lengths, and filenames of all the files */
         public override object[][] GetFileList(ref Stream data)
         {
@@ -142,38 +24,23 @@ namespace puyo_tools
                 /* Get the number of files */
                 uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x30));
 
-                /* This is where the header should start */
-                uint headerStart = Endian.Swap(StreamConverter.ToUInt(data, 0x34)) + Endian.Swap(StreamConverter.ToUInt(data, 0x38)) + 0x4;
-
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
-                /* Use this to find filenames */
-                uint expectedStart = NumberData.RoundUpToMultiple(headerStart + (files * 0x8), 4);
+                /* See if the archive contains filenames */
+                bool containsFilenames = (files > 0 && Endian.Swap(StreamConverter.ToUInt(data, 0x3C + (files * 0x14))) + 0x20 != 0x3C + (files * 0x1C) && StreamConverter.ToString(data, 0x3C + (files * 0x1C), 4) == "FLST");
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    /* Get the offset & length */
-                    uint offset = Endian.Swap(StreamConverter.ToUInt(data, 0x4 + (i * 0x8) + headerStart)) + 0x20;
-                    uint length = Endian.Swap(StreamConverter.ToUInt(data, 0x0 + (i * 0x8) + headerStart));
-
-                    /* Check for filenames, if the offset of the file is bigger we expected it to be */
-                    string filename = String.Empty;
-                    if (offset > expectedStart)
-                        filename = StreamConverter.ToString(data, expectedStart, offset - expectedStart);
-
-                    /* Now update the expected start. */
-                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4);
-
-                    fileInfo[i] = new object[] {
-                        offset,  // Offset
-                        length,  // Length
-                        filename // Filename
+                    fileList[i] = new object[] {
+                        Endian.Swap(StreamConverter.ToUInt(data, 0x40 + (files * 0x14) + (i * 0x8))) + 0x20, // Offset
+                        Endian.Swap(StreamConverter.ToUInt(data, 0x3C + (files * 0x14) + (i * 0x8))),        // Length
+                        (containsFilenames ? StreamConverter.ToString(data, 0x40 + (files * 0x1C) + (i * 0x40), 64) : String.Empty) // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -182,9 +49,129 @@ namespace puyo_tools
             }
         }
 
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        /* Create a header for an archive */
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
-            return null;
+            try
+            {
+                /* Create variables from settings */
+                //blockSize         = 8;
+                bool addFilenames = settings[0];
+
+                /* Create the header data. */
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(0x3C + (files.Length * 0x1C));
+
+                /* Start with the NSIF/NUIF header */
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.NGIF, 4));
+                header.AddRange(NumberConverter.ToByteList(0x18));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x01)));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x20)));
+
+                /* Get the size for the NTL data */
+                uint ntl_size = 0;
+                foreach (string file in files)
+                    ntl_size += Number.RoundUp((uint)new FileInfo(file).Length, blockSize);
+
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x1C + ((uint)files.Length * 0x1C) + ntl_size)));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x3C + ((uint)files.Length * 0x1C) + ntl_size)));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x18 + ((uint)files.Length * 4))));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x01)));
+
+                /* NTL Header */
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.NGTL, 4));
+                header.AddRange(NumberConverter.ToByteList(0x14 + ((uint)files.Length * 0x1C) + ntl_size));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x10)));
+                header.AddRange(NumberConverter.ToByteList(0x00));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap((uint)files.Length)));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(0x1C)));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap(((uint)files.Length * 0x14) + 0x1C)));
+
+                /* Start adding the crap bytes at the top */
+                for (int i = 0; i < files.Length; i++)
+                {
+                    header.AddRange(NumberConverter.ToByteList(0x00));
+                    header.AddRange(NumberConverter.ToByteList(0x00));
+                    header.AddRange(ByteConverter.ToByteList(new byte[] { 0x0, 0x1, 0x0, 0x1 }));
+                    header.AddRange(NumberConverter.ToByteList(Endian.Swap((uint)i)));
+                    header.AddRange(NumberConverter.ToByteList(0x00));
+                }
+
+                /* Set the intial offset */
+                if (addFilenames)
+                    header.Capacity += 0x4 + (0x40 * files.Length);
+                uint offset = (uint)header.Capacity;
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    uint length = (uint)new FileInfo(files[i]).Length;
+
+                    /* Write out the information */
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(length)));        // Length
+                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(offset - 0x20))); // Offset
+
+                    /* Increment the offset */
+                    offset += Number.RoundUp(length, blockSize);
+                }
+
+                /* Do we want to add filenames? */
+                if (addFilenames)
+                {
+                    header.AddRange(StringConverter.ToByteList("FLST", 4));
+                    for (int i = 0; i < files.Length; i++)
+                        header.AddRange(StringConverter.ToByteList(archiveFilenames[i], 63, 64));
+                }
+
+                return header;
+            }
+            catch
+            {
+                offsetList = null;
+                return null;
+            }
+        }
+
+        /* Create a footer for the archive */
+        public override List<byte> CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref List<byte> header)
+        {
+            try
+            {
+                /* Create variables from settings */
+                //blockSize = 16;
+
+                /* Create the footer */
+                List<byte> footer = new List<byte>(Number.RoundUp(0x14 + (files.Length * 0x4), blockSize) + Number.RoundUp(0x4, blockSize));
+                footer.AddRange(StringConverter.ToByteList("NOF0", 4));
+
+                /* Write the crap data on the footer */
+                footer.AddRange(NumberConverter.ToByteList(0x14 + (files.Length * 0x4)));
+                footer.AddRange(NumberConverter.ToByteList(Endian.Swap((uint)files.Length + 2)));
+                footer.AddRange(NumberConverter.ToByteList(0x00));
+                footer.AddRange(NumberConverter.ToByteList(Endian.Swap(0x14)));
+
+                /* Write this number for whatever reason */
+                for (int i = 0; i < files.Length; i++)
+                    footer.AddRange(NumberConverter.ToByteList(Endian.Swap(0x20 + ((uint)files.Length * 0x14) + ((uint)i * 0x8))));
+
+                footer.AddRange(NumberConverter.ToByteList(Endian.Swap(0x18)));
+
+                /* Pad data before NEND */
+                while (footer.Count % blockSize != 0)
+                    footer.Add(PaddingByte());
+
+                /* Add the NEND stuff and then pad file */
+                footer.AddRange(StringConverter.ToByteList("NEND", 4));
+                while (footer.Count < footer.Capacity)
+                    footer.Add(PaddingByte());
+
+                return footer;
+            }
+            catch
+            {
+                /* An error occured */
+                return null;
+            }
         }
     }
 }

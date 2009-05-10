@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -24,34 +25,22 @@ namespace puyo_tools
                 uint files = StreamConverter.ToUShort(data, 0x2);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
-                /* Use this to find filenames */
-                uint expectedStart = NumberData.RoundUpToMultiple((files * 0xC) + 0x10, 4096);
+                /* See if the archive contains filenames */
+                bool containsFilenames = (files > 0 && StreamConverter.ToUInt(data, 0x10) != 0xC + (files * 0xC) && StreamConverter.ToString(data, 0xC + (files * 0xC), 4) == "FLST");
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    /* Get the offset & length */
-                    uint offset = StreamConverter.ToUInt(data, 0x10 + (i * 0xC));
-                    uint length = StreamConverter.ToUInt(data, 0x0C + (i * 0xC));
-
-                    /* Check for filenames, if the offset of the file is bigger we expected it to be */
-                    string filename = String.Empty;
-                    if (offset > expectedStart)
-                        filename = StreamConverter.ToString(data, expectedStart, offset - expectedStart);
-
-                    /* Now update the expected start. */
-                    expectedStart = NumberData.RoundUpToMultiple(offset + length, 4096);
-
-                    fileInfo[i] = new object[] {
-                        offset,  // Offset
-                        length,  // Length
-                        filename // Filename
+                    fileList[i] = new object[] {
+                        StreamConverter.ToUInt(data, 0x10 + (i * 0xC)), // Offset
+                        StreamConverter.ToUInt(data, 0x0C + (i * 0xC)), // Length
+                        (containsFilenames ? StreamConverter.ToString(data, 0xC + (files * 0xC) + (i * 0x40), 64) : String.Empty) // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -60,65 +49,55 @@ namespace puyo_tools
             }
         }
 
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] archiveFilenames, uint blockSize, object[] settings)
+        /* Create a header for an archive */
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
             try
             {
-                /* Create variables from settings */
-                bool addFilenames = (bool)settings[0];
+                /* Seperate settings */
+                //blockSize = 4096;
+                bool addFilenames = settings[0];
 
-                /* Create the header data. */
-                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x8) + 0x8, 4)];
+                /* Create the header and offset list */
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(0x4 + (files.Length * 0x8));
+                header.AddRange(StringConverter.ToByteList("\x02\x00", 2));
+                header.AddRange(NumberConverter.ToByteList((ushort)files.Length));
 
-                /* Write out the header and number of files. */
-                //Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ACX), 0, header, 0x0, 4); // ACX
-                //Array.Copy(BitConverter.GetBytes(Endian.Swap((uint)files.Length)), 0, header, 0x4, 4); // Files
+                /* Set the intial offset */
+                if (addFilenames)
+                    header.Capacity += 0x4 + (0x40 * files.Length);
+                header.Capacity = Number.RoundUp(header.Capacity, blockSize);
+                uint offset     = (uint)header.Capacity;
 
-                /* Set the offset */
-                uint offset = (uint)header.Length;
-
-                /* Now add the filenames, offsets and lengths */
                 for (int i = 0; i < files.Length; i++)
                 {
-                    uint length = (uint)(new FileInfo(files[i]).Length);
+                    uint length = (uint)new FileInfo(files[i]).Length;
 
-                    /* Increment offsets for filenames */
-                    if (addFilenames)
-                        offset += NumberData.RoundUpToMultiple((uint)ObjectConverter.StringToBytes(archiveFilenames[i], 63).Length, 4);
+                    /* Write out the information */
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(length))); // Length
+                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(offset))); // Offset
 
-                    /* Write the offsets and lengths */
-                    Array.Copy(BitConverter.GetBytes(Endian.Swap(offset)), 0, header, 0x8 + (i * 0x8), 4); // Offset
-                    Array.Copy(BitConverter.GetBytes(Endian.Swap(length)), 0, header, 0xC + (i * 0x8), 4); // Length
+                    /* Increment the offset */
+                    offset += Number.RoundUp(length, blockSize);
+                }
 
-                    /* Now increment the offset */
-                    offset += NumberData.RoundUpToMultiple(length, 4);
+                /* Do we want to add filenames? */
+                if (addFilenames)
+                {
+                    header.AddRange(StringConverter.ToByteList("FLST", 4));
+                    for (int i = 0; i < files.Length; i++)
+                        header.AddRange(StringConverter.ToByteList(archiveFilenames[i], 63, 64));
                 }
 
                 return header;
             }
             catch
             {
-                /* Something went wrong, so return nothing */
-                return new byte[0];
-            }
-        }
-
-        /* Get offset for the file and the filename */
-        public uint getOffset(byte[] header, uint file)
-        {
-            try
-            {
-                /* See if it is the first file. */
-                if (file == 0)
-                    return (uint)header.Length;
-                else
-                    return NumberData.RoundUpToMultiple(Endian.Swap(BitConverter.ToUInt32(header, 0x8 + (((int)file - 1) * 0x8))) + Endian.Swap(BitConverter.ToUInt32(header, 0xC + ((int)(file - 1) * 0x8))), 4);
-            }
-            catch
-            {
-                /* Something went wrong, so return the offset 0x0 */
-                return 0x0;
+                /* An error occured. */
+                offsetList = null;
+                return null;
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -14,142 +15,6 @@ namespace puyo_tools
         {
         }
 
-        /* Extract files from the MRG archive */
-        public object[][] extract(byte[] data, bool returnFileNames)
-        {
-            try
-            {
-                uint files = BitConverter.ToUInt32(data, 0x4); // Number of Files
-
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart = new uint[files];
-                uint[] fileLength = new uint[files];
-
-                /* Obtain the data for each file */
-                byte[][] returnData = new byte[files][];
-
-                for (int i = 0; i < files; i++)
-                {
-                    /* Get the file offset & length. */
-                    fileStart[i]  = BitConverter.ToUInt32(data, 0x14 + (i * 0x30)); // Start Offset
-                    fileLength[i] = BitConverter.ToUInt32(data, 0x18 + (i * 0x30)); // File Length
-
-                    returnData[i] = new byte[fileLength[i]];
-                    Array.Copy(data, fileStart[i], returnData[i], 0, fileLength[i]);
-                }
-
-                /* Attempt to file filenames for all of the files */
-                string[] fileNames = getFileNames(data, files);
-
-
-                /* Return all of the data now */
-                return new object[][] { returnData, fileNames };
-            }
-            catch (Exception)
-            {
-                return new object[0][];
-            }
-        }
-
-        /* Create MRG archive. */
-        public byte[] create(byte[][] data, string[] fileNames)
-        {
-            try
-            {
-                /* Obtain a list of file offsets and lengths. */
-                uint[] fileStart  = new uint[data.Length];
-                uint[] fileLength = new uint[data.Length];
-
-                /* Set initial data. */
-                int fileSize = Header.MRG.Length + 0xC + (data.Length * 0x30); // Filesize of Header
-
-                /* Get the size for the files that will be added in the MRG archive. */
-                for (int i = 0; i < data.Length; i++)
-                {
-                    /* Set file offset and length. */
-                    fileStart[i]  = (uint)fileSize;
-                    fileLength[i] = (uint)data[i].Length;
-
-                    fileSize += PadInteger.multipleLength(data[i].Length, 2);
-                }
-
-                /* Now that we have the filesize, start writing the data. */
-                byte[] archiveData = new byte[fileSize];
-
-                /* Set up the header */
-                Array.Copy(Header.MRG, 0, archiveData, 0, Header.MRG.Length); // MRG Header
-                Array.Copy(BitConverter.GetBytes((uint)data.Length), 0, archiveData, 0x4, 0x4); // Number of Files
-
-                /* Add the file data and the header. */
-                for (int i = 0; i < data.Length; i++)
-                {
-                    /* Add the file extension. */
-                    byte[] fileExt = PadString.fileNameToBytes(System.IO.Path.GetExtension(fileNames[i]), 0x5);
-                    if (fileExt.Length > 0)
-                        Array.Copy(fileExt, 1, archiveData, Header.MRG.Length + 0xC + (i * 0x30), fileExt.Length - 1);
-
-                    /* Add the file size & length. */
-                    Array.Copy(BitConverter.GetBytes(fileStart[i]),  0, archiveData, Header.MRG.Length + 0x10 + (i * 0x30), 0x4); // Start Offset
-                    Array.Copy(BitConverter.GetBytes(fileLength[i]), 0, archiveData, Header.MRG.Length + 0x14 + (i * 0x30), 0x4); // File Length
-
-                    /* Add the filename. */
-                    byte[] fileName = PadString.fileNameToBytes(System.IO.Path.GetFileNameWithoutExtension(fileNames[i]), 0x20);
-                    if (fileName.Length > 0)
-                        Array.Copy(fileName, 0, archiveData, Header.MRG.Length + 0x1C + (i * 0x30), fileName.Length);
-
-                    /* Add the data now. */
-                    Array.Copy(data[i], 0, archiveData, fileStart[i], fileLength[i]);
-                }
-
-                return archiveData;
-            }
-            catch
-            {
-                return new byte[0];
-            }
-        }
-
-        /* Attempt to find filenames in the MRG archive. */
-        private string[] getFileNames(byte[] data, uint files)
-        {
-            string[] fileNames = new string[files]; // Set up an array of filenames.
-            int start          = 0x10;              // Start of file name data.
-
-            for (int i = 0; i < files; i++)
-            {
-                /* Set the start position */
-                int pos = start + (i * 0x30);
-
-                /* Get the file extension. */
-                string fileExt = String.Empty;
-
-                for (int j = 0; j < 0x4; j++)
-                {
-                    if (data[pos + j] == 0x0)
-                        break;
-
-                    fileExt += (char)data[pos + j];
-                }
-
-                /* Now jump to the filename. */
-                pos += 0x10;
-
-                /* Get the file name. */
-                for (int j = 0; j < 0x20; j++)
-                {
-                    if (data[pos + j] == 0x0)
-                        break;
-
-                    fileNames[i] += (char)data[pos + j];
-                }
-
-                /* Add the file extension */
-                fileNames[i] += "." + fileExt;
-            }
-
-            return fileNames;
-        }
-
         /* Get the offsets, lengths, and filenames of all the files */
         public override object[][] GetFileList(ref Stream data)
         {
@@ -159,7 +24,7 @@ namespace puyo_tools
                 uint files = StreamConverter.ToUInt(data, 0x4);
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
@@ -168,14 +33,14 @@ namespace puyo_tools
                     string filename = StreamConverter.ToString(data, 0x20 + (i * 0x30), 32); // Name
                     string fileext  = StreamConverter.ToString(data, 0x10 + (i * 0x30), 4);  // Extension
 
-                    fileInfo[i] = new object[] {
+                    fileList[i] = new object[] {
                         StreamConverter.ToUInt(data,  0x14 + (i * 0x30)), // Offset
                         StreamConverter.ToUInt(data,  0x18 + (i * 0x30)), // Length
-                        filename + "." + fileext // Filename
+                        (filename == String.Empty && fileext == String.Empty ? String.Empty : filename + "." + fileext) // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -184,36 +49,44 @@ namespace puyo_tools
             }
         }
 
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        /* Create a header for an archive */
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
             try
             {
+                /* Create variables from settings */
+                //blockSize = 16;
+
                 /* Create the header data. */
-                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x30) + 0x10, 16)];
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(Number.RoundUp(0x10 + (files.Length * 0x30), blockSize));
 
                 /* Write out the identifier and number of files */
-                Array.Copy(ObjectConverter.StringToBytes(FileHeader.MRG, 4), 0, header, 0x0, 4);
-                Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.MRG, 4));
+                header.AddRange(NumberConverter.ToByteList(files.Length));
 
                 /* Set the offset */
-                uint offset = (uint)header.Length;
+                uint offset = (uint)header.Capacity;
 
                 /* Now add the filenames, offsets and lengths */
                 for (int i = 0; i < files.Length; i++)
                 {
-                    uint length = (uint)(new FileInfo(files[i]).Length);
+                    uint length = (uint)new FileInfo(files[i]).Length;
 
-                    /* Write the filename & file extension */
-                    Array.Copy(ObjectConverter.StringToBytes(Path.GetExtension(storedFilenames[i]).Substring(1),    3), 0, header, 0x10 + (i * 0x30), 3);
-                    Array.Copy(ObjectConverter.StringToBytes(Path.GetFileNameWithoutExtension(storedFilenames[i]), 31), 0, header, 0x20 + (i * 0x30), 31);
+                    /* Write the file extension */
+                    string fileext = Path.GetExtension(archiveFilenames[i]);
+                    header.AddRange(StringConverter.ToByteList((fileext == String.Empty ? String.Empty : fileext.Substring(1)), 3, 4));
 
                     /* Write the offsets and lengths */
-                    Array.Copy(BitConverter.GetBytes(offset), 0, header, 0x14 + (i * 0x30), 4); // Offset
-                    Array.Copy(BitConverter.GetBytes(length), 0, header, 0x18 + (i * 0x30), 4); // Length
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(offset));
+                    header.AddRange(NumberConverter.ToByteList(length));
+
+                    /* Write the filename */
+                    header.AddRange(StringConverter.ToByteList(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 31, 32));
 
                     /* Now increment the offset */
-                    offset += NumberData.RoundUpToMultiple(length, 16);
+                    offset += Number.RoundUp(length, blockSize);
                 }
 
                 return header;
@@ -221,7 +94,8 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so return nothing */
-                return new byte[0];
+                offsetList = null;
+                return null;
             }
         }
     }

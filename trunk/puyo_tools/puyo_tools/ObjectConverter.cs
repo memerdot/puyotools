@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -14,15 +15,26 @@ namespace puyo_tools
         /* Copy part of stream */
         public static Stream Copy(Stream stream, int offset, int length)
         {
-            MemoryStream outputStream = new MemoryStream(length);
+            try
+            {
+                MemoryStream outputStream = new MemoryStream(length);
 
-            stream.Position = offset;
-            for (int i = 0; i < length; i++)
-                outputStream.WriteByte((byte)stream.ReadByte());
+                stream.Position = offset;
+                for (int i = 0; i < length; i++)
+                    outputStream.WriteByte((byte)stream.ReadByte());
 
-            return outputStream;
+                return outputStream;
+            }
+            catch
+            {
+                return null;
+            }
         }
         public static Stream Copy(Stream stream, uint offset, uint length)
+        {
+            return Copy(stream, (int)offset, (int)length);
+        }
+        public static Stream Copy(Stream stream, long offset, long length)
         {
             return Copy(stream, (int)offset, (int)length);
         }
@@ -30,19 +42,26 @@ namespace puyo_tools
         /* Convert stream to string */
         public static string ToString(Stream stream, long offset, uint maxLength, bool nullBytes)
         {
-            string str = String.Empty;
-
-            stream.Position = offset;
-            for (int i = 0; i < maxLength; i++)
+            try
             {
-                char strChar = (char)stream.ReadByte();
-                if (strChar == '\0' && !nullBytes)
-                    break;
-                else
-                    str += strChar;
-            }
+                string str = String.Empty;
 
-            return str;
+                stream.Position = offset;
+                for (int i = 0; i < maxLength && offset + i < stream.Length; i++)
+                {
+                    char strChar = (char)stream.ReadByte();
+                    if (strChar == '\0' && !nullBytes)
+                        break;
+                    else
+                        str += strChar;
+                }
+
+                return str;
+            }
+            catch
+            {
+                return null;
+            }
         }
         public static string ToString(Stream stream, long offset, uint maxLength)
         {
@@ -68,6 +87,18 @@ namespace puyo_tools
         public static byte[] ToByteArray(Stream stream, uint offset, uint length)
         {
             return ToByteArray(stream, (int)offset, (int)length);
+        }
+
+        /* Convert stream to byte list */
+        public static List<byte> ToByteList(Stream stream, int offset, int length)
+        {
+            List<byte> byteList = new List<byte>(length);
+            stream.Position = offset;
+
+            for (int i = 0; i < length; i++)
+                byteList.Add((byte)stream.ReadByte());
+
+            return byteList;
         }
 
         /* Convert Stream to unsigned integer */
@@ -103,13 +134,33 @@ namespace puyo_tools
 
             for (int i = 0; i < length; i++)
             {
-                if (str.Length < i)
+                if (i < str.Length)
                     byteArray[i] = (byte)str[i];
                 else
                     byteArray[i] = 0;
             }
 
             return byteArray;
+        }
+
+        /* Convert string to byte list */
+        public static List<byte> ToByteList(string str, int strLength, int length)
+        {
+            List<byte> byteList = new List<byte>(length);
+
+            for (int i = 0; i < length; i++)
+            {
+                if (i < str.Length && i < strLength)
+                    byteList.Add((byte)str[i]);
+                else
+                    byteList.Add(0);
+            }
+
+            return byteList;
+        }
+        public static List<byte> ToByteList(string str, int length)
+        {
+            return ToByteList(str, length, length);
         }
     }
 
@@ -124,6 +175,51 @@ namespace puyo_tools
                 str += (char)byteArray[i];
 
             return str;
+        }
+
+        /* Convert byte array to byte list */
+        public static List<byte> ToByteList(byte[] byteArray)
+        {
+            List<byte> byteList = new List<byte>(byteArray.Length);
+
+            for (int i = 0; i < byteArray.Length; i++)
+                byteList.Add(byteArray[i]);
+
+            return byteList;
+        }
+
+        /* Convert byte list to Stream */
+        public static Stream ToStream(List<byte> byteList)
+        {
+            Stream stream = new MemoryStream(byteList.Count);
+
+            for (int i = 0; i < byteList.Count; i++)
+                stream.WriteByte(byteList[i]);
+
+            return stream;
+        }
+    }
+
+    public class NumberConverter
+    {
+        /* Convert integer to byte list */
+        public static List<byte> ToByteList(int number)
+        {
+            return ByteConverter.ToByteList(BitConverter.GetBytes(number));
+        }
+        public static List<byte> ToByteList(uint number)
+        {
+            return ByteConverter.ToByteList(BitConverter.GetBytes(number));
+        }
+
+        /* Convert short to byte list */
+        public static List<byte> ToByteList(short number)
+        {
+            return ByteConverter.ToByteList(BitConverter.GetBytes(number));
+        }
+        public static List<byte> ToByteList(ushort number)
+        {
+            return ByteConverter.ToByteList(BitConverter.GetBytes(number));
         }
     }
 }

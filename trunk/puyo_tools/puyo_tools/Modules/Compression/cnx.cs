@@ -114,14 +114,14 @@ namespace puyo_tools
                 uint Dpointer = 0x0;  // Decompressed Pointer
 
                 List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData = ObjectConverter.StreamToBytes(data, 0x0, (int)decompressedSize); // Decompressed Data
+                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
 
                 /* Add the header */
-                compressedData.AddRange(ObjectConverter.StringToByteList(FileHeader.CNX, 4));
-                compressedData.AddRange(ObjectConverter.StringToByteList(Path.GetExtension(filename).PadRight(4, '\x00').Substring(1), 3));
+                compressedData.AddRange(StringConverter.ToByteList(CompressionHeader.CNX, 4));
+                compressedData.AddRange(StringConverter.ToByteList(Path.GetExtension(filename).PadRight(4, '\x00').Substring(1), 3));
                 compressedData.Add(0x10);
-                compressedData.AddRange(ObjectConverter.UIntToByteList(0)); // Set to 0 for now (Compressed file size).
-                compressedData.AddRange(ObjectConverter.UIntToByteList(Endian.Swap(decompressedSize)));
+                compressedData.AddRange(NumberConverter.ToByteList(0)); // Set to 0 for now (Compressed file size).
+                compressedData.AddRange(NumberConverter.ToByteList(Endian.Swap(decompressedSize)));
 
                 /* Ok, now let's start creating the compressed data */
                 while (Dpointer < decompressedSize)
@@ -219,7 +219,7 @@ namespace puyo_tools
                 /* Let's go back and add the compressed filesize */
                 uint compressedSize = (uint)compressedData.Count;
                 compressedData.RemoveRange(0x8, 4);
-                compressedData.InsertRange(0x8, ObjectConverter.UIntToByteList(Endian.Swap(compressedSize - 16)));
+                compressedData.InsertRange(0x8, NumberConverter.ToByteList(Endian.Swap(compressedSize - 16)));
 
                 return new MemoryStream(compressedData.ToArray());
             }
@@ -234,7 +234,7 @@ namespace puyo_tools
         /* Get Filename */
         public override string GetFilename(ref Stream data, string filename)
         {
-            return Path.GetFileNameWithoutExtension(filename) + '.' + ObjectConverter.StreamToString(data, 0x4, 3);
+            return Path.GetFileNameWithoutExtension(filename) + '.' + StreamConverter.ToString(data, 0x4, 3);
         }
 
         /* Search for data that can be compressed */

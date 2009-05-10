@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Puyo Nexus")]
 [assembly: AssemblyProduct("puyo_tools.Properties")]
-[assembly: AssemblyCopyright("Copyright © Nick W, nmn 2008")]
+[assembly: AssemblyCopyright("Copyright © Nick W, nmn 2008-2009")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

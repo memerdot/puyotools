@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace puyo_tools
 {
@@ -25,19 +26,21 @@ namespace puyo_tools
                 uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x4));
 
                 /* Create the array of files now */
-                object[][] fileInfo = new object[files][];
+                object[][] fileList = new object[files][];
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileInfo[i] = new object[] {
-                        Endian.Swap(StreamConverter.ToUInt(data,   0x08 + (i * 0x28))), // Offset
-                        Endian.Swap(StreamConverter.ToUInt(data,   0x0C + (i * 0x28))), // Length
-                        StreamConverter.ToString(data, 0x10 + (i * 0x28), 32) + ".gvr"  // Filename
+                    string filename = StreamConverter.ToString(data, 0x10 + (i * 0x28), 32);
+
+                    fileList[i] = new object[] {
+                        Endian.Swap(StreamConverter.ToUInt(data, 0x08 + (i * 0x28))), // Offset
+                        Endian.Swap(StreamConverter.ToUInt(data, 0x0C + (i * 0x28))), // Length
+                        (filename == String.Empty ? String.Empty : filename + ".gvr") // Filename
                     };
                 }
 
-                return fileInfo;
+                return fileList;
             }
             catch
             {
@@ -46,58 +49,43 @@ namespace puyo_tools
             }
         }
 
-        /* Add a header to a blank archive */
-        public override byte[] CreateHeader(string[] files, string[] storedFilenames, uint blockSize, object[] settings)
+        /* Create a header for an archive */
+        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
         {
             try
             {
+                /* Create variables from settings */
+                //blockSize = 64;
+
                 /* Create the header data. */
-                byte[] header = new byte[NumberData.RoundUpToMultiple(((uint)files.Length * 0x40) + 0x8, 32)];
+                offsetList        = new List<uint>(files.Length);
+                List<byte> header = new List<byte>(Number.RoundUp(0x8 + (files.Length * 0x28), blockSize));
+                header.AddRange(StringConverter.ToByteList(ArchiveHeader.TXAG, 4));
+                header.AddRange(NumberConverter.ToByteList(Endian.Swap((uint)files.Length)));
 
-                /* Write out the header and number of files. */
-                //Array.Copy(BitConverter.GetBytes((uint)ArchiveHeader.ONE), 0, header, 0x0, 4); // ONE
-                //Array.Copy(BitConverter.GetBytes(files.Length), 0, header, 0x4, 4); // Files
+                /* Set the intial offset */
+                uint offset = (uint)header.Capacity;
 
-                /* Set the offset */
-                uint offset = (uint)header.Length;
-
-                /* Now add the filenames, offsets and lengths */
                 for (int i = 0; i < files.Length; i++)
                 {
-                    uint length = (uint)(new FileInfo(files[i]).Length);
+                    uint length = (uint)new FileInfo(files[i]).Length;
 
-                    /* Write the filename */
-                    Array.Copy(ObjectConverter.StringToBytes(storedFilenames[i], 55), 0, header, 0x8 + (i * 0x40), 55);
+                    /* Write out the information */
+                    offsetList.Add(offset);
+                    header.AddRange(NumberConverter.ToByteList(offset)); // Offset
+                    header.AddRange(NumberConverter.ToByteList(length)); // Length
+                    header.AddRange(StringConverter.ToByteList(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 31, 32)); // Filename
 
-                    /* Write the offsets and lengths */
-                    Array.Copy(BitConverter.GetBytes(offset), 0, header, 0x40 + (i * 0x40), 4); // Offset
-                    Array.Copy(BitConverter.GetBytes(length), 0, header, 0x44 + (i * 0x40), 4); // Length
-
-                    /* Now increment the offset */
-                    offset += NumberData.RoundUpToMultiple(length, 32);
+                    /* Increment the offset */
+                    offset += Number.RoundUp(length, blockSize);
                 }
 
                 return header;
             }
             catch
             {
-                /* Something went wrong, so return nothing */
-                return new byte[0];
-            }
-        }
-
-        /* Get offset for the file*/
-        public uint getOffset(byte[] header, uint file)
-        {
-            try
-            {
-                /* Return the offset that we can add the file to. */
-                return BitConverter.ToUInt32(header, (int)(0x40 + (file * 0x40)));
-            }
-            catch
-            {
-                /* Something went wrong, so return the offset 0x0 */
-                return 0x0;
+                offsetList = null;
+                return null;
             }
         }
     }
