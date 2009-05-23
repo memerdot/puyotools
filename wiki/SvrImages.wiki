@@ -1,0 +1,76 @@
+#summary File Specifications for SEGA SVR files used on the Playstation 2.
+
+= Introduction =
+
+SVR files are the image files used by Sonic Team (Japan) on the Playstation 2. They are similar to PVR used on the Dreamcast but suited for Playstation 2. SVR files store their color information as RGB or RGBA, instead of BGR or ABGR generally used in the Playstation 2.
+
+== Color Formats ==
+*Rgb5a3* is Rgb555 when the first bit is one, and Rgb4443 when the first bit is 0.
+{{{
+ 1 | RRRRR | GGGGG | BBBBB |
+ 0 | RRRR  | GGGG  | BBBB  | AAA
+}}}
+
+*Rgb565* dedicates 5 bits for the Red component, 6 bits for the Green component, and 5 bits for the Blue component.
+{{{
+ RRRRR | GGGGGG | BBBBB
+}}}
+
+*ARGB888* indicates that there are 8 bits for each for the Red, Green, Blue, and Alpha components. The Alpha channel does contain 255 possible values despite it taking up 8 bits. When the first bit is 1, the alpha is 255. When it is 0, shift the bits to the left by one to get the alpha.
+{{{
+ RRRRRRRR | GGGGGGGG | BBBBBBBB | AAAAAAAA
+}}}
+
+
+= File Format =
+The file starts off with 0x20 (64) bytes of header data which describes the remainder of the image.
+
+== Header ==
+The header consists of two main parts, each typically consisting of 0x10 bytes. The first header is not required, and as a result may not exist in the file.
+
+=== 1st Header ===
+0x00 - 0x03   'GBIX'
+ Magic Code, 4 bytes
+
+0x04 - 0x07   Global Index
+ 4 bytes.
+
+0x08 - 0x0F
+ Reserved - 8 bytes. Always Zero.
+
+
+=== 2nd Header ===
+0x10 - 0x13   'PVRT'
+ Format Magic Code, 4 bytes
+
+0x14 - 0x17
+ Size, 4 bytes. Looks like the post-header filesize but I just ignore it for decoding.
+
+0x18
+ 1 byte, Palette Format
+  Known Values:
+   * 08: RGB5A3
+   * 09: ARGB8888
+
+0x19
+ 1 byte, Data Format
+  Known Values:
+   * 60: Raw data, no palette used.
+   * 64: Swizzled data, 256 colors in the palette, palette stored in a seperate SVP file.
+   * 6C: Swizzled data, 256 colors in the palette.
+
+0x1A - 0x1B
+ 2 bytes. Always zero.
+
+0x1C - 0x1D
+ Width, 2 bytes
+
+0x1E - 0x1F
+ Height, 2 bytes
+
+
+== Format Header ==
+This is where the palette is stored. Refer to the palette format for more information.
+
+== Image Data ==
+Refer to the data format for more information on how the data is stored as.
