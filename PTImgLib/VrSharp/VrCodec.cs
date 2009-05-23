@@ -34,8 +34,12 @@ namespace VrSharp
         Fmt00001809 = 0x00001809,
         Fmt00002809 = 0x00002809,
         Fmt00002808 = 0x00002808,
+        Fmt09600000 = 0x09600000,
         Fmt09680000 = 0x09680000,
+        Fmt09690000 = 0x09690000,
         Fmt096C0000 = 0x096C0000,
+        Fmt08640000 = 0x08640000,
+        Fmt09640000 = 0x09640000,
     };
 
     public enum VrType
@@ -124,6 +128,15 @@ namespace VrSharp
             Format = VrFormat.Fmt00002809;
         }
     }
+    public class VrCodec_09600000 : VrCodec
+    {
+        public VrCodec_09600000()
+        {
+            Decode = new VrDecoder_09600000();
+            Encode = null;
+            Format = VrFormat.Fmt09600000;
+        }
+    }
     public class VrCodec_09680000 : VrCodec
     {
         public VrCodec_09680000()
@@ -133,6 +146,15 @@ namespace VrSharp
             Format = VrFormat.Fmt09680000;
         }
     }
+    public class VrCodec_09690000 : VrCodec
+    {
+        public VrCodec_09690000()
+        {
+            Decode = new VrDecoder_09690000();
+            Encode = null;
+            Format = VrFormat.Fmt09690000;
+        }
+    }
     public class VrCodec_096C0000 : VrCodec
     {
         public VrCodec_096C0000()
@@ -140,6 +162,24 @@ namespace VrSharp
             Decode = new VrDecoder_096C0000();
             Encode = null;
             Format = VrFormat.Fmt096C0000;
+        }
+    }
+    public class VrCodec_08640000 : VrCodec
+    {
+        public VrCodec_08640000()
+        {
+            Decode = new VrDecoder_08640000();
+            Encode = null;
+            Format = VrFormat.Fmt08640000;
+        }
+    }
+    public class VrCodec_09640000 : VrCodec
+    {
+        public VrCodec_09640000()
+        {
+            Decode = new VrDecoder_09640000();
+            Encode = null;
+            Format = VrFormat.Fmt09640000;
         }
     }
 
@@ -159,8 +199,12 @@ namespace VrSharp
             Register("00001809", new VrCodec_00001809());
             Register("00002808", new VrCodec_00002808());
             Register("00002809", new VrCodec_00002809());
+            Register("09600000", new VrCodec_09600000());
             Register("09680000", new VrCodec_09680000());
+            Register("09690000", new VrCodec_09690000());
             Register("096C0000", new VrCodec_096C0000());
+            Register("08640000", new VrCodec_08640000());
+            Register("09640000", new VrCodec_09640000());
             inited = true;
         }
         public static bool Unregister(string CodecID)
