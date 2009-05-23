@@ -25,10 +25,10 @@ namespace VrSharp
         abstract public int GetFormatHeaderSize();
 
         // Do we need an external palette?
-        abstract public bool NeedExternalPalette();
+        abstract public bool NeedExternalPalette(ref int PalSize);
 
         // Pass an external palette
-        abstract public bool GetExternalPalette(ref byte[] ExtPal, ref int PalSize);
+        abstract public bool GetExternalPalette(ref byte[] ExtPal);
 
         /// <summary>  
         /// <para>Initializes the VrCodec.</para> 
@@ -111,11 +111,11 @@ namespace VrSharp
         {
             return 256 * 2;
         }
-        override public bool NeedExternalPalette()
+        override public bool NeedExternalPalette(ref int PalSize)
 		{
 			return false;
 		}
-        override public bool GetExternalPalette(ref byte[] ExtPal, ref int PalSize)
+        override public bool GetExternalPalette(ref byte[] ExtPal)
 		{
 			return false;
 		}
