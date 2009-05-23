@@ -45,6 +45,7 @@ namespace VrSharp
             { 0x47, 0x42, 0x49, 0x58 }; 
 		private byte[] CompressedData;   // GVR Data
 		private byte[] DecompressedData; // Regular, Decompressed Data
+		private byte[] ExternalPalData;  // External Palette Data
 
         private int VrFileHeight;
         private int VrFileWidth;
@@ -119,18 +120,25 @@ namespace VrSharp
 		
 		
 		// public byte[] GetCompressedData()
+		// Return Value: The byte array of the compressed data
+		// Description: Gets the compressed GVR data
+		public byte[] GetCompressedData()
+		{
+			return CompressedData;
+		}
+		// public byte[] GetCompressedData()
 		// Return Value: The byte array of the decompressed data
 		// Description: Gets the decompressed data
 		public byte[] GetDecompressedData()
 		{
 			return DecompressedData;
 		}
-		// public byte[] GetCompressedData()
-		// Return Value: The byte array of the compressed data
-		// Description: Gets the compressed GVR data
-		public byte[] GetCompressedData()
+		// public byte[] GetExternalPaletteData()
+		// Return Value: The byte array of the palette data
+		// Description: Gets the raw external palette data
+		public byte[] GetExternalPaletteData()
 		{
-			return CompressedData;
+			return ExternalPalData;
 		}
 		
 		
@@ -186,6 +194,18 @@ namespace VrSharp
             {
                 throw new VrCodecLoadingException("The codec for format 0x" + FormatCodeString(VrPixelFormatCode) + " could not be loaded.", e);
             }
+			
+			if(VrDecoder.NeedExternalPalette() == true)
+			{
+				if(ExternalPalData != null)
+				{
+					VrDecoder.SendExternalPalette(ExternalPalData);
+				}
+				else
+				{
+					throw new VrCodecNeedsPaletteException("The codec for format 0x" + FormatCodeString(VrPixelFormatCode) + " requires an external palette. The application must catch and handle this exception in order to use Vr files which need external palette data.");
+				}
+			}
 
             VrCodecChunkWidth = VrDecoder.GetChunkWidth();
             VrCodecChunkHeight = VrDecoder.GetChunkHeight();
@@ -294,6 +314,18 @@ namespace VrSharp
                     VrEncoder.EncodeChunk(ref CompressedData, ref ptr, ref DecompressedData, x * VrCodecChunkWidth, y * VrCodecChunkHeight);
                 }
             }
+			
+			return true;
+		}
+		// public bool SetExternalPaletteData(byte[] ExternalPal)
+		// Parameters:
+		//  byte[] ExternalPal: External Palette
+		// Return Value: True if the data was properly loaded.
+		public bool SetExternalPaletteData(byte[] ExternalPal)
+		{
+			if(ExternalPal == null) return false;
+			
+			ExternalPalData = ExternalPal;
 			
 			return true;
 		}

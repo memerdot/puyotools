@@ -10,6 +10,12 @@ namespace VrSharp
 
         public VrNoSuitableCodecException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
+    public class VrCodecNeedsPaletteException : _ErrorException
+    {
+        public VrCodecNeedsPaletteException(string errorMessage) : base(errorMessage) { }
+
+        public VrCodecNeedsPaletteException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
+    }
     public class VrCodecProcessingException : _ErrorException
     {
         public VrCodecProcessingException(string errorMessage) : base(errorMessage) { }

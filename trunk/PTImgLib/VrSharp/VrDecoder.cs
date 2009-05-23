@@ -21,12 +21,12 @@ namespace VrSharp
 
         // The BPP of a chunk
         abstract public int GetChunkBpp();
-
+		
         // Do we need an external palette?
         abstract public bool NeedExternalPalette();
 
         // Pass an external palette
-        abstract public bool SendExternalPalette(byte[] ExtPal, int PalSize);
+        abstract public bool SendExternalPalette(byte[] ExtPal);
 
         // The bytes of a chunk
         public int GetChunkSize()
@@ -76,7 +76,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -136,7 +136,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -209,7 +209,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -289,7 +289,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -375,7 +375,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -448,7 +448,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -544,7 +544,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -604,7 +604,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -687,7 +687,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -779,7 +779,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -871,7 +871,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -952,7 +952,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
@@ -1033,7 +1033,7 @@ namespace VrSharp
 		{
 			return false;
 		}
-        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+        override public bool SendExternalPalette(byte[] ExtPal)
 		{
 			return false;
 		}
