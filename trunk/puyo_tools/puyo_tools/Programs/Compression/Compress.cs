@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -175,7 +176,7 @@ namespace puyo_tools
                         outputFilename  = Path.GetFileName(fileList[i]);
 
                         /* Decompress data */
-                        MemoryStream compressedData = (MemoryStream)compression.Compress();
+                        MemoryStream compressedData = compression.Compress();
 
                         /* Check to make sure the decompression was successful */
                         if (compressedData == null)
@@ -190,7 +191,7 @@ namespace puyo_tools
 
                     /* Write file data */
                     using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + outputFilename, FileMode.Create, FileAccess.Write))
-                        data.WriteTo(outputStream);
+                        outputStream.Write(data);
                 }
                 catch
                 {

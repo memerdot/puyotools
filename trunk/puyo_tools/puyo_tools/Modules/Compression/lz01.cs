@@ -11,7 +11,7 @@ namespace puyo_tools
         }
 
         /* Decompress */
-        public override Stream Decompress(ref Stream data)
+        public override MemoryStream Decompress(ref Stream data)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace puyo_tools
         }
 
         /* Compress */
-        public override Stream Compress(ref Stream data, string filename)
+        public override MemoryStream Compress(ref Stream data, string filename)
         {
             try
             {

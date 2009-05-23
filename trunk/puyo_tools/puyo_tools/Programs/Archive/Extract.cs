@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Extensions;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
@@ -42,12 +43,13 @@ namespace puyo_tools
         public Archive_Extract()
         {
             /* Select the files */
-            files = FileSelectionDialog.OpenFiles("Select Archives",
-                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
+            files = FileSelectionDialog.OpenFiles("Select Archive",
+                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
                 "GNT Archive (*.gnt)|*.gnt|" +
                 "GVM Archive (*.gvm)|*.gvm|" +
+                "MDL Archive (*.mdl)|*.mdl|" +
                 "MRG Archive (*.mrg)|*.mrg|" +
                 "NARC Archive (*.narc;*.carc)|*.narc;*.carc|" +
                 "ONE Archive (*.one;*.onz)|*.one;*.onz|" +
@@ -244,7 +246,7 @@ namespace puyo_tools
                             if (compression.Format != CompressionFormat.NULL)
                             {
                                 /* Decompress data */
-                                MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                                MemoryStream decompressedData = compression.Decompress();
 
                                 /* Check to make sure the decompression was successful */
                                 if (decompressedData != null)
@@ -261,12 +263,12 @@ namespace puyo_tools
                         if (archive.Format == ArchiveFormat.NULL)
                             continue;
 
-                        object[][] archiveFileList = archive.GetFileList();
-                        if (archiveFileList == null || archiveFileList.Length == 0)
+                        ArchiveFileList archiveFileList = archive.GetFileList();
+                        if (archiveFileList == null || archiveFileList.Entries == 0)
                             continue;
 
                         /* Set the total files in the archive */
-                        status.TotalFilesLocal = archiveFileList.Length;
+                        status.TotalFilesLocal = archiveFileList.Entries;
 
                         /* Create the extraction directory */
                         outputDirectory = Path.GetDirectoryName(fileList[i]);
@@ -279,20 +281,20 @@ namespace puyo_tools
                             Directory.CreateDirectory(outputDirectory);
 
                         /* Extract the data */
-                        for (int j = 0; j < archiveFileList.Length; j++)
+                        for (int j = 0; j < archiveFileList.Entries; j++)
                         {
                             /* Set the file number in the archive */
                             status.CurrentFileLocal = j;
 
                             /* Load the file into a MemoryStream */
-                            MemoryStream outputData = (MemoryStream)StreamConverter.Copy(archive.Data, (uint)archiveFileList[j][0], (uint)archiveFileList[j][1]);
+                            MemoryStream outputData = archive.Data.Copy(archiveFileList.Entry[j].Offset, archiveFileList.Entry[j].Length);
 
                             /* Get the filename we will extract the data to */
                             string extractFilename;
-                            if (extractFilenames.Checked && archiveFileList[j][2].ToString() != String.Empty)
-                                extractFilename = archiveFileList[j][2].ToString();
+                            if (extractFilenames.Checked && archiveFileList.Entry[j].FileName != String.Empty)
+                                extractFilename = archiveFileList.Entry[j].FileName;
                             else
-                                extractFilename = j.ToString().PadLeft(Number.Digits(archiveFileList.Length), '0') + FileData.GetFileExtension(ref outputData);
+                                extractFilename = j.ToString().PadLeft(archiveFileList.Entries.Digits(), '0') + FileData.GetFileExtension(ref outputData);
 
                             /* Decompress this data before we write it? */
                             if (decompressExtractedFile.Checked)
@@ -302,7 +304,7 @@ namespace puyo_tools
                                 if (compression.Format != CompressionFormat.NULL)
                                 {
                                     /* Decompress data */
-                                    MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                                    MemoryStream decompressedData = compression.Decompress();
 
                                     /* Check to make sure the decompression was successful */
                                     if (decompressedData != null)
@@ -316,7 +318,7 @@ namespace puyo_tools
 
                             /* Write the data */
                             using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + extractFilename, FileMode.Create, FileAccess.Write))
-                                outputData.WriteTo(outputStream);
+                                outputStream.Write(outputData);
 
                             /* Convert the file to an image? */
                             if (unpackImage.Checked)
@@ -343,7 +345,7 @@ namespace puyo_tools
 
                                         /* Output the image */
                                         using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                            outputData.WriteTo(outputStream);
+                                            outputStream.Write(outputData);
 
                                         /* Delete the source image if we want to */
                                         if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))

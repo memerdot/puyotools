@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -17,29 +17,29 @@ namespace puyo_tools
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
-        public override object[][] GetFileList(ref Stream data)
+        public override ArchiveFileList GetFileList(ref Stream data)
         {
             try
             {
                 /* Get the number of files */
-                uint files = StreamConverter.ToUInt(data, 0x4);
+                uint files = data.ReadUInt(0x4);
 
                 /* Create the array of files now */
-                object[][] fileList = new object[files][];
+                ArchiveFileList fileList = new ArchiveFileList(files);
 
                 /* Find the metadata location */
-                uint metadataLocation = StreamConverter.ToUInt(data, (files * 0x8) + 0x8);
+                uint metadataLocation = data.ReadUInt((files * 0x8) + 0x8);
                 if (metadataLocation == 0x0)
-                    metadataLocation = StreamConverter.ToUInt(data, StreamConverter.ToUInt(data, 0x8) - 0x8);
+                    metadataLocation = data.ReadUInt(data.ReadUInt(0x8) - 0x8);
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList[i] = new object[] {
-                        StreamConverter.ToUInt(data, 0x8 + (i * 0x8)), // Offset
-                        StreamConverter.ToUInt(data, 0xC + (i * 0x8)), // Length
-                        StreamConverter.ToString(data, metadataLocation + (i * 0x30), 32) // Filename
-                    };
+                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                        data.ReadUInt(0x8 + (i * 0x8)), // Offset
+                        data.ReadUInt(0xC + (i * 0x8)), // Length
+                        data.ReadString(metadataLocation + (i * 0x30), 32) // Filename
+                    );
                 }
 
                 return fileList;
@@ -52,7 +52,7 @@ namespace puyo_tools
         }
 
         /* Create a header for an archive */
-        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
+        public override MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
             try
             {
@@ -61,10 +61,10 @@ namespace puyo_tools
                 bool v1 = settings[0];
 
                 /* Create the header data. */
-                offsetList        = new List<uint>(files.Length);
-                List<byte> header = new List<byte>(Number.RoundUp(0x10 + (files.Length * 0x8), blockSize));
-                header.AddRange(StringConverter.ToByteList(ArchiveHeader.AFS, 4));
-                header.AddRange(NumberConverter.ToByteList(files.Length));
+                offsetList          = new uint[files.Length];
+                MemoryStream header = new MemoryStream(Number.RoundUp(0x10 + (files.Length * 0x8), blockSize));
+                header.Write(ArchiveHeader.AFS, 4);
+                header.Write(files.Length);
 
                 /* Set the intial offset */
                 uint offset = (uint)header.Capacity;
@@ -74,25 +74,20 @@ namespace puyo_tools
                     uint length = (uint)new FileInfo(files[i]).Length;
 
                     /* Write out the information */
-                    offsetList.Add(offset);
-                    header.AddRange(NumberConverter.ToByteList(offset)); // Offset
-                    header.AddRange(NumberConverter.ToByteList(length)); // Length
+                    offsetList[i] = offset;
+                    header.Write(offset); // Offset
+                    header.Write(length); // Length
 
                     /* Increment the offset */
-                    offset += Number.RoundUp(length, blockSize);
+                    offset += length.RoundUp(blockSize);
                 }
 
                 /* Add the location to the metadata */
                 if (v1) // AFS v1
-                {
-                    header.InsertRange(header.Capacity - 0x8, NumberConverter.ToByteList(offset));
-                    header.InsertRange(header.Capacity - 0x4, NumberConverter.ToByteList(files.Length * 0x30));
-                }
-                else // AFS v2
-                {
-                    header.AddRange(NumberConverter.ToByteList(offset));
-                    header.AddRange(NumberConverter.ToByteList(files.Length * 0x30));
-                }
+                    header.Position = header.Capacity - 0x8;
+
+                header.Write(offset);
+                header.Write(files.Length * 0x30);
 
                 return header;
             }
@@ -104,7 +99,7 @@ namespace puyo_tools
         }
 
         /* Create a footer for the archive */
-        public override List<byte> CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref List<byte> header)
+        public override MemoryStream CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref MemoryStream header)
         {
             try
             {
@@ -114,35 +109,35 @@ namespace puyo_tools
                 bool storeCreationTime = settings[1];
 
                 /* Create the footer */
-                List<byte> footer = new List<byte>(Number.RoundUp(files.Length * 0x30, blockSize));
+                MemoryStream footer = new MemoryStream(Number.RoundUp(files.Length * 0x30, blockSize));
 
                 for (int i = 0; i < files.Length; i++)
                 {
                     DateTime fileDate = new FileInfo(files[i]).CreationTime;
 
                     /* Write the filename and file info */
-                    footer.AddRange(StringConverter.ToByteList(archiveFilenames[i], 31, 32));
+                    footer.Write(archiveFilenames[i], 31, 32);
 
                     if (storeCreationTime)
                     {
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Year));
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Month));
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Day));
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Hour));
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Minute));
-                        footer.AddRange(NumberConverter.ToByteList((short)fileDate.Second));
+                        footer.Write((short)fileDate.Year);
+                        footer.Write((short)fileDate.Month);
+                        footer.Write((short)fileDate.Day);
+                        footer.Write((short)fileDate.Hour);
+                        footer.Write((short)fileDate.Minute);
+                        footer.Write((short)fileDate.Second);
                     }
                     else
                     {
                         for (int j = 0; j < 12; j++)
-                            footer.Add(0x0);
+                            footer.WriteByte(0x0);
                     }
 
-                    /* Store this useless byte for some reason */
+                    /* Store these useless bytes for some reason */
                     if (v1) // AFS v1
-                        footer.AddRange(header.GetRange(0x8 + (i * 0x8), 4));
+                        footer.Write(header, 0x8 + (i * 0x8), 4);
                     else // AFS v2
-                        footer.AddRange(header.GetRange(0x4 + (i * 0x4), 4));
+                        footer.Write(header, 0x4 + (i * 0x4), 4);
                 }
 
                 return footer;
@@ -152,6 +147,42 @@ namespace puyo_tools
                 /* An error occured */
                 return null;
             }
+        }
+
+        /* Checks to see if the input stream is an AFS archive */
+        public override bool Check(ref Stream input, string filename)
+        {
+            try
+            {
+                return (input.ReadString(0x0, 4, false) == ArchiveHeader.AFS);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /* Archive Information */
+        public override Archive.Information Information()
+        {
+            string Name   = "AFS";
+            string Ext    = ".afs";
+            string Filter = "AFS Archive (*.afs)|*.afs";
+
+            bool Extract = true;
+            bool Create  = true;
+
+            int[] BlockSize   = { 2048, 32 };
+            string[] Settings = new string[] {
+                "Use AFS v1",
+                "Store Creation Times",
+            };
+            bool[] DefaultSettings = new bool[] {
+                false,
+                true,
+            };
+
+            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

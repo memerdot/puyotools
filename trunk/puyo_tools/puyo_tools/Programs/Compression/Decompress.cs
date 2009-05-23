@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -189,7 +190,7 @@ namespace puyo_tools
                         outputFilename  = (useStoredFilename.Checked ? compression.GetFilename() : Path.GetFileName(fileList[i]));
 
                         /* Decompress data */
-                        MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                        MemoryStream decompressedData = compression.Decompress();
 
                         /* Check to make sure the decompression was successful */
                         if (decompressedData == null)
@@ -204,7 +205,7 @@ namespace puyo_tools
 
                     /* Write file data */
                     using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + outputFilename, FileMode.Create, FileAccess.Write))
-                        data.WriteTo(outputStream);
+                        outputStream.Write(data);
 
                     /* Delete source image? */
                     if (deleteSourceFile.Checked && File.Exists(fileList[i]))
@@ -236,7 +237,7 @@ namespace puyo_tools
 
                                 /* Output the image */
                                 using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                    data.WriteTo(outputStream);
+                                    outputStream.Write(data);
 
                                 /* Delete the source image if we want to */
                                 if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))

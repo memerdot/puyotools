@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Extensions;
 using System.Drawing;
 
 /* Archive Module */
@@ -60,8 +61,7 @@ namespace puyo_tools
             try
             {
                 /* Let's check for image formats based on the 12 byte headers first */
-                //switch ((GraphicHeader)ObjectConverter.StreamToUInt(data, 0x0))
-                switch (StreamConverter.ToString(data, 0x0, 12))
+                switch (data.ReadString(0x0, 12, false))
                 {
                     case GraphicHeader.GIM: // GIM (Big Endian)
                     case GraphicHeader.MIG: // GIM (Little Endian)
@@ -75,8 +75,8 @@ namespace puyo_tools
                 /* Ok, do special checks now */
 
                 /* PVR file */
-                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x19) < 64) ||
-                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x9) < 64))
+                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) < 64) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) < 64))
                 {
                     format    = GraphicFormat.PVR;
                     //converter = new PVR();
@@ -87,9 +87,9 @@ namespace puyo_tools
                 }
 
                 /* GVR File */
-                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.GVRT) ||
-                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GCIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.GVRT) ||
-                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT))
+                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.GCIX && data.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.GVRT))
                 {
                     format    = GraphicFormat.GVR;
                     converter = new GVR();
@@ -99,13 +99,23 @@ namespace puyo_tools
                 }
 
                 /* SVR File */
-                if ((StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GBIX && StreamConverter.ToString(data, 0x10, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x19) > 64) ||
-                    (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.PVRT && StreamConverter.ToByte(data, 0x9) > 64))
+                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) > 64) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) > 64))
                 {
                     format    = GraphicFormat.SVR;
                     converter = new SVR();
                     name      = "SVR";
                     ext       = ".svr";
+                    return;
+                }
+
+                /* GMP File */
+                if (data.ReadString(0x0, 8, false) == "GMP-200\x00")
+                {
+                    format    = GraphicFormat.GMP;
+                    converter = new GMP();
+                    name      = "GMP";
+                    ext       = ".gmp";
                     return;
                 }
 
@@ -131,6 +141,27 @@ namespace puyo_tools
                 return;
             }
         }
+
+        /* Image Information */
+        public class Information
+        {
+            public string Name = null;
+            public string Ext = null;
+            public string Filter = null;
+
+            public bool Unpack = false;
+            public bool Pack  = false;
+
+            public Information(string name, bool unpack, bool pack, string ext, string filter)
+            {
+                Name   = name;
+                Ext    = ext;
+                Filter = filter;
+
+                Unpack = unpack;
+                Pack   = pack;
+            }
+        }
     }
 
     /* Image Format */
@@ -151,6 +182,7 @@ namespace puyo_tools
             GBIX = "GBIX",
             GCIX = "GCIX",
             GIM  = ".GIM1.00\x00PSP",
+            GMP  = "GMP-200\x00",
             GVRT = "GVRT",
             MIG  = "MIG.00.1PSP\x00",
             PVRT = "PVRT";
@@ -159,7 +191,9 @@ namespace puyo_tools
     public abstract class ImageClass
     {
         /* Image Functions */
-        public abstract Bitmap Unpack(ref Stream data); // Unpack image
-        public abstract Stream Pack(ref Bitmap data);   // Pack Image
+        public abstract Bitmap Unpack(ref Stream data);   // Unpack image
+        public abstract Stream Pack(ref Bitmap data);     // Pack Image
+        public abstract bool Check(ref Stream data);      // Check Image
+        public abstract Images.Information Information(); // Image Information
     }
 }

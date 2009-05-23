@@ -8,36 +8,40 @@ namespace puyo_tools
         /* Open File Selection Dialog */
         public static string OpenFile(string title, string filter)
         {
-            OpenFileDialog ofd   = new OpenFileDialog();
-            ofd.Multiselect      = false;
-            ofd.RestoreDirectory = true;
-            ofd.CheckFileExists  = true;
-            ofd.CheckPathExists  = true;
-            ofd.AddExtension     = true;
-            ofd.Filter           = filter;
-            ofd.DefaultExt       = String.Empty;
-            ofd.Title            = title;
-            ofd.ShowDialog();
+            OpenFileDialog ofd = new OpenFileDialog() {
+                Multiselect      = false,
+                RestoreDirectory = true,
+                CheckFileExists  = true,
+                CheckPathExists  = true,
+                AddExtension     = true,
+                Filter           = filter,
+                DefaultExt       = string.Empty,
+                Title            = title,
+            };
+            DialogResult result = ofd.ShowDialog();
+
+            if (result != DialogResult.OK)
+                return null;
 
             return ofd.FileName;
         }
 
         public static string[] OpenFiles(string title, string filter)
         {
-            OpenFileDialog ofd   = new OpenFileDialog();
-            ofd.Multiselect      = true;
-            ofd.RestoreDirectory = true;
-            ofd.CheckFileExists  = true;
-            ofd.CheckPathExists  = true;
-            ofd.AddExtension     = true;
-            ofd.Filter           = filter;
-            ofd.DefaultExt       = String.Empty;
-            ofd.Title            = title;
-			
-			if(ofd.ShowDialog() != DialogResult.OK)
-			{
-				return null;
-			}
+            OpenFileDialog ofd = new OpenFileDialog() {
+                Multiselect      = true,
+                RestoreDirectory = true,
+                CheckFileExists  = true,
+                CheckPathExists  = true,
+                AddExtension     = true,
+                Filter           = filter,
+                DefaultExt       = string.Empty,
+                Title            = title,
+            };
+            DialogResult result = ofd.ShowDialog();
+
+            if (result != DialogResult.OK)
+                return null;
 
             return ofd.FileNames;
         }
@@ -45,20 +49,20 @@ namespace puyo_tools
         /* Save File Selection Dialog */
         public static string SaveFile(string title, string filename, string filter)
         {
-            SaveFileDialog sfd   = new SaveFileDialog();
-            sfd.AddExtension     = true;
-            sfd.DefaultExt       = String.Empty;
-            sfd.FileName         = filename;
-            sfd.Filter           = filter;
-            sfd.OverwritePrompt  = true;
-            sfd.RestoreDirectory = true;
-            sfd.Title            = title;
-            sfd.ValidateNames    = true;
-			
-			if(sfd.ShowDialog() != DialogResult.OK)
-			{
-				return null;
-			}
+            SaveFileDialog sfd   = new SaveFileDialog() {
+                AddExtension     = true,
+                DefaultExt       = string.Empty,
+                FileName         = filename,
+                Filter           = filter,
+                OverwritePrompt  = true,
+                RestoreDirectory = true,
+                Title            = title,
+                ValidateNames    = true,
+            };
+            DialogResult result = sfd.ShowDialog();
+
+            if (result != DialogResult.OK)
+                return null;
 
             return sfd.FileName;
         }
@@ -70,12 +74,10 @@ namespace puyo_tools
             fbd.Description         = description;
             fbd.SelectedPath        = Application.StartupPath;
             fbd.ShowNewFolderButton = true;
-            fbd.ShowDialog();
-			
-			if(fbd.ShowDialog() != DialogResult.OK)
-			{
-				return null;
-			}
+            DialogResult result = fbd.ShowDialog();
+
+            if (result != DialogResult.OK)
+                return null;
 
             return fbd.SelectedPath;
         }

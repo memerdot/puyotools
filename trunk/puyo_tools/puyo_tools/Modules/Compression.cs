@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Extensions;
 using System.Collections.Generic;
 
 /* Compression Module */
@@ -42,13 +43,13 @@ namespace puyo_tools
         }
 
         /* Decompress */
-        public Stream Decompress()
+        public MemoryStream Decompress()
         {
             return Compressor.Decompress(ref Data);
         }
 
         /* Compress */
-        public Stream Compress()
+        public MemoryStream Compress()
         {
             return Compressor.Compress(ref Data, Filename);
         }
@@ -74,8 +75,7 @@ namespace puyo_tools
             try
             {
                 /* Check based on the first 4 bytes */
-                //switch ((CompressionHeader)ObjectConverter.StreamToUInt(data, 0x0))
-                switch (StreamConverter.ToString(data, 0x0, 4))
+                switch (data.ReadString(0x0, 4))
                 {
                     case CompressionHeader.CNX: // CNX
                         format     = CompressionFormat.CNX;
@@ -97,8 +97,7 @@ namespace puyo_tools
                 }
 
                 /* Check compression based on the first byte */
-                //switch ((CompressionHeader)ObjectConverter.StreamToBytes(data, 0x0, 1)[0])
-                switch (StreamConverter.ToString(data, 0x0, 1))
+                switch (data.ReadString(0x0, 1))
                 {
                     case CompressionHeader.LZSS: // LZSS
                         format     = CompressionFormat.LZSS;
@@ -135,7 +134,7 @@ namespace puyo_tools
         }
 
         /* Get compression information, used for compressing */
-        public void CompressionInformation(CompressionFormat format, out CompressionClass compressor, out string name)
+        public void CompressorInformation(CompressionFormat format, out CompressionClass compressor, out string name)
         {
             switch (format)
             {
@@ -180,8 +179,8 @@ namespace puyo_tools
     public abstract class CompressionClass
     {
         /* Compression Functions */
-        public abstract Stream Decompress(ref Stream data); // Decompress Data
-        public abstract Stream Compress(ref Stream data, string filename); // Compress Data
+        public abstract MemoryStream Decompress(ref Stream data); // Decompress Data
+        public abstract MemoryStream Compress(ref Stream data, string filename); // Compress Data
         public virtual string GetFilename(ref Stream data, string filename) // Get Filname
         {
             return filename;

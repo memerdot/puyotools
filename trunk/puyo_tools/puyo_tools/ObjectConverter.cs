@@ -4,10 +4,10 @@ using System.Collections.Generic;
 
 namespace puyo_tools
 {
-    public class StreamConverter
+    public static class StreamConverter
     {
         /* Copy a stream to another stream */
-        public static Stream Copy(Stream stream)
+        public static Stream Copy(this Stream stream)
         {
             return Copy(stream, 0x0, (int)stream.Length);
         }
@@ -125,7 +125,7 @@ namespace puyo_tools
         }
     }
 
-    public class StringConverter
+    public static class StringConverter
     {
         /* Convert string to byte array */
         public static byte[] ToByteArray(string str, int length)
@@ -164,7 +164,7 @@ namespace puyo_tools
         }
     }
 
-    public class ByteConverter
+    public static class ByteConverter
     {
         /* Convert byte array to string */
         public static string ToString(byte[] byteArray, int maxLength)
@@ -200,14 +200,14 @@ namespace puyo_tools
         }
     }
 
-    public class NumberConverter
+    public static class NumberConverter
     {
         /* Convert integer to byte list */
-        public static List<byte> ToByteList(int number)
+        public static List<byte> ToByteList(this int number)
         {
             return ByteConverter.ToByteList(BitConverter.GetBytes(number));
         }
-        public static List<byte> ToByteList(uint number)
+        public static List<byte> ToByteList(this uint number)
         {
             return ByteConverter.ToByteList(BitConverter.GetBytes(number));
         }

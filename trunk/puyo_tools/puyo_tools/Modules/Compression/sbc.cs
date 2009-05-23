@@ -11,7 +11,7 @@ namespace puyo_tools
         }
 
         /* Decompress */
-        public Stream Decompress(ref Stream data, uint decompressedSize)
+        public MemoryStream Decompress(ref Stream data, uint decompressedSize)
         {
             try
             {
@@ -111,13 +111,13 @@ namespace puyo_tools
                 return null;
             }
         }
-        public override Stream Decompress(ref Stream data)
+        public override MemoryStream Decompress(ref Stream data)
         {
             return null;
         }
 
         /* Compress */
-        public override Stream Compress(ref Stream data, string filename)
+        public override MemoryStream Compress(ref Stream data, string filename)
         {
             try
             {

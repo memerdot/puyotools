@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Extensions;
 using System.Collections.Generic;
 
 namespace puyo_tools
@@ -14,13 +15,13 @@ namespace puyo_tools
         }
 
         /* Decompress */
-        public override Stream Decompress(ref Stream data)
+        public override MemoryStream Decompress(ref Stream data)
         {
             try
             {
                 /* Set variables */
-                uint compressedSize   = Endian.Swap(StreamConverter.ToUInt(data, 0x8)) + 16; // Compressed Size
-                uint decompressedSize = Endian.Swap(StreamConverter.ToUInt(data, 0xC));      // Decompressed Size
+                uint compressedSize   = data.ReadUInt(0x8).SwapEndian() + 16; // Compressed Size
+                uint decompressedSize = data.ReadUInt(0xC).SwapEndian();      // Decompressed Size
 
                 uint Cpointer = 0x10; // Compressed Pointer
                 uint Dpointer = 0x0;  // Decompressed Pointer
@@ -59,8 +60,7 @@ namespace puyo_tools
 
                             /* Copy from destination buffer to current position */
                             case 2:
-                                uint temp_word = Endian.Swap(compressedData[Cpointer]);
-                                //uint temp_word = Endian.Swap(ObjectConverter.StreamToUShort(data, Cpointer));
+                                uint temp_word = BitConverter.ToUInt16(compressedData, (int)Cpointer).SwapEndian();
 
                                 uint off = (temp_word >> 5) + 1;
                                 uint len = (temp_word & 0x1F) + 4;
@@ -95,15 +95,16 @@ namespace puyo_tools
                 /* Finished decompression, now return the data */
                 return new MemoryStream(decompressedData);
             }
-            catch
+            catch (Exception f)
             {
                 /* An error occured */
+                System.Windows.Forms.MessageBox.Show(f.ToString());
                 return null;
             }
         }
 
         /* Compress */
-        public override Stream Compress(ref Stream data, string filename)
+        public override MemoryStream Compress(ref Stream data, string filename)
         {
             try
             {
@@ -234,7 +235,8 @@ namespace puyo_tools
         /* Get Filename */
         public override string GetFilename(ref Stream data, string filename)
         {
-            return Path.GetFileNameWithoutExtension(filename) + '.' + StreamConverter.ToString(data, 0x4, 3);
+            string fileext = data.ReadString(0x4, 3);
+            return (fileext == string.Empty ? filename : Path.GetFileNameWithoutExtension(filename) + '.' + fileext);
         }
 
         /* Search for data that can be compressed */

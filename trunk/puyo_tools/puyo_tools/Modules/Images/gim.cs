@@ -3,6 +3,7 @@ using System.IO;
 using System.Drawing;
 using System.Diagnostics;
 using System.Drawing.Imaging;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -80,6 +81,33 @@ namespace puyo_tools
         public override Stream Pack(ref Bitmap data)
         {
             return null;
+        }
+
+        /* Check to see if this is a GIM */
+        public override bool Check(ref Stream input)
+        {
+            try
+            {
+                return (input.ReadString(0x0, 12, false) == GraphicHeader.MIG ||
+                    input.ReadString(0x0, 12, false) == GraphicHeader.GIM);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /* Image Information */
+        public override Images.Information Information()
+        {
+            string Name   = "GIM";
+            string Ext    = ".gim";
+            string Filter = "GIM Image (*.gim)|*.gim";
+
+            bool Unpack = true;
+            bool Pack   = false;
+
+            return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
 
         /* Pack a Bitmap into a GIM */
