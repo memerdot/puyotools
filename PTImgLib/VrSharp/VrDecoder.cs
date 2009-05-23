@@ -22,6 +22,12 @@ namespace VrSharp
         // The BPP of a chunk
         abstract public int GetChunkBpp();
 
+        // Do we need an external palette?
+        abstract public bool NeedExternalPalette();
+
+        // Pass an external palette
+        abstract public bool SendExternalPalette(byte[] ExtPal, int PalSize);
+
         // The bytes of a chunk
         public int GetChunkSize()
         {
@@ -66,6 +72,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -118,6 +132,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -183,6 +205,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -255,6 +285,14 @@ namespace VrSharp
         {
             return 16 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -333,6 +371,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -398,6 +444,14 @@ namespace VrSharp
         {
             return 16 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -486,6 +540,14 @@ namespace VrSharp
         {
             return 0;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -538,6 +600,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -613,6 +683,14 @@ namespace VrSharp
         {
             return 16 * 4;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -697,6 +775,14 @@ namespace VrSharp
         {
             return 16 * 4;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -781,6 +867,14 @@ namespace VrSharp
         {
             return 256 * 4;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -854,6 +948,14 @@ namespace VrSharp
         {
             return 256 * 4;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -927,6 +1029,14 @@ namespace VrSharp
         {
             return 256 * 2;
         }
+        override public bool NeedExternalPalette()
+		{
+			return false;
+		}
+        override public bool SendExternalPalette(byte[] ExtPal, int PalSize)
+		{
+			return false;
+		}
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
