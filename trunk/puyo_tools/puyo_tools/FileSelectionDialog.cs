@@ -33,7 +33,11 @@ namespace puyo_tools
             ofd.Filter           = filter;
             ofd.DefaultExt       = String.Empty;
             ofd.Title            = title;
-            ofd.ShowDialog();
+			
+			if(ofd.ShowDialog() != DialogResult.OK)
+			{
+				return null;
+			}
 
             return ofd.FileNames;
         }
@@ -50,7 +54,11 @@ namespace puyo_tools
             sfd.RestoreDirectory = true;
             sfd.Title            = title;
             sfd.ValidateNames    = true;
-            sfd.ShowDialog();
+			
+			if(sfd.ShowDialog() != DialogResult.OK)
+			{
+				return null;
+			}
 
             return sfd.FileName;
         }
@@ -63,6 +71,11 @@ namespace puyo_tools
             fbd.SelectedPath        = Application.StartupPath;
             fbd.ShowNewFolderButton = true;
             fbd.ShowDialog();
+			
+			if(fbd.ShowDialog() != DialogResult.OK)
+			{
+				return null;
+			}
 
             return fbd.SelectedPath;
         }
