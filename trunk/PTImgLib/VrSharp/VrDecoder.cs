@@ -541,6 +541,90 @@ namespace VrSharp
             return true;
         }
     }
+    public class VrDecoder_09680000 : VrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[16][];
+        private bool init = false;
+        private int width, height, outptr;
+        override public int GetChunkWidth()
+        {
+            return 32;
+        }
+        override public int GetChunkHeight()
+        {
+            return 1;
+        }
+        override public int GetChunkBpp()
+        {
+            return 4;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 16 * 4;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            for (int i = 0; i < 16; i++)
+            {
+                PaletteARGB[i] = new byte[4];
+
+                uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
+
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
+                PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
+                PaletteARGB[i][3] = (byte)((entry >> 8)  & 0xFF);
+
+                Pointer += 4;
+            }
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // Unswizzle the image if we have not yet started work on it
+            if (x1 == 0 && y1 == 0)
+                PS2GsSwizzle.UnSwizzle4(Input, width, height, InPtr);
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); )
+                {
+                    try
+                    {
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] >> 4][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] >> 4][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] >> 4][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] >> 4][3];
+                        x2++;
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[Input[InPtr] & 0xF][0];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[Input[InPtr] & 0xF][1];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[Input[InPtr] & 0xF][2];
+                        Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[Input[InPtr] & 0xF][3];
+                        x2++;
+                    }
+                    catch
+                    {
+                        x2 += 2;
+                        return true;
+                    }
+                    InPtr++;
+                }
+            }
+            return true;
+        }
+    }
     public class VrDecoder_096C0000 : VrDecoder
     {
         private byte[][] PaletteARGB = new byte[256][];
@@ -552,11 +636,11 @@ namespace VrSharp
         }
         override public int GetChunkHeight()
         {
-            return 2;
+            return 1;
         }
         override public int GetChunkBpp()
         {
-            return 1;
+            return 8;
         }
         override public int GetFormatHeaderSize()
         {
@@ -579,10 +663,10 @@ namespace VrSharp
 
                 uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
 
-                PaletteARGB[i][0] = (byte)(FormatHeader[Pointer+3]);
-                PaletteARGB[i][1] = (byte)(FormatHeader[Pointer+0]);
-                PaletteARGB[i][2] = (byte)(FormatHeader[Pointer+1]);
-                PaletteARGB[i][3] = (byte)(FormatHeader[Pointer+2]);
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
+                PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
+                PaletteARGB[i][3] = (byte)((entry >> 8)  & 0xFF);
 
                 Pointer += 4;
             }
@@ -592,7 +676,10 @@ namespace VrSharp
         override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
         {
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
-            PS2GsSwizzle.DoSwizzle(Input, InPtr, PS2GsSwizzle.Swizzle8x8, PS2GsSwizzle.Direction.Backward);
+
+            // Unswizzle the image if we have not yet started work on it
+            if (x1 == 0 && y1 == 0)
+                PS2GsSwizzle.UnSwizzle8(Input, width, height, InPtr);
             
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
