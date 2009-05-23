@@ -14,8 +14,13 @@ namespace puyo_tools
             /* Create the form */
             FormContent.Create(this, "Puyo Tools", new Size(344, 96));
 
+			/* Create the toolstrip */
+            ToolStrip toolStrip = new ToolStrip();
+            this.Controls.Add(toolStrip);
+			
             /* Create the tool menu */
-            programItem = new ToolStripMenuItem[] { // Prorams
+            programItem = new ToolStripMenuItem[] // Programs
+			{
                 new ToolStripMenuItem("Select Files",     null, LaunchProgram), // Decompressor
                 new ToolStripMenuItem("Select Directory", null, LaunchProgram), // Decompressor
                 new ToolStripMenuItem("Select Files",     null, LaunchProgram), // Compressor
@@ -25,32 +30,41 @@ namespace puyo_tools
                 new ToolStripMenuItem("Create",           null, LaunchProgram), // Create
                 new ToolStripMenuItem("Archive Explorer", null, LaunchProgram), // Explorer
             };
-
-            ToolStrip toolStrip = new ToolStrip(new ToolStripItem[] {
-                new ToolStripDropDownButton("Compression", null, new ToolStripMenuItem[] {
-                    new ToolStripMenuItem("Decompress", null, new ToolStripItem[] {
-                        programItem[0],
-                        programItem[1],
-                    }),
-                    new ToolStripMenuItem("Compress", null, new ToolStripItem[] {
-                        programItem[2],
-                        programItem[3],
-                    }),
-                }),
-                new ToolStripSeparator(),
-                new ToolStripDropDownButton("Archives", null, new ToolStripMenuItem[] {
-                    new ToolStripMenuItem("Extractor", null, new ToolStripItem[] {
-                        programItem[4],
-                        programItem[5],
-                    }),
-                    programItem[6],
-                    programItem[7],
-                }),
-                new ToolStripSeparator(),
-                new ToolStripButton("About", null, aboutProgram),
-            });
-            this.Controls.Add(toolStrip);
-
+			
+			/* Build the menu */
+			ItemIterator Menu = new ItemArray("Root",new ItemIterator[]
+			{
+				new ItemArray("Compression", new ItemIterator[]
+				{
+					new ItemArray("Decompress", new ItemIterator[]
+					{
+						new Item(programItem[0]),
+						new Item(programItem[1]),
+					}),
+					new ItemArray("Compress", new ItemIterator[]
+					{
+						new Item(programItem[2]),
+						new Item(programItem[3]),
+					}),
+				}),
+				new Item(new ToolStripSeparator()),
+				new ItemArray("Archives", new ItemIterator[]
+				{
+					new ItemArray("Extractor", new ItemIterator[]
+					{
+						new Item(programItem[4]),
+						new Item(programItem[5]),
+					}),
+					new Item(programItem[6]),
+					new Item(programItem[7]),
+				}),
+				new Item(new ToolStripSeparator()),
+				new Item("About", aboutProgram),
+			});
+			
+			/* Setup menu */
+			toolStrip.Items.AddRange((ToolStripItem[])Menu.buildToolStripItemArray());
+			
             /* Draw logo */
             PictureBox logo = new PictureBox();
             logo.Image = new Bitmap((Bitmap)new ComponentResourceManager(typeof(images)).GetObject("logo"));

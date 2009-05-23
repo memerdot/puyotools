@@ -375,7 +375,7 @@ namespace puyo_tools
         {
             string[] files = FileSelectionDialog.OpenFiles("Select Files", "All Files (*.*)|*.*");
 
-            if (files.Length == 0)
+            if (files == null || files.Length == 0)
                 return;
 
             /* Add the files now */

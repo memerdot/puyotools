@@ -42,7 +42,7 @@ namespace puyo_tools
             files = FileSelectionDialog.OpenFiles("Select Files to Compress", "All Files|*.*");
 
             /* If no files were selected, don't continue */
-            if (files.Length == 0)
+            if (files == null || files.Length == 0)
                 return;
 
             showOptions();
@@ -54,7 +54,7 @@ namespace puyo_tools
             string directory = FileSelectionDialog.SaveDirectory("Select a directory");
 
             /* If no directory was selected, don't continue */
-            if (directory == null)
+            if (directory == null || directory == String.Empty)
                 return;
 
             /* Ask the user if they want to search sub directories */
