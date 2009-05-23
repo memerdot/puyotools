@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -45,7 +45,7 @@
   <ItemGroup>
     <ProjectReference Include="..\VrSharp\VrSharp.csproj">
       <Project>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</Project>
-      <Name>GvrSharp</Name>
+      <Name>VrSharp</Name>
     </ProjectReference>
     <ProjectReference Include="..\ImgSharp\ImgSharp.csproj">
       <Project>{889DCE80-78CB-4865-A16F-12FD2B85766B}</Project>
