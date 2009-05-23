@@ -29,11 +29,13 @@ namespace VrSharp
         Fmt00000005 = 0x00000005,
         Fmt00000006 = 0x00000006,
         Fmt0000000E = 0x0000000E,
+        Fmt00000105 = 0x00000105,
         Fmt00001808 = 0x00001808,
         Fmt00001809 = 0x00001809,
         Fmt00002809 = 0x00002809,
         Fmt00002808 = 0x00002808,
-        Fmt096C0000 = 0x096C0000
+        Fmt09680000 = 0x09680000,
+        Fmt096C0000 = 0x096C0000,
     };
 
     public enum VrType
@@ -77,6 +79,15 @@ namespace VrSharp
             Format = VrFormat.Fmt00000006;
         }
     }
+    public class VrCodec_00000105 : VrCodec
+    {
+        public VrCodec_00000105()
+        {
+            Decode = new VrDecoder_00000005();
+            Encode = null;
+            Format = VrFormat.Fmt00000105;
+        }
+    }
     public class VrCodec_00001808 : VrCodec
     {
         public VrCodec_00001808()
@@ -113,6 +124,15 @@ namespace VrSharp
             Format = VrFormat.Fmt00002809;
         }
     }
+    public class VrCodec_09680000 : VrCodec
+    {
+        public VrCodec_09680000()
+        {
+            Decode = new VrDecoder_09680000();
+            Encode = null;
+            Format = VrFormat.Fmt09680000;
+        }
+    }
     public class VrCodec_096C0000 : VrCodec
     {
         public VrCodec_096C0000()
@@ -134,10 +154,12 @@ namespace VrSharp
             Register("00000004", new VrCodec_00000004());
             Register("00000005", new VrCodec_00000005());
             Register("00000006", new VrCodec_00000006());
+            Register("00000105", new VrCodec_00000105());
             Register("00001808", new VrCodec_00001808());
             Register("00001809", new VrCodec_00001809());
             Register("00002808", new VrCodec_00002808());
             Register("00002809", new VrCodec_00002809());
+            Register("09680000", new VrCodec_09680000());
             Register("096C0000", new VrCodec_096C0000());
             inited = true;
         }
