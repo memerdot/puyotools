@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -16,27 +16,27 @@ namespace puyo_tools
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
-        public override object[][] GetFileList(ref Stream data)
+        public override ArchiveFileList GetFileList(ref Stream data)
         {
             try
             {
                 /* Get the number of files */
-                ushort files = StreamConverter.ToUShort(data, 0x0);
+                ushort files = data.ReadUShort(0x0);
 
                 /* Create the array of files now */
-                object[][] fileList = new object[files][];
+                ArchiveFileList fileList = new ArchiveFileList(files);
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (int i = 0; i < files; i++)
                 {
                     /* Get the filename */
-                    string filename = StreamConverter.ToString(data, 0xA + (i * 0x24), 28);
+                    string filename = data.ReadString(0xA + (i * 0x24), 28);
 
-                    fileList[i] = new object[] {
-                        StreamConverter.ToUInt(data, 0x2 + (i * 0x24)), // Offset
-                        StreamConverter.ToUInt(data, 0x6 + (i * 0x24)), // Length
-                        (filename == String.Empty ? String.Empty : filename + ".gvr") // Filename
-                    };
+                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                        data.ReadUInt(0x2 + (i * 0x24)), // Offset
+                        data.ReadUInt(0x6 + (i * 0x24)), // Length
+                        (filename == string.Empty ? string.Empty : filename + ".gvr") // Filename
+                    );
                 }
 
                 return fileList;
@@ -51,16 +51,15 @@ namespace puyo_tools
 
         /* To simplify the process greatly, we are going to convert
          * the GVM to a new format */
-        public override Stream TranslateData(ref Stream stream)
+        public override MemoryStream TranslateData(ref Stream stream)
         {
             try
             {
                 /* Get the number of files, and format type in the stream */
-                ushort files = Endian.Swap(StreamConverter.ToUShort(stream, 0xA));
-                byte formatType = StreamConverter.ToByte(stream, 0x9);
+                ushort files = stream.ReadUShort(0xA).SwapEndian();
+                byte formatType = stream.ReadByte(0x9);
 
                 /* Now let's see what information is contained inside the metadata */
-                bool containsMDLN        = (formatType & (1 << 4)) > 0;
                 bool containsFilename    = (formatType & (1 << 3)) > 0;
                 bool containsPixelFormat = (formatType & (1 << 2)) > 0;
                 bool containsDimensions  = (formatType & (1 << 1)) > 0;
@@ -76,53 +75,55 @@ namespace puyo_tools
 
                 /* Now create the header */
                 MemoryStream data = new MemoryStream();
-                data.Write(BitConverter.GetBytes(files), 0, 2);
+                data.Write(files);
 
                 /* Ok, try to find out data */
-                uint sourceOffset = StreamConverter.ToUInt(stream, 0x4) + 0x8;
-
-                /* Find a PVR file if the offset refers to a MDLN file */
-                if (containsMDLN)
-                    sourceOffset = Number.RoundUp(sourceOffset + StreamConverter.ToUInt(stream, sourceOffset + 0x4), 16);
+                uint sourceOffset = stream.ReadUInt(0x4) + 0x8;
 
                 /* Write each file in the header */
                 uint offset = 0x2 + ((uint)files * 0x24);
                 for (int i = 0; i < files; i++)
                 {
                     /* Ok, get the size of the GVR file */
-                    uint length = StreamConverter.ToUInt(stream, sourceOffset + 0x4) + 24;
+                    uint length = stream.ReadUInt(sourceOffset + 0x4) + 8;
+
+                    /* Make sure this is a valid file length */
+                    if (sourceOffset + length > stream.Length)
+                        length -= 16; // For some reason some GVR files are like this.
+                    if (sourceOffset + length > stream.Length)
+                        throw new Exception();
 
                     /* Write the offset, file length, and filename */
-                    data.Write(BitConverter.GetBytes(offset), 0, 4); // Offset
-                    data.Write(BitConverter.GetBytes(length), 0, 4); // Length
+                    data.Write(offset);      // Offset
+                    data.Write(length + 16); // Length
 
                     if (containsFilename)
-                        data.Write(StreamConverter.ToByteArray(stream, (uint)(0xE + (i * metaDataSize)), 28), 0, 28); // Filename
+                        data.Write(stream.ReadString(0xE + (i * metaDataSize), 28), 28); // Filename
                     else
                         data.Position += 28;
 
                     /* Add the GBIX header */
                     data.Position = offset;
-                    data.Write(StringConverter.ToByteArray(GraphicHeader.GBIX, 4), 0, 4);
-                    data.Write(BitConverter.GetBytes((int)0x8), 0, 4);
+                    data.Write(GraphicHeader.GBIX);
+                    data.Write((int)0x8);
 
                     /* Copy the global index */
                     if (containsGlobalIndex)
-                        data.Write(StreamConverter.ToByteArray(stream, 0xE + size_filename + size_pixelFormat + size_dimensions + (i * metaDataSize), 4), 0, 4);
+                        data.Write(stream.ReadUInt(0xE + size_filename + size_pixelFormat + size_dimensions + (i * metaDataSize)));
                     else
                         data.Position += 4;
 
                     /* Write out the 0x0 in the header */
-                    data.Write(new byte[] { 0x0, 0x0, 0x0, 0x0 }, 0, 4);
+                    data.Write(new byte[] { 0x0, 0x0, 0x0, 0x0 });
 
                     /* Now copy the file */
-                    ((MemoryStream)StreamConverter.Copy(stream, sourceOffset, length)).WriteTo(data);
+                    data.Write(stream, sourceOffset, length);
                     data.Position = 0x26 + (i * 0x24);
 
-                    sourceOffset += Number.RoundUp((length - 24), 16);
+                    sourceOffset += length.RoundUp(16);
 
                     /* Increment the offset */
-                    offset += length;
+                    offset += length + 16;
                 }
 
                 return data;
@@ -130,7 +131,7 @@ namespace puyo_tools
             catch
             {
                 /* Something went wrong, so send as blank stream */
-                return null;
+                return new MemoryStream();
             }
         }
 
@@ -142,19 +143,19 @@ namespace puyo_tools
             if (images.Format == GraphicFormat.GVR)
             {
                 /* Does the file start with GVRT? */
-                if (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT)
+                if (data.ReadString(0x0, 4) == GraphicHeader.GVRT)
                     return data;
 
                 /* Otherwise strip off the first 16 bytes */
                 else
-                    return StreamConverter.Copy(data, 0x10, data.Length - 0x10);
+                    return data.Copy(0x10, (int)data.Length - 0x10);
             }
 
             /* Can't add this file! */
             return null;
         }
 
-        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
+        public override MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
             try
             {
@@ -173,10 +174,10 @@ namespace puyo_tools
                 if (addGlobalIndex) metaDataSize += 4;
 
                 /* Create the header now */
-                offsetList        = new List<uint>(files.Length);
-                List<byte> header = new List<byte>(Number.RoundUp(0xC + (files.Length * metaDataSize), blockSize));
-                header.AddRange(StringConverter.ToByteList(ArchiveHeader.GVM, 4));
-                header.AddRange(NumberConverter.ToByteList(header.Capacity));
+                offsetList          = new uint[files.Length];
+                MemoryStream header = new MemoryStream(Number.RoundUp(0xC + (files.Length * metaDataSize), blockSize));
+                header.Write(ArchiveHeader.GVM, 4);
+                header.Write(header.Capacity);
                 
                 /* Set up format type */
                 byte formatType = 0x0;
@@ -184,11 +185,11 @@ namespace puyo_tools
                 if (addPixelFormat) formatType |= (1 << 2);
                 if (addDimensions)  formatType |= (1 << 1);
                 if (addGlobalIndex) formatType |= (1 << 0);
-                header.Add(0x0);
-                header.Add(formatType);
+                header.WriteByte(0x0);
+                header.WriteByte(formatType);
 
                 /* Write number of files */
-                header.AddRange(NumberConverter.ToByteList(Endian.Swap((ushort)files.Length)));
+                header.Write(((ushort)files.Length).SwapEndian());
 
                 uint offset = (uint)header.Capacity + 8;
 
@@ -203,29 +204,29 @@ namespace puyo_tools
                             throw new IncorrectGraphicFormat();
 
                         /* Get the header offset */
-                        int headerOffset = (StreamConverter.ToString(data, 0x0, 4) == GraphicHeader.GVRT ? 0x0 : 0x10);
+                        int headerOffset = (data.ReadString(0x0, 4) == GraphicHeader.GVRT ? 0x0 : 0x10);
 
-                        offsetList.Add(offset);
-                        header.AddRange(NumberConverter.ToByteList(Endian.Swap((ushort)i)));
+                        offsetList[i] = offset;
+                        header.Write(((ushort)i).SwapEndian());
 
                         if (addFilename)
-                            header.AddRange(StringConverter.ToByteList(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 27, 28));
+                            header.Write(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 27, 28);
                         if (addPixelFormat)
-                            header.AddRange(StreamConverter.ToByteList(data, headerOffset + 0xA, 2));
+                            header.Write(data, headerOffset + 0xA, 2);
                         if (addDimensions)
                         {
                             /* Get the width and height */
-                            int width  = (int)Math.Min(Math.Log(Endian.Swap(StreamConverter.ToUShort(data, headerOffset + 0xC)), 2) - 2, 9);
-                            int height = (int)Math.Min(Math.Log(Endian.Swap(StreamConverter.ToUShort(data, headerOffset + 0xE)), 2) - 2, 9);
-                            header.Add(0x0);
-                            header.Add((byte)((width << 4) | height));
+                            int width  = (int)Math.Min(Math.Log(data.ReadUShort(headerOffset + 0xC).SwapEndian(), 2) - 2, 9);
+                            int height = (int)Math.Min(Math.Log(data.ReadUShort(headerOffset + 0xE).SwapEndian(), 2) - 2, 9);
+                            header.WriteByte(0x0);
+                            header.WriteByte((byte)((width << 4) | height));
                         }
                         if (addGlobalIndex)
                         {
                             if (headerOffset == 0x0)
-                                header.AddRange(ByteConverter.ToByteList(new byte[] {0x0, 0x0, 0x0, 0x0}));
+                                header.Write(new byte[] {0x0, 0x0, 0x0, 0x0});
                             else
-                                header.AddRange(StreamConverter.ToByteList(data, 0x8, 4));
+                                header.Write(data, 0x8, 4);
                         }
 
                         offset += Number.RoundUp((uint)(data.Length - headerOffset), blockSize);
@@ -244,6 +245,46 @@ namespace puyo_tools
                 offsetList = null;
                 return null;
             }
+        }
+
+        /* Checks to see if the input stream is a GVM archive */
+        public override bool Check(ref Stream input, string filename)
+        {
+            try
+            {
+                return (input.ReadString(0x0, 4) == ArchiveHeader.GVM);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /* Archive Information */
+        public override Archive.Information Information()
+        {
+            string Name   = "GVM";
+            string Ext    = ".gvm";
+            string Filter = "GVM Archive (*.gvm)|*.gvm";
+
+            bool Extract = true;
+            bool Create  = true;
+
+            int[] BlockSize   = { 16, -1 };
+            string[] Settings = new string[] {
+                "Add Filenames",
+                "Add GVR Pixel Format",
+                "Add GVR Dimensions",
+                "Add GVR Global Index",
+            };
+            bool[] DefaultSettings = new bool[] {
+                true,
+                true,
+                true,
+                true,
+            };
+
+            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

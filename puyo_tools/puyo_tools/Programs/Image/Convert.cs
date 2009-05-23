@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -38,7 +39,7 @@ namespace puyo_tools
                 "Supported Image Formats (*.gim;*.gvr)|*.gim;*.gvr|" +
                 "GIM Images (*.gim)|*.gim|" + 
                 "GVR Images (*.gvr)|*.gvr|" + 
-                "All Files|*.*");
+                "All Files (*.*)|*.*");
 
             /* If no files were selected, don't continue */
             if (files == null || files.Length == 0)
@@ -174,7 +175,7 @@ namespace puyo_tools
                             if (compression.Format != CompressionFormat.NULL)
                             {
                                 /* Decompress data */
-                                MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                                MemoryStream decompressedData = compression.Decompress();
 
                                 /* Check to make sure the decompression was successful */
                                 if (decompressedData != null)
@@ -212,7 +213,7 @@ namespace puyo_tools
 
                         /* Output the image */
                         using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                            data.WriteTo(outputStream);
+                            outputStream.Write(data);
                     }
 
                     /* Delete the source image if we want to */

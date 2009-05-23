@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -35,7 +36,7 @@ namespace puyo_tools
 
         /* Archive Details */
         private int level = 0;
-        private List<object[][]> FileList = new List<object[][]>();
+        private List<ArchiveFileList> FileList = new List<ArchiveFileList>();
         private List<Stream> ArchiveData  = new List<Stream>();
         private List<string> ArchiveName  = new List<string>();
         private List<string> ArchiveType  = new List<string>();
@@ -122,7 +123,7 @@ namespace puyo_tools
             this.ShowDialog();
         }
 
-        private object[][] GetFileList(ref Stream data, string filename, out string type)
+        private ArchiveFileList GetFileList(ref Stream data, string filename, out string type)
         {
             type = null;
 
@@ -133,7 +134,7 @@ namespace puyo_tools
                 if (compression.Format != CompressionFormat.NULL)
                 {
                     /* Decompress */
-                    MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                    MemoryStream decompressedData = compression.Decompress();
                     if (decompressedData != null)
                         data = decompressedData;
                 }
@@ -157,13 +158,13 @@ namespace puyo_tools
             }
         }
 
-        private void populateList(object[][] fileList)
+        private void populateList(ArchiveFileList fileList)
         {
             /* Erase the current list */
             fileListView.Items.Clear();
 
             /* Make sure the file list contains entries */
-            if (fileList == null || fileList.Length == 0)
+            if (fileList == null || fileList.Entries == 0)
                 return;
 
             /* If we are not at the base level, we need to add some extra crap */
@@ -180,13 +181,13 @@ namespace puyo_tools
                 fileListView.Items.Add(item);
             }
 
-            for (int i = 0; i < fileList.Length; i++)
+            for (int i = 0; i < fileList.Entries; i++)
             {
                 /* Add the file information */
                 ListViewItem item = new ListViewItem(new string[] {
                     (i + 1).ToString("#,0"),
-                    (fileList[i][2].ToString() == String.Empty ? " -- No Filename -- " : fileList[i][2].ToString()),
-                    String.Format("{0} ({1} bytes)", FormatFileSize((uint)fileList[i][1]), ((uint)fileList[i][1]).ToString("#,0")),
+                    (fileList.Entry[i].FileName == String.Empty ? " -- No Filename -- " : fileList.Entry[i].FileName),
+                    String.Format("{0} ({1} bytes)", FormatFileSize(fileList.Entry[i].Length), fileList.Entry[i].Length.ToString("#,0")),
                 });
 
                 fileListView.Items.Add(item);
@@ -227,10 +228,10 @@ namespace puyo_tools
             /* Ok, load the file and get the file list */
             string archiveType   = String.Empty;
             Stream archiveStream = new FileStream(file, FileMode.Open, FileAccess.Read);
-            object[][] fileList = GetFileList(ref archiveStream, file, out archiveType);
+            ArchiveFileList fileList = GetFileList(ref archiveStream, file, out archiveType);
 
             /* If we were able to open it up and get the contents, populate the list */
-            if (fileList != null && fileList.Length > 0)
+            if (fileList != null && fileList.Entries > 0)
             {
                 /* Clear the archive data list if it contains entries */
                 if (ArchiveData.Count > 0)
@@ -278,19 +279,19 @@ namespace puyo_tools
                 else
                 {
                     /* Open up the new archive if we can */
-                    Stream archiveStream = StreamConverter.Copy(ArchiveData[level], (uint)FileList[level][selectedItem][0], (uint)FileList[level][selectedItem][1]);
+                    Stream archiveStream = ArchiveData[level].Copy(FileList[level].Entry[selectedItem].Offset, FileList[level].Entry[selectedItem].Length);
 
                     /* Try to see if we can open this */
                     string archiveType  = String.Empty;
-                    object[][] fileList = GetFileList(ref archiveStream, FileList[level][selectedItem][2].ToString(), out archiveType);
+                    ArchiveFileList fileList = GetFileList(ref archiveStream, FileList[level].Entry[selectedItem].FileName, out archiveType);
 
                     /* Was it an archive that we can open? */
-                    if (fileList != null && fileList.Length > 0)
+                    if (fileList != null && fileList.Entries > 0)
                     {
                         /* Yes it is! */
                         FileList.Add(fileList);
                         ArchiveData.Add(archiveStream);
-                        ArchiveName.Add(FileList[level][selectedItem][2].ToString());
+                        ArchiveName.Add(FileList[level].Entry[selectedItem].FileName);
                         ArchiveType.Add(archiveType);
                         level++;
 
@@ -298,7 +299,45 @@ namespace puyo_tools
                         populateList(fileList);
                         updateArchiveInformation();
                     }
+                    else
+                    {
+                        /* Maybe this is an image? */
+                        loadEmbeddedImage();
+                    }
                 }
+            }
+        }
+
+        private void loadEmbeddedImage()
+        {
+            try
+            {
+                /* get the selected item and the data and filename */
+                int item = fileListView.SelectedIndices[0] - (level == 0 ? 0 : 1);
+                MemoryStream imageData = ArchiveData[level].Copy(FileList[level].Entry[item].Offset, FileList[level].Entry[item].Length);
+                string filename = FileList[level].Entry[item].FileName;
+
+                /* Check to see if the archive is compressed */
+                Compression compression = new Compression(imageData, filename);
+                if (compression.Format != CompressionFormat.NULL)
+                {
+                    /* Decompress */
+                    MemoryStream decompressedData = compression.Decompress();
+                    if (decompressedData != null)
+                        imageData = decompressedData;
+                }
+
+                /* Check to see if this is an image */
+
+                Images image = new Images(imageData, filename);
+                if (image.Format == GraphicFormat.NULL)
+                    throw new GraphicFormatNotSupported();
+
+                /* Try to open this image if we can */
+                new Image_Viewer(imageData, filename);
+            }
+            catch
+            {
             }
         }
 
@@ -343,11 +382,11 @@ namespace puyo_tools
             {
                 try
                 {
-                    string filename = FileList[level][files[i] - (level > 0 ? 1 : 0)][2].ToString();
+                    string filename = FileList[level].Entry[files[i] - (level > 0 ? 1 : 0)].FileName;
                     int num         = files[i] - (level > 0 ? 1 : 0);
 
-                    output_filename = (filename == String.Empty ? num.ToString().PadLeft(Number.Digits(FileList.Count), '0') :
-                        (addFileNumberExtracted.Checked ? Path.GetFileNameWithoutExtension(filename) + '_' + num.ToString().PadLeft(Number.Digits(FileList.Count), '0') + Path.GetExtension(filename) :
+                    output_filename = (filename == String.Empty ? num.ToString().PadLeft(FileList.Count.Digits(), '0') :
+                        (addFileNumberExtracted.Checked ? Path.GetFileNameWithoutExtension(filename) + '_' + num.ToString().PadLeft(FileList.Count.Digits(), '0') + Path.GetExtension(filename) :
                         filename));
 
                     /* Which selection dialog do we want? */
@@ -369,7 +408,7 @@ namespace puyo_tools
                         Directory.CreateDirectory(output_directory);
 
                     /* Copy the data to a new stream */
-                    MemoryStream outputData = (MemoryStream)StreamConverter.Copy(ArchiveData[level], (uint)FileList[level][num][0], (uint)FileList[level][num][1]);
+                    MemoryStream outputData = ArchiveData[level].Copy(FileList[level].Entry[num].Offset, FileList[level].Entry[num].Length);
 
                     /* Do we want to decompress the file? */
                     if (decompressExtracted.Checked)
@@ -377,7 +416,7 @@ namespace puyo_tools
                         Compression compression = new Compression(outputData, output_filename);
                         if (compression.Format != CompressionFormat.NULL)
                         {
-                            MemoryStream decompressedData = (MemoryStream)compression.Decompress();
+                            MemoryStream decompressedData = compression.Decompress();
                             if (decompressedData != null)
                             {
                                 outputData      = decompressedData;
@@ -404,7 +443,7 @@ namespace puyo_tools
 
                     /* Write the file */
                     using (FileStream outputStream = new FileStream(output_directory + Path.DirectorySeparatorChar + output_filename, FileMode.Create, FileAccess.Write))
-                        outputData.WriteTo(outputStream);
+                        outputStream.Write(outputData);
                 }
                 catch
                 {
@@ -417,7 +456,7 @@ namespace puyo_tools
         {
             /* Update the archive information */
             archiveInformation_name.Text  = String.Empty;
-            archiveInformation_files.Text = "Files: " + FileList[level].Length.ToString("#,0");
+            archiveInformation_files.Text = "Files: " + FileList[level].Entries.ToString("#,0");
             archiveInformation_type.Text  = "Format: " + ArchiveType[level];
 
             for (int i = 0; i <= level; i++)

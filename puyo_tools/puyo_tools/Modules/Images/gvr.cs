@@ -2,6 +2,7 @@
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Extensions;
 using VrSharp;
 using ImgSharp;
 
@@ -34,6 +35,34 @@ namespace puyo_tools
         public override Stream Pack(ref Bitmap data)
         {
             return null;
+        }
+
+        /* Check to see if this is a GVR */
+        public override bool Check(ref Stream input)
+        {
+            try
+            {
+                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
+                    (input.ReadString(0x0, 4) == GraphicHeader.GCIX && input.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
+                    (input.ReadString(0x0, 4) == GraphicHeader.GVRT));
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /* Image Information */
+        public override Images.Information Information()
+        {
+            string Name   = "GVR";
+            string Ext    = ".gvr";
+            string Filter = "GVR Image (*.gvr)|*.gvr";
+
+            bool Unpack = true;
+            bool Pack   = false;
+
+            return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
     }
 }

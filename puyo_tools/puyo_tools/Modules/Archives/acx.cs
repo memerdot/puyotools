@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -17,27 +17,27 @@ namespace puyo_tools
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
-        public override object[][] GetFileList(ref Stream data)
+        public override ArchiveFileList GetFileList(ref Stream data)
         {
             try
             {
                 /* Get the number of files */
-                uint files = Endian.Swap(StreamConverter.ToUInt(data, 0x4));
+                uint files = data.ReadUInt(0x4).SwapEndian();
 
                 /* Create the array of files now */
-                object[][] fileList = new object[files][];
+                ArchiveFileList fileList = new ArchiveFileList(files);
 
                 /* See if the archive contains filenames */
-                bool containsFilenames = (files > 0 && StreamConverter.ToUInt(data, 0x8) != 0x8 + (files * 0x8) && StreamConverter.ToString(data, 0x8 + (files * 0x8), 4) == "FLST");
+                bool containsFilenames = (files > 0 && data.ReadUInt(0x8) != 0x8 + (files * 0x8) && data.ReadString(0x8 + (files * 0x8), 4) == "FLST");
 
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (int i = 0; i < files; i++)
                 {
-                    fileList[i] = new object[] {
-                        Endian.Swap(StreamConverter.ToUInt(data, 0x8 + (i * 0x8))), // Offset
-                        Endian.Swap(StreamConverter.ToUInt(data, 0xC + (i * 0x8))), // Length
-                        (containsFilenames ? StreamConverter.ToString(data, 0xC + (files * 0x8) + (i * 0x40), 64) : String.Empty) // Filename
-                    };
+                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                        data.ReadUInt(0x8 + (i * 0x8)).SwapEndian(), // Offset
+                        data.ReadUInt(0xC + (i * 0x8)).SwapEndian(), // Length
+                        (containsFilenames ? data.ReadString(0xC + (files * 0x8) + (i * 0x40), 64) : string.Empty) // Filename
+                    );
                 }
 
                 return fileList;
@@ -50,7 +50,7 @@ namespace puyo_tools
         }
 
         /* Create a header for an archive */
-        public override List<byte> CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out List<uint> offsetList)
+        public override MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
             try
             {
@@ -59,15 +59,15 @@ namespace puyo_tools
                 bool addFilenames = settings[0];
 
                 /* Create the header and offset list */
-                offsetList        = new List<uint>(files.Length);
-                List<byte> header = new List<byte>(0x8 + (files.Length * 0x8));
-                header.AddRange(StringConverter.ToByteList(ArchiveHeader.ACX, 4));
-                header.AddRange(NumberConverter.ToByteList(Endian.Swap((uint)files.Length)));
+                offsetList          = new uint[files.Length];
+                MemoryStream header = new MemoryStream(0x8 + (files.Length * 0x8));
+                header.Write(ArchiveHeader.ACX, 4);
+                header.Write(files.Length.SwapEndian());
 
                 /* Set the intial offset */
                 if (addFilenames)
                     header.Capacity += 0x4 + (0x40 * files.Length);
-                header.Capacity = Number.RoundUp(header.Capacity, blockSize);
+                header.Capacity = header.Capacity.RoundUp(blockSize);
                 uint offset     = (uint)header.Capacity;
 
                 for (int i = 0; i < files.Length; i++)
@@ -75,20 +75,20 @@ namespace puyo_tools
                     uint length = (uint)new FileInfo(files[i]).Length;
 
                     /* Write out the information */
-                    offsetList.Add(offset);
-                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(offset))); // Offset
-                    header.AddRange(NumberConverter.ToByteList(Endian.Swap(length))); // Length
+                    offsetList[i] = offset;
+                    header.Write(offset.SwapEndian()); // Offset
+                    header.Write(length.SwapEndian()); // Length
 
                     /* Increment the offset */
-                    offset += Number.RoundUp(length, blockSize);
+                    offset += length.RoundUp(blockSize);
                 }
 
                 /* Do we want to add filenames? */
                 if (addFilenames)
                 {
-                    header.AddRange(StringConverter.ToByteList("FLST", 4));
+                    header.Write("FLST");
                     for (int i = 0; i < files.Length; i++)
-                        header.AddRange(StringConverter.ToByteList(archiveFilenames[i], 63, 64));
+                        header.Write(archiveFilenames[i], 63, 64);
                 }
 
                 return header;
@@ -99,6 +99,41 @@ namespace puyo_tools
                 offsetList = null;
                 return null;
             }
+        }
+
+        /* Checks to see if the input stream is an ACX archive */
+        public override bool Check(ref Stream input, string filename)
+        {
+            try
+            {
+                return (input.ReadString(0x0, 4, false) == ArchiveHeader.ACX &&
+                    Path.GetExtension(filename) == ".acx");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /* Archive Information */
+        public override Archive.Information Information()
+        {
+            string Name   = "ACX";
+            string Ext    = ".acx";
+            string Filter = "ACX Archive (*.acx)|*.acx";
+
+            bool Extract = true;
+            bool Create  = true;
+
+            int[] BlockSize   = { 4, 2048 };
+            string[] Settings = new string[] {
+                "Add Filenames",
+            };
+            bool[] DefaultSettings = new bool[] {
+                false,
+            };
+
+            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }
