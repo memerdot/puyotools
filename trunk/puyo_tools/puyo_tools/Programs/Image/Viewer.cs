@@ -21,6 +21,7 @@ namespace puyo_tools
         ToolStripStatusLabel statusStripText;
         ToolStripComboBox backColorSelect;
         string imageName = String.Empty;
+        bool openedFromArchive = false;
 
         public Image_Viewer()
         {
@@ -75,6 +76,7 @@ namespace puyo_tools
         public Image_Viewer(Stream stream, string filename)
         {
             /* Set up the form */
+            openedFromArchive = true;
             FormContent.Create(this, "Puyo Tools Image Viewer", new Size(512, 256));
 
             /* Set up the background color selection */
@@ -117,7 +119,78 @@ namespace puyo_tools
             this.Controls.Add(imagePanel);
 
             /* Now load the image */
-            Bitmap bitmap = LoadImage(ref stream, filename);
+            Bitmap bitmap;
+            try
+            {
+                bitmap = LoadImage(ref stream, filename);
+            }
+            catch (GraphicFormatNeedsPalette)
+            {
+                throw new GraphicFormatNeedsPalette();
+            }
+
+            /* Only bother if an image was actually produced */
+            if (bitmap != null && !bitmap.Size.IsEmpty)
+            {
+                DisplayImage(bitmap, filename);
+                this.ShowDialog();
+            }
+            else
+                this.Dispose();
+        }
+
+        /* Loaded from the Archive Explorer */
+        public Image_Viewer(Stream stream, string filename, Stream palette)
+        {
+            /* Set up the form */
+            openedFromArchive = true;
+            FormContent.Create(this, "Puyo Tools Image Viewer", new Size(512, 256));
+
+            /* Set up the background color selection */
+            backColorSelect = new ToolStripComboBox()
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+            };
+            backColorSelect.Items.AddRange(new string[] { "White", "Blue", "Black" });
+            backColorSelect.SelectedIndex = 0;
+            backColorSelect.MaxDropDownItems = backColorSelect.Items.Count;
+            backColorSelect.SelectedIndexChanged += new EventHandler(ChangeBackColor);
+
+            /* Set up the toolstrip */
+            ToolStrip toolStrip = new ToolStrip(new ToolStripItem[] {
+                new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
+                new ToolStripSeparator(),
+                new ToolStripLabel("Background Color: "),
+                backColorSelect,
+            });
+            this.Controls.Add(toolStrip);
+
+            /* Set up the status strip */
+            statusStrip = new StatusStrip()
+            {
+                SizingGrip = false,
+            };
+            statusStripText = new ToolStripStatusLabel()
+            {
+                Size = new Size(statusStrip.Size.Width, statusStrip.Size.Height),
+            };
+
+            statusStrip.Items.Add(statusStripText);
+            this.Controls.Add(statusStrip);
+
+            /* Set up the image panel */
+            imagePanel = new Panel()
+            {
+                Location = new Point(0, 25),
+                Size = new Size(this.Size.Width, 512),
+                AutoScroll = true,
+            };
+
+            imagePanel.Controls.Add(image);
+            this.Controls.Add(imagePanel);
+
+            /* Now load the image */
+            Bitmap bitmap = LoadImage(ref stream, filename, palette);
 
             /* Only bother if an image was actually produced */
             if (bitmap != null && !bitmap.Size.IsEmpty)
@@ -164,14 +237,22 @@ namespace puyo_tools
                         Compression compression = new Compression(file, filename);
                         if (compression.Format == CompressionFormat.NULL)
                             throw new GraphicFormatNotSupported();
-
                         file = compression.Decompress();
+
                         imageClass = new Images(file, filename);
+                        
                         if (imageClass.Format == GraphicFormat.NULL)
                             throw new GraphicFormatNotSupported();
                     }
 
-                    return imageClass.Unpack();
+                    try
+                    {
+                        return imageClass.Unpack();
+                    }
+                    catch (GraphicFormatNeedsPalette)
+                    {
+                        return imageClass.Unpack(LoadPaletteFile(filename, imageClass));
+                    }
                 }
             }
             catch
@@ -186,7 +267,32 @@ namespace puyo_tools
             {
                 /* Get and return the image */
                 Images imageClass = new Images(data, filename);
-                return imageClass.Unpack();
+                try
+                {
+                    return imageClass.Unpack();
+                }
+                catch (GraphicFormatNeedsPalette)
+                {
+                    throw new GraphicFormatNeedsPalette();
+                }
+            }
+            catch (GraphicFormatNeedsPalette)
+            {
+                throw new GraphicFormatNeedsPalette();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private Bitmap LoadImage(ref Stream data, string filename, Stream palette)
+        {
+            try
+            {
+                /* Get and return the image */
+                Images imageClass = new Images(data, filename);
+                return imageClass.Unpack(palette);
             }
             catch
             {
@@ -284,6 +390,25 @@ namespace puyo_tools
             catch
             {
             }
+        }
+
+        /* Load Palette File */
+        private Stream LoadPaletteFile(string filename, Images imageClass)
+        {
+            /* See if a palette file exists */
+            string paletteFile = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename);
+            if (imageClass.Format == GraphicFormat.GVR)
+                paletteFile += ".gvp";
+            else if (imageClass.Format == GraphicFormat.SVR)
+                paletteFile += ".svp";
+
+            if (File.Exists(paletteFile))
+            {
+                using (FileStream input = new FileStream(paletteFile, FileMode.Open, FileAccess.Read))
+                    return input.Copy();
+            }
+
+            return null;
         }
     }
 }
