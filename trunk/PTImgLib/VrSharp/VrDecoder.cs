@@ -21,7 +21,7 @@ namespace VrSharp
 
         // The BPP of a chunk
         abstract public int GetChunkBpp();
-		
+
         // Do we need an external palette?
         abstract public bool NeedExternalPalette();
 
@@ -31,7 +31,7 @@ namespace VrSharp
         // The bytes of a chunk
         public int GetChunkSize()
         {
-            return (GetChunkWidth() * GetChunkHeight() * GetChunkBpp())/8;
+            return (GetChunkWidth() * GetChunkHeight() * GetChunkBpp()) / 8;
         }
 
         // The format header size
@@ -73,13 +73,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -133,13 +133,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -206,13 +206,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -286,13 +286,13 @@ namespace VrSharp
             return 16 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -372,13 +372,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -445,13 +445,13 @@ namespace VrSharp
             return 16 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -541,13 +541,13 @@ namespace VrSharp
             return 0;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -569,7 +569,7 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = 0xFF;
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)((Input[InPtr + 3] & 0xFF) == 0x80 ? 0xFF : ((Input[InPtr + 3] & 0x7F) << 1));
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Input[InPtr + 0];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Input[InPtr + 1];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Input[InPtr + 2];
@@ -601,13 +601,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -684,13 +684,13 @@ namespace VrSharp
             return 16 * 4;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -708,7 +708,7 @@ namespace VrSharp
 
                 uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
 
-                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) == 0x80 ? 0xFF : ((entry & 0x7F) << 1));
                 PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
                 PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
                 PaletteARGB[i][3] = (byte)((entry >> 8)  & 0xFF);
@@ -724,7 +724,7 @@ namespace VrSharp
 
             // Unswizzle the image if we have not yet started work on it
             if (x1 == 0 && y1 == 0)
-                PS2GsSwizzle.UnSwizzle4(Input, width, height, InPtr);
+                SvrSwizzle.UnSwizzle4(Input, width, height, InPtr);
 
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
@@ -776,13 +776,13 @@ namespace VrSharp
             return 16 * 4;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -800,7 +800,7 @@ namespace VrSharp
 
                 uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
 
-                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) == 0x80 ? 0xFF : ((entry & 0x7F) << 1));
                 PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
                 PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
                 PaletteARGB[i][3] = (byte)((entry >> 8)  & 0xFF);
@@ -868,13 +868,13 @@ namespace VrSharp
             return 256 * 4;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -892,7 +892,7 @@ namespace VrSharp
 
                 uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
 
-                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) == 0x80 ? 0xFF : ((entry & 0x7F) << 1));
                 PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
                 PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
                 PaletteARGB[i][3] = (byte)((entry >> 8)  & 0xFF);
@@ -949,13 +949,13 @@ namespace VrSharp
             return 256 * 4;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -973,7 +973,7 @@ namespace VrSharp
 
                 uint entry = (uint)(FormatHeader[Pointer + 0] << 24 | FormatHeader[Pointer + 1] << 16 | FormatHeader[Pointer + 2] << 8 | FormatHeader[Pointer + 3]);
 
-                PaletteARGB[i][0] = (byte)((entry & 0xFF) * 0xFF / 0x80);
+                PaletteARGB[i][0] = (byte)((entry & 0xFF) == 0x80 ? 0xFF : ((entry & 0x7F) << 1));
                 PaletteARGB[i][1] = (byte)((entry >> 24) & 0xFF);
                 PaletteARGB[i][2] = (byte)((entry >> 16) & 0xFF);
                 PaletteARGB[i][3] = (byte)((entry >> 8) & 0xFF);
@@ -1030,13 +1030,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette()
-		{
-			return false;
-		}
+        {
+            return true;
+        }
         override public bool SendExternalPalette(byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(byte[] ImageHeader, int Width, int Height)
         {
             init = true;
@@ -1086,13 +1086,102 @@ namespace VrSharp
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
                     // Swap 4th and 5th bit in entry
-                    //byte entry = Input[InPtr];
                     byte entry = (byte)((Input[InPtr] & 0xE7) | ((Input[InPtr] >> 4 & 0x1) << 3) | ((Input[InPtr] >> 3 & 0x1) << 4));
 
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[entry][0];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[entry][1];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[entry][2];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[entry][3];
+                    InPtr++;
+                }
+            }
+            return true;
+        }
+    }
+    public class VrDecoder_086A0000 : VrDecoder
+    {
+        private byte[][] PaletteARGB = new byte[256][];
+        private bool init = false;
+        private int width, height, outptr;
+        override public int GetChunkWidth()
+        {
+            return width;
+        }
+        override public int GetChunkHeight()
+        {
+            return height;
+        }
+        override public int GetChunkBpp()
+        {
+            return 8;
+        }
+        override public int GetFormatHeaderSize()
+        {
+            return 256 * 2;
+        }
+        override public bool NeedExternalPalette()
+        {
+            return false;
+        }
+        override public bool SendExternalPalette(byte[] ExtPal)
+        {
+            return false;
+        }
+        override public bool Initialize(byte[] ImageHeader, int Width, int Height)
+        {
+            init = true;
+            width = Width;
+            height = Height;
+            return true;
+        }
+        override public bool DecodeFormatHeader(ref byte[] FormatHeader, ref int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode format header because you have not initalized yet.");
+
+            for (int i = 0; i < 256; i++)
+            {
+                PaletteARGB[i] = new byte[4];
+
+                // Get 16-bit palette Entry
+                ushort entry = BitConverter.ToUInt16(FormatHeader, Pointer);
+                if ((entry & 0x8000) != 0)
+                {
+                    PaletteARGB[i][0] = (byte)0xFF;
+                    PaletteARGB[i][1] = (byte)(((entry >> 10) & 0x1f) * 255 / 32);
+                    PaletteARGB[i][2] = (byte)(((entry >> 5) & 0x1f) * 255 / 32);
+                    PaletteARGB[i][3] = (byte)(((entry >> 0) & 0x1f) * 255 / 32);
+                }
+                else
+                {
+                    PaletteARGB[i][0] = (byte)(((entry >> 12) & 0x07) * 255 / 8);
+                    PaletteARGB[i][1] = (byte)(((entry >> 8) & 0x0f) * 255 / 16);
+                    PaletteARGB[i][2] = (byte)(((entry >> 4) & 0x0f) * 255 / 16);
+                    PaletteARGB[i][3] = (byte)(((entry >> 0) & 0x0f) * 255 / 16);
+                }
+                Pointer += 2;
+            }
+
+            return true;
+        }
+        override public bool DecodeChunk(ref byte[] Input, ref int InPtr, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // Unswizzle the image if we have not yet started work on it
+            if (x1 == 0 && y1 == 0)
+                PS2GsSwizzle.UnSwizzle8(Input, width, height, InPtr);
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Swap 4th and 5th bit in entry
+                    byte entry = (byte)((Input[InPtr] & 0xE7) | ((Input[InPtr] >> 4 & 0x1) << 3) | ((Input[InPtr] >> 3 & 0x1) << 4));
+
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = PaletteARGB[entry][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = PaletteARGB[entry][3];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = PaletteARGB[entry][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = PaletteARGB[entry][1];
                     InPtr++;
                 }
             }

@@ -167,7 +167,7 @@ namespace VrSharp
                 {
                     // get the pen
                     int index = y * Width + x;
-                    byte uPen = (byte)(Buf[Where + (index >> 1)] >> ((index & 1) * 4) & 0xf);
+                    byte uPen = (byte)(Buf[Where + (index >> 1)] >> (4 - (index & 1) * 4) & 0xf);
 
                     // swizzle
                     int pageX = x & (~0x7f);
