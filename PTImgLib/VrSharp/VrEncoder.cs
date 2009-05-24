@@ -112,13 +112,13 @@ namespace VrSharp
             return 256 * 2;
         }
         override public bool NeedExternalPalette(ref int PalSize)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool GetExternalPalette(ref byte[] ExtPal)
-		{
-			return false;
-		}
+        {
+            return false;
+        }
         override public bool Initialize(ref byte[] Data, byte[] AuxData, int Width, int Height)
         {
             Initialized = true;

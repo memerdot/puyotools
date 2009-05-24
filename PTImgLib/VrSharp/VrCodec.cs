@@ -40,6 +40,7 @@ namespace VrSharp
         Fmt096C0000 = 0x096C0000,
         Fmt08640000 = 0x08640000,
         Fmt09640000 = 0x09640000,
+        Fmt086A0000 = 0x086A0000,
     };
 
     public enum VrType
@@ -182,6 +183,15 @@ namespace VrSharp
             Format = VrFormat.Fmt09640000;
         }
     }
+    public class VrCodec_086A0000 : VrCodec
+    {
+        public VrCodec_086A0000()
+        {
+            Decode = new VrDecoder_086A0000();
+            Encode = null;
+            Format = VrFormat.Fmt086A0000;
+        }
+    }
 
     // VrCodecs is a static class for containing codecs
     // Register your codecs here in the initialize function.
@@ -205,6 +215,7 @@ namespace VrSharp
             Register("096C0000", new VrCodec_096C0000());
             Register("08640000", new VrCodec_08640000());
             Register("09640000", new VrCodec_09640000());
+            Register("086A0000", new VrCodec_086A0000());
             inited = true;
         }
         public static bool Unregister(string CodecID)
