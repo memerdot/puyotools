@@ -29,4 +29,11 @@ namespace puyo_tools
         {
         }
     }
+
+    class GraphicFormatNeedsPalette : Exception
+    {
+        public GraphicFormatNeedsPalette()
+        {
+        }
+    }
 }

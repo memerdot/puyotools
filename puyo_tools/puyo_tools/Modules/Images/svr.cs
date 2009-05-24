@@ -16,20 +16,28 @@ namespace puyo_tools
         }
 
         /* Convert the SVR to an image */
-        public override Bitmap Unpack(ref Stream data)
+        public override Bitmap Unpack(ref Stream data, Stream palette)
         {
             /* Convert the SVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(StreamConverter.ToByteArray(data, 0, (int)data.Length));
+                VrFile imageInput = new VrFile(StreamConverter.ToByteArray(data, 0, (int)data.Length), (palette == null ? null : StreamConverter.ToByteArray(palette, 0, (int)palette.Length)));
                 ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
 
                 return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
+            }
+            catch (VrCodecNeedsPaletteException)
+            {
+                throw new GraphicFormatNeedsPalette();
             }
             catch
             {
                 return null;
             }
+        }
+        public override Bitmap Unpack(ref Stream data)
+        {
+            return Unpack(ref data, null);
         }
 
         public override Stream Pack(ref Bitmap data)

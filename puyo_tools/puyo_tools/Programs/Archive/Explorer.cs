@@ -328,17 +328,51 @@ namespace puyo_tools
                 }
 
                 /* Check to see if this is an image */
-
                 Images image = new Images(imageData, filename);
                 if (image.Format == GraphicFormat.NULL)
                     throw new GraphicFormatNotSupported();
 
+                /* Check to see if a palette file exists */
+                if (image.Format == GraphicFormat.SVR && indexOfFile(Path.GetFileNameWithoutExtension(filename) + ".svp") != -1)
+                {
+                }
+
                 /* Try to open this image if we can */
-                new Image_Viewer(imageData, filename);
+                try
+                {
+                    new Image_Viewer(imageData, filename);
+                }
+                catch (GraphicFormatNeedsPalette)
+                {
+                    string paletteFile = Path.GetFileNameWithoutExtension(filename);
+                    if (image.Format == GraphicFormat.GVR)
+                        paletteFile += ".gvp";
+                    else if (image.Format == GraphicFormat.SVR)
+                        paletteFile += ".svp";
+
+                    int index = indexOfFile(paletteFile);
+                    if (index == -1)
+                        throw new Exception();
+                    else
+                        new Image_Viewer(imageData, filename, ArchiveData[level].Copy(FileList[level].Entry[index].Offset, FileList[level].Entry[index].Length));
+                }
             }
             catch
             {
             }
+        }
+
+        /* Find file */
+        private int indexOfFile(string filename)
+        {
+            /* Let's see if an entry exists with that filename */
+            for (int i = 0; i < FileList[level].Entries; i++)
+            {
+                if (filename.ToLower() == FileList[level].Entry[i].FileName.ToLower())
+                    return i;
+            }
+
+            return -1;
         }
 
         /* Extract files */
