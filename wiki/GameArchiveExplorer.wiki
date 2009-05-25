@@ -1,4 +1,0 @@
-#summary Game Archive Explorer
-
-= Game Archive Explorer =
-Game Archive Explorer allows you to view the contents of archives without having to extract them. It is meant to be used in conjunction with Puyo Tools. It is now defunct as the next version of Puyo Tools will include an archive explorer, rendering Game Archive Explorer useless.
