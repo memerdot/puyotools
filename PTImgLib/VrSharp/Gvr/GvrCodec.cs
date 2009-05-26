@@ -15,6 +15,8 @@ namespace VrSharp
     // GVR Data Formats
     public enum GvrDataFormat : byte
     {
+        Format02 = 0x02,
+        Format03 = 0x03,
         Format04 = 0x04,
         Format05 = 0x05,
         Format06 = 0x06,
@@ -71,7 +73,25 @@ namespace VrSharp
         }
     }
 
-    // SVR Data Format Classes
+    // GVR Data Format Classes
+    public class GvrDataCodec_02 : GvrDataCodec
+    {
+        public GvrDataCodec_02()
+        {
+            Decode = new GvrDataDecoder_02();
+            Encode = null;
+            Format = GvrDataFormat.Format02;
+        }
+    }
+    public class GvrDataCodec_03 : GvrDataCodec
+    {
+        public GvrDataCodec_03()
+        {
+            Decode = new GvrDataDecoder_03();
+            Encode = null;
+            Format = GvrDataFormat.Format03;
+        }
+    }
     public class GvrDataCodec_04 : GvrDataCodec
     {
         public GvrDataCodec_04()
@@ -94,7 +114,7 @@ namespace VrSharp
     {
         public GvrDataCodec_06()
         {
-            Decode = null;
+            Decode = new GvrDataDecoder_06();
             Encode = null;
             Format = GvrDataFormat.Format06;
         }
@@ -142,11 +162,14 @@ namespace VrSharp
             // Add the Palette Formats
             GvrPaletteCodecs.Add(0x00, new GvrPaletteCodec_00());
             GvrPaletteCodecs.Add(0x01, new GvrPaletteCodec_01());
+            GvrPaletteCodecs.Add(0x08, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x09, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x18, new GvrPaletteCodec_18());
             GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
 
             // Add the Data Formats
+            GvrDataCodecs.Add(0x02, new GvrDataCodec_02());
+            GvrDataCodecs.Add(0x03, new GvrDataCodec_03());
             GvrDataCodecs.Add(0x04, new GvrDataCodec_04());
             GvrDataCodecs.Add(0x05, new GvrDataCodec_05());
             GvrDataCodecs.Add(0x06, new GvrDataCodec_06());

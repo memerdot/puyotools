@@ -6,6 +6,148 @@ namespace VrSharp
     {
     }
 
+    // Format 02
+    public class GvrDataDecoder_02 : GvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[0][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 8;
+        }
+        public override int GetChunkHeight()
+        {
+            return 4;
+        }
+        public override int GetChunkBpp()
+        {
+            return 4;
+        }
+        public override int GetPaletteSize()
+        {
+            return 0;
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width  = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)((Input[Pointer] >> 4) * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
+                    Pointer++;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    // Format 03
+    public class GvrDataDecoder_03 : GvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[0][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 4;
+        }
+        public override int GetChunkHeight()
+        {
+            return 4;
+        }
+        public override int GetChunkBpp()
+        {
+            return 8;
+        }
+        public override int GetPaletteSize()
+        {
+            return 0;
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)(Input[Pointer] * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)(Input[Pointer + 1] * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)(Input[Pointer + 1] * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)(Input[Pointer + 1] * 255 / 16);
+                    Pointer += 2;
+                }
+            }
+
+            return true;
+        }
+    }
+
     // Format 04
     public class GvrDataDecoder_04 : GvrDataDecoder
     {
@@ -149,6 +291,79 @@ namespace VrSharp
                     Pointer += (paletteDecoder.GetBpp() / 8);
                 }
             }
+
+            return true;
+        }
+    }
+
+    // Format 06
+    public class GvrDataDecoder_06 : GvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[0][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 4;
+        }
+        public override int GetChunkHeight()
+        {
+            return 4;
+        }
+        public override int GetChunkBpp()
+        {
+            return 32;
+        }
+        public override int GetPaletteSize()
+        {
+            return 0;
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width  = Width;
+            height = Height;
+            paletteDecoder = null; // We will be using RGBA8888
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Don't bother with the palette, just decode the data
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Input[Pointer + 0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Input[Pointer + 1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Input[Pointer + 32];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Input[Pointer + 33];
+                    Pointer += 2;
+                }
+            }
+            Pointer += 32;
 
             return true;
         }
