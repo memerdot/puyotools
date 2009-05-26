@@ -4,6 +4,17 @@ namespace VrSharp
 {
     public abstract class GvrPaletteDecoder : VrPaletteDecoder
     {
+        public static uint icolor(byte[] a, byte[] b, float fa, float fb, float fc)
+        {
+            byte[] aa = a;
+            byte[] bb = b;
+            byte[] cc = new byte[4];
+
+            for (int i = 0; i < 4; i++)
+                cc[i] = (byte)((aa[i] * fa + bb[i] * fb) / fc);
+
+            return BitConverter.ToUInt32(cc, 0);
+        }
     }
 
     // Format 18 (RGB565)

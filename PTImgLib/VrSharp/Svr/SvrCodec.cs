@@ -86,7 +86,7 @@ namespace VrSharp
     {
         public SvrDataCodec_68()
         {
-            Decode = null;
+            Decode = new SvrDataDecoder_68();
             Encode = null;
             Format = SvrDataFormat.Format68;
         }

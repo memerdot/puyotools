@@ -82,8 +82,6 @@ namespace VrSharp
 
         private int VrFileOffset;
 
-        private VrType VrType;
-
         public string FormatCodeString(uint fmtcode)
         {
             return fmtcode.ToString("X").PadLeft(8, '0');
