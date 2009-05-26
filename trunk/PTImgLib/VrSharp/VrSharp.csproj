@@ -52,6 +52,11 @@
     <Compile Include="Gvr\GvrPaletteDecoder.cs" />
     <Compile Include="Gvr\GvrPaletteEncoder.cs" />
     <Compile Include="PS2GsSwizzle.cs" />
+    <Compile Include="Pvr\PvrCodec.cs" />
+    <Compile Include="Pvr\PvrDataDecoder.cs" />
+    <Compile Include="Pvr\PvrDataEncoder.cs" />
+    <Compile Include="Pvr\PvrPaletteDecoder.cs" />
+    <Compile Include="Pvr\PvrPaletteEncoder.cs" />
     <Compile Include="Svr\SvrCodec.cs" />
     <Compile Include="Svr\SvrDataDecoder.cs" />
     <Compile Include="Svr\SvrDataEncoder.cs" />

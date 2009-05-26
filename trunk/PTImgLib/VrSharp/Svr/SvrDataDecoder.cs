@@ -128,6 +128,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
 
             paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+            SvrPaletteDecoder.ReorderPalette(ref Palette);
 
             return true;
         }
@@ -144,13 +145,10 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    // Swap 4th and 5th bit in entry
-                    byte entry = (byte)((Input[Pointer] & 0xE7) | ((Input[Pointer] >> 4 & 0x1) << 3) | ((Input[Pointer] >> 3 & 0x1) << 4));
-
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[entry][1];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[entry][2];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[entry][3];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[Input[Pointer]][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[Input[Pointer]][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[Input[Pointer]][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[Input[Pointer]][3];
                     Pointer++;
                 }
             }
@@ -290,6 +288,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
 
             paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+            SvrPaletteDecoder.ReorderPalette(ref Palette);
 
             return true;
         }
@@ -306,13 +305,10 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    // Swap 4th and 5th bit in entry
-                    byte entry = (byte)((Input[Pointer] & 0xE7) | ((Input[Pointer] >> 4 & 0x1) << 3) | ((Input[Pointer] >> 3 & 0x1) << 4));
-
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[entry][3];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[entry][2];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[entry][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[Input[Pointer]][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[Input[Pointer]][3];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[Input[Pointer]][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[Input[Pointer]][1];
                     Pointer++;
                 }
             }
@@ -369,6 +365,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
 
             paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+            SvrPaletteDecoder.ReorderPalette(ref Palette);
 
             return true;
         }
@@ -385,13 +382,10 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    // Swap 4th and 5th bit in entry
-                    byte entry = (byte)((Input[Pointer] & 0xE7) | ((Input[Pointer] >> 4 & 0x1) << 3) | ((Input[Pointer] >> 3 & 0x1) << 4));
-
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[entry][1];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[entry][2];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[entry][3];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[Input[Pointer]][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[Input[Pointer]][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[Input[Pointer]][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[Input[Pointer]][3];
                     Pointer++;
                 }
             }

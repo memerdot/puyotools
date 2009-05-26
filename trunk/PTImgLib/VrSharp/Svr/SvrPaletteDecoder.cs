@@ -4,6 +4,20 @@ namespace VrSharp
 {
     public abstract class SvrPaletteDecoder : VrPaletteDecoder
     {
+        public static void ReorderPalette(ref byte[][] Palette)
+        {
+            // Make a copy of the palette
+            byte[][] PaletteCopy = new byte[256][];
+            for (int i = 0; i < 256; i++)
+                PaletteCopy[i] = Palette[i];
+
+            // Now reorder the palette
+            for (int i = 0; i < 256; i++)
+            {
+                byte entry = (byte)((i & 0xE7) | ((i >> 4 & 0x1) << 3) | ((i >> 3 & 0x1) << 4));
+                Palette[i] = PaletteCopy[entry];
+            }
+        }
     }
 
     // Format 08 (RGB5A3)

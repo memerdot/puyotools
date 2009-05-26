@@ -20,6 +20,7 @@ namespace VrSharp
         Format06 = 0x06,
         Format08 = 0x08,
         Format09 = 0x09,
+        Format0E = 0x0E,
     }
 
     public abstract class GvrPaletteCodec : VrPaletteCodec
@@ -116,6 +117,15 @@ namespace VrSharp
             Format = GvrDataFormat.Format09;
         }
     }
+    public class GvrDataCodec_0E : GvrDataCodec
+    {
+        public GvrDataCodec_0E()
+        {
+            Decode = new GvrDataDecoder_0E();
+            Encode = null;
+            Format = GvrDataFormat.Format0E;
+        }
+    }
 
     // VrCodecs is a static class for containing codecs
     // Register your codecs here in the initialize function.
@@ -132,6 +142,7 @@ namespace VrSharp
             // Add the Palette Formats
             GvrPaletteCodecs.Add(0x00, new GvrPaletteCodec_00());
             GvrPaletteCodecs.Add(0x01, new GvrPaletteCodec_01());
+            GvrPaletteCodecs.Add(0x09, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x18, new GvrPaletteCodec_18());
             GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
 
@@ -141,6 +152,7 @@ namespace VrSharp
             GvrDataCodecs.Add(0x06, new GvrDataCodec_06());
             GvrDataCodecs.Add(0x08, new GvrDataCodec_08());
             GvrDataCodecs.Add(0x09, new GvrDataCodec_09());
+            GvrDataCodecs.Add(0x0E, new GvrDataCodec_0E());
 
             init = true;
         }
