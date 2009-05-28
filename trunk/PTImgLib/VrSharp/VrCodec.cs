@@ -45,7 +45,6 @@ namespace VrSharp
 
     public abstract class VrCodec
     {
-        public VrDecoder Decode;
         public VrEncoder Encode;
         public VrFormat Format;
     };
@@ -54,7 +53,6 @@ namespace VrSharp
     {
         public VrCodec_00000004()
         {
-            Decode = new VrDecoder_00000004();
             Encode = null;
             Format = VrFormat.Fmt00000004;
         }
@@ -63,7 +61,6 @@ namespace VrSharp
     {
         public VrCodec_00000005()
         {
-            Decode = new VrDecoder_00000005();
             Encode = null;
             Format = VrFormat.Fmt00000005;
         }
@@ -72,7 +69,6 @@ namespace VrSharp
     {
         public VrCodec_00000006()
         {
-            Decode = new VrDecoder_00000006();
             Encode = null;
             Format = VrFormat.Fmt00000006;
         }
@@ -81,7 +77,6 @@ namespace VrSharp
     {
         public VrCodec_00001808()
         {
-            Decode = new VrDecoder_00001808();
             Encode = null;
             Format = VrFormat.Fmt00001808;
         }
@@ -90,7 +85,6 @@ namespace VrSharp
     {
         public VrCodec_00001809()
         {
-            Decode = new VrDecoder_00001809();
             Encode = new VrEncoder_00001809();
             Format = VrFormat.Fmt00001809;
         }
@@ -99,7 +93,6 @@ namespace VrSharp
     {
         public VrCodec_00002808()
         {
-            Decode = new VrDecoder_00002808();
             Encode = null;
             Format = VrFormat.Fmt00002808;
         }
@@ -108,7 +101,6 @@ namespace VrSharp
     {
         public VrCodec_00002809()
         {
-            Decode = new VrDecoder_00002809();
             Encode = null;
             Format = VrFormat.Fmt00002809;
         }
@@ -117,7 +109,6 @@ namespace VrSharp
     {
         public VrCodec_096C0000()
         {
-            Decode = new VrDecoder_096C0000();
             Encode = null;
             Format = VrFormat.Fmt096C0000;
         }

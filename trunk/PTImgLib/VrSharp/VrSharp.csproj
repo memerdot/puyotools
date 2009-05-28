@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.50727</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -46,13 +46,30 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColorConversions.cs" />
-    <Compile Include="PS2GsSwizzle.cs" />
+    <Compile Include="Gvr\GvrCodec.cs" />
+    <Compile Include="Gvr\GvrDataDecoder.cs" />
+    <Compile Include="Gvr\GvrDataEncoder.cs" />
+    <Compile Include="Gvr\GvrPaletteDecoder.cs" />
+    <Compile Include="Gvr\GvrPaletteEncoder.cs" />
+    <Compile Include="Pvr\PvrCodec.cs" />
+    <Compile Include="Pvr\PvrDataDecoder.cs" />
+    <Compile Include="Pvr\PvrDataEncoder.cs" />
+    <Compile Include="Pvr\PvrPaletteDecoder.cs" />
+    <Compile Include="Pvr\PvrPaletteEncoder.cs" />
+    <Compile Include="Pvr\PvrTwiddle.cs" />
+    <Compile Include="Svr\SvrCodec.cs" />
+    <Compile Include="Svr\SvrDataDecoder.cs" />
+    <Compile Include="Svr\SvrDataEncoder.cs" />
+    <Compile Include="Svr\SvrPaletteDecoder.cs" />
+    <Compile Include="Svr\SvrPaletteEncoder.cs" />
+    <Compile Include="Svr\SvrSwizzle.cs" />
     <Compile Include="VrCodec.cs" />
     <Compile Include="VrColorProfile.cs" />
-    <Compile Include="VrDecoder.cs" />
+    <Compile Include="VrDataDecoder.cs" />
     <Compile Include="VrEncoder.cs" />
     <Compile Include="VrExceptions.cs" />
     <Compile Include="VrFile.cs" />
+    <Compile Include="VrPaletteDecoder.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
