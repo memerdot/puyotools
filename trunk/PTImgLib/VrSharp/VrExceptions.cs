@@ -6,21 +6,9 @@ namespace VrSharp
 {
     public class VrNoSuitableCodecException : _ErrorException
     {
-        public VrNoSuitableCodecException(string errorMessage) : base(errorMessage) { }
+        public VrNoSuitableCodecException(string errorMessage) : base(errorMessage) {}
 
         public VrNoSuitableCodecException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
-    }
-    public class VrNoSuitablePaletteException : _ErrorException
-    {
-        public VrNoSuitablePaletteException(string errorMessage) : base(errorMessage) { }
-
-        public VrNoSuitablePaletteException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
-    }
-    public class VrCodecNeedsPaletteException : _ErrorException
-    {
-        public VrCodecNeedsPaletteException(string errorMessage) : base(errorMessage) { }
-
-        public VrCodecNeedsPaletteException(string errorMessage, Exception innerEx) : base(errorMessage, innerEx) { }
     }
     public class VrCodecProcessingException : _ErrorException
     {

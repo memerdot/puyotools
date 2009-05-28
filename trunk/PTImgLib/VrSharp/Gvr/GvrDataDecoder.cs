@@ -97,7 +97,7 @@ namespace VrSharp
         }
         public override int GetChunkBpp()
         {
-            return 8;
+            return 16;
         }
         public override int GetPaletteSize()
         {
@@ -136,10 +136,10 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)(Input[Pointer] * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)(Input[Pointer + 1] * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)(Input[Pointer + 1] * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)(Input[Pointer + 1] * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Input[Pointer];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Input[Pointer + 1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Input[Pointer + 1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Input[Pointer + 1];
                     Pointer += 2;
                 }
             }

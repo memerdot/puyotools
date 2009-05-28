@@ -8,6 +8,7 @@ namespace VrSharp
     {
         Format00 = 0x00,
         Format01 = 0x01,
+        Format02 = 0x02,
         Format18 = 0x18,
         Format28 = 0x28,
     }
@@ -52,6 +53,15 @@ namespace VrSharp
             Decode = null;
             Encode = null;
             Format = GvrPaletteFormat.Format01;
+        }
+    }
+    public class GvrPaletteCodec_02 : GvrPaletteCodec
+    {
+        public GvrPaletteCodec_02()
+        {
+            Decode = null;
+            Encode = null;
+            Format = GvrPaletteFormat.Format02;
         }
     }
    public class GvrPaletteCodec_18 : GvrPaletteCodec
@@ -162,9 +172,11 @@ namespace VrSharp
             // Add the Palette Formats
             GvrPaletteCodecs.Add(0x00, new GvrPaletteCodec_00());
             GvrPaletteCodecs.Add(0x01, new GvrPaletteCodec_01());
+            GvrPaletteCodecs.Add(0x02, new GvrPaletteCodec_02());
             GvrPaletteCodecs.Add(0x08, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x09, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x18, new GvrPaletteCodec_18());
+            GvrPaletteCodecs.Add(0x19, new GvrPaletteCodec_18());
             GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
 
             // Add the Data Formats

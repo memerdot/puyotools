@@ -224,7 +224,7 @@ namespace VrSharp
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
                     // Get entry
-                    byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> (4 - (PixelPointer % 2) * 4)) & 0xF);
+                    byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> ((PixelPointer % 2) * 4)) & 0xF);
 
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[entry][1];
