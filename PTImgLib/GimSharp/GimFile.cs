@@ -104,30 +104,39 @@ namespace GimSharp
                 GimPaletteOffset = 0x30;
                 GimDataOffset    = 0x30 + BitConverter.ToInt32(CompressedData, 0x30 + 0x8);
             }
-            else
+            else if (0x30 + BitConverter.ToInt32(CompressedData, 0x30 + 0x8) < CompressedData.Length && CompressedData[0x30 + BitConverter.ToInt32(CompressedData, 0x30 + 0x8)] == 0x05)
             {
                 // Palette is stored after the image data
                 GimPaletteOffset = 0x30 + BitConverter.ToInt32(CompressedData, 0x30 + 0x8);
                 GimDataOffset    = 0x30;
             }
-
-            // Get Palette Information
-            GimPaletteFormatCode = Compressed[GimPaletteOffset + 0x14];
-            GimPaletteColors     = BitConverter.ToUInt16(Compressed, GimPaletteOffset + 0x18);
-
-            // Set up the palette decoder
-            try
+            else
             {
-                GimPaletteDecoder = GimCodecs.GetPaletteCodec(GimPaletteFormatCode).Decode;
-                GimPaletteSize    = GimPaletteColors * (GimPaletteDecoder.GetBpp() / 8);
-            }
-            catch (Exception e)
-            {
-                throw new GimCodecLoadingException("The codec for palette format 0x" + GimPaletteFormatCode.ToString("X") + " could not be loaded or does not exist.", e);
+                // No Palette
+                GimPaletteOffset = 0x00;
+                GimDataOffset    = 0x30;
             }
 
-            GimFileWidth  = BitConverter.ToUInt16(Compressed, GimDataOffset + 0x18);
-            GimFileHeight = BitConverter.ToUInt16(Compressed, GimDataOffset + 0x1A);
+            if (GimPaletteOffset > 0)
+            {
+                // Get Palette Information
+                GimPaletteFormatCode = Compressed[GimPaletteOffset + 0x14];
+                GimPaletteColors     = BitConverter.ToUInt16(Compressed, GimPaletteOffset + 0x18);
+
+                // Set up the palette decoder
+                try
+                {
+                    GimPaletteDecoder = GimCodecs.GetPaletteCodec(GimPaletteFormatCode).Decode;
+                    GimPaletteSize    = GimPaletteColors * (GimPaletteDecoder.GetBpp() / 8);
+                }
+                catch (Exception e)
+                {
+                    throw new GimCodecLoadingException("The codec for palette format 0x" + GimPaletteFormatCode.ToString("X") + " could not be loaded or does not exist.", e);
+                }
+            }
+
+            GimFileWidth  = RoundUp(BitConverter.ToUInt16(Compressed, GimDataOffset + 0x18), 16);
+            GimFileHeight = RoundUp(BitConverter.ToUInt16(Compressed, GimDataOffset + 0x1A), 8);
 
             GimDataFormatCode = Compressed[GimDataOffset + 0x14];
             GimDataSwizzled   = (BitConverter.ToUInt16(Compressed, GimDataOffset + 0x16) == 0x01);
@@ -194,6 +203,15 @@ namespace GimSharp
         public int GetWidth()
         {
             return GimFileWidth;
+        }
+
+        // Fix for some GIM files who don't list their file widths and lengths properly
+        public int RoundUp(int number, int multiple)
+        {
+            if (number % multiple == 0)
+                return number;
+
+            return number + (multiple - (number % multiple));
         }
     }
 }
