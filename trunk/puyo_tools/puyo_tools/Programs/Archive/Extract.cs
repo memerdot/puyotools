@@ -273,7 +273,7 @@ namespace puyo_tools
                         /* Create the extraction directory */
                         outputDirectory = Path.GetDirectoryName(fileList[i]);
                         if (extractDirSameFilename.Checked && deleteSourceArchive.Checked)
-                            outputDirectory += Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(outputFilename);
+                            outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                         else if (!extractSameDir.Checked)
                             outputDirectory += Path.DirectorySeparatorChar + archive.OutputDirectory + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(outputFilename);
 
@@ -360,8 +360,15 @@ namespace puyo_tools
                                 Archive testArchive = new Archive(outputData, extractFilename);
                                 if (testArchive.Format != ArchiveFormat.NULL)
                                 {
-                                    fileList.Add(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
-                                    status.AddFile(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
+                                    /* Set the directory appropiately */
+                                    string addFile;
+                                    if (deleteSourceArchive.Checked && extractDirSameFilename.Checked)
+                                        addFile = fileList[i] + Path.DirectorySeparatorChar + extractFilename;
+                                    else
+                                        addFile = outputDirectory + Path.DirectorySeparatorChar + extractFilename;
+
+                                    fileList.Add(addFile);
+                                    status.AddFile(addFile);
                                 }
                             }
                         }
@@ -374,7 +381,7 @@ namespace puyo_tools
 
                         /* We have to rename that directory, remember? */
                         if (extractDirSameFilename.Checked)
-                            Directory.Move(outputDirectory, outputDirectory + Path.GetExtension(fileList[i]));
+                            Directory.Move(outputDirectory, fileList[i]);
                     }
                 }
                 catch

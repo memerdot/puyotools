@@ -112,6 +112,16 @@ namespace puyo_tools
                         return;
                 }
 
+                /* Check file extension */
+                switch (Path.GetExtension(Filename).ToLower())
+                {
+                    case ".prs": // PRS
+                        format     = CompressionFormat.PRS;
+                        compressor = new PRS();
+                        name       = "PRS";
+                        return;
+                }
+
                 /* Unknown or unsupported compression */
                 throw new CompressionFormatNotSupported();
             }
@@ -163,6 +173,7 @@ namespace puyo_tools
         LZ01,
         LZSS,
         ONZ,
+        PRS,
     }
 
     /* Compression Header */

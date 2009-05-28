@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using Extensions;
+using GimSharp;
+using ImgSharp;
 
 namespace puyo_tools
 {
@@ -16,6 +18,23 @@ namespace puyo_tools
 
         /* Unpack a GIM into a Bitmap */
         public override Bitmap Unpack(ref Stream data)
+        {
+            /* Convert the GIM to an image */
+            try
+            {
+                GimFile imageInput  = new GimFile(data.ReadBytes(0, (int)data.Length));
+                ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
+
+                return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
+            }
+            catch (Exception f)
+            {
+                System.Windows.Forms.MessageBox.Show(f.ToString());
+                return null;
+            }
+        }
+
+        public Bitmap Unpack2(ref Stream data)
         {
             try
             {

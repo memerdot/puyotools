@@ -205,7 +205,7 @@ namespace puyo_tools
         {
             /* Select the file to open */
             string file = FileSelectionDialog.OpenFile("Select Archive",
-                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
+                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.prs;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.prs;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
                 "GNT Archive (*.gnt)|*.gnt|" +
@@ -215,6 +215,7 @@ namespace puyo_tools
                 "NARC Archive (*.narc;*.carc)|*.narc;*.carc|" +
                 "ONE Archive (*.one;*.onz)|*.one;*.onz|" +
                 "PVM Archive (*.pvm)|*.pvm|" +
+                "PRS Compressed Archive (*.prs)|*.prs|" +
                 "SNT Archive (*.snt)|*.snt|" +
                 "SPK Archive (*.spk)|*.spk|" +
                 "TEX Archive (*.tex)|*.tex|" +

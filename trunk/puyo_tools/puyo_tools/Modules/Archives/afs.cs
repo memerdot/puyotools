@@ -38,7 +38,7 @@ namespace puyo_tools
                     fileList.Entry[i] = new ArchiveFileList.FileEntry(
                         data.ReadUInt(0x8 + (i * 0x8)), // Offset
                         data.ReadUInt(0xC + (i * 0x8)), // Length
-                        data.ReadString(metadataLocation + (i * 0x30), 32) // Filename
+                        (metadataLocation == 0x0 ? String.Empty : data.ReadString(metadataLocation + (i * 0x30), 32)) // Filename
                     );
                 }
 

@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -17,12 +18,12 @@ namespace puyo_tools
             {
                 /* Set variables */
                 uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = StreamConverter.ToUInt(data, 0x0) >> 8; // Decompressed Size
+                uint decompressedSize = data.ReadUInt(0x0) >> 8; // Decompressed Size
 
                 uint Cpointer = 0x4; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
 
-                byte[] compressedData = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
+                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */
