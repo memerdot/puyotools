@@ -80,6 +80,7 @@
     <Compile Include="Modules\Archives\txag.cs" />
     <Compile Include="Modules\Compression\lzss.cs" />
     <Compile Include="Modules\Compression\onz.cs" />
+    <Compile Include="Modules\Compression\prs.cs" />
     <Compile Include="Modules\Compression\sbc.cs" />
     <Compile Include="Modules\Images.cs" />
     <Compile Include="Modules\Images\bmd.cs" />
@@ -138,6 +139,10 @@
     <Compile Include="StreamExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\PTImgLib\GimSharp\GimSharp.csproj">
+      <Project>{18707752-78B4-4735-AE5A-4261AD5C06EE}</Project>
+      <Name>GimSharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\PTImgLib\ImgSharp\ImgSharp.csproj">
       <Project>{889DCE80-78CB-4865-A16F-12FD2B85766B}</Project>
       <Name>ImgSharp</Name>

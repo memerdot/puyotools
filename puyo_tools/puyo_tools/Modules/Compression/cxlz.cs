@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -17,12 +18,12 @@ namespace puyo_tools
             {
                 /* Set variables */
                 uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = StreamConverter.ToUInt(data, 0x4) >> 8; // Decompressed Size
+                uint decompressedSize = data.ReadUInt(0x4) >> 8; // Decompressed Size
 
                 uint Cpointer = 0x8; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
 
-                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
+                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */
@@ -41,9 +42,6 @@ namespace puyo_tools
                             byte second      = compressedData[Cpointer + 1];
                             int pos          = (second + (first & 0xF) * 256) + 1;
                             int amountToCopy = ((first >> 4) & 0xF) + 3;
-                            //int pos = (((first & 0xF) << 8) | second) + 1;
-                            //int amountToCopy = (first >> 4) + 3;
-                            //Cpointer += 2;
 
                             /* Ok, copy the data now */
                             for (int j = 0; j < amountToCopy; j++)
@@ -51,28 +49,6 @@ namespace puyo_tools
 
                             Cpointer += 2;
                             Dpointer += (uint)amountToCopy;
-
-                            /* Ok, copy the data now */
-                            //for (int j = 0; j < amountToCopy; j++)
-                            //{
-                                /* Don't continue if our decompressed pointer is out of bounds */
-                                //if (Dpointer + j >= decompressedSize)
-                                //    break;
-
-                                //int Cpos = (int)(Dpointer + (j * 2) - pos);
-
-                                /* Make sure the pointer is set at a correct position and copy */
-                                //if (Cpos >= Dpointer + j)
-                                //    Cpos -= 0x1000;
-
-                                //if (Cpos < 0)
-                                //    decompressedData[Dpointer + j] = 0x0;
-                                //else
-                                //    decompressedData[Dpointer + j] = decompressedData[Cpos];
-
-                                //pos++;
-                            //}
-                            //Dpointer += (uint)amountToCopy;
                         }
                         else
                         {
@@ -109,7 +85,7 @@ namespace puyo_tools
                 uint Dpointer = 0x0; // Decompressed Pointer
 
                 List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
+                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
 
                 /* Add the header */
                 compressedData.AddRange(StringConverter.ToByteList(CompressionHeader.CXLZ, 4));

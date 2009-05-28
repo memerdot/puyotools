@@ -207,7 +207,7 @@ namespace puyo_tools
                     using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + outputFilename, FileMode.Create, FileAccess.Write))
                         outputStream.Write(data);
 
-                    /* Delete source image? */
+                    /* Delete source file? */
                     if (deleteSourceFile.Checked && File.Exists(fileList[i]))
                         File.Delete(fileList[i]);
 

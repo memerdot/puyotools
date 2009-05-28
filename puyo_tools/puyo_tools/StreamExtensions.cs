@@ -14,6 +14,20 @@ namespace Extensions
             return (byte)stream.ReadByte();
         }
 
+        /* Read bytes */
+        public static byte[] ReadBytes(this Stream stream, long offset, int length)
+        {
+            byte[] array = new byte[length];
+            stream.Position = offset;
+            stream.Read(array, 0, length);
+
+            return array;
+        }
+        public static byte[] ReadBytes(this Stream stream, long offset, uint length)
+        {
+            return stream.ReadBytes(offset, (int)length);
+        }
+
         /* Read a short */
         public static short ReadShort(this Stream stream, long offset)
         {

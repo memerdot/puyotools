@@ -5,28 +5,28 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class SBC : CompressionClass
+    public class PRS : CompressionClass
     {
-        public SBC()
+        public PRS()
         {
         }
 
         /* Decompress */
-        public MemoryStream Decompress(ref Stream data, uint decompressedSize)
+        public override MemoryStream Decompress(ref Stream data)
         {
             try
             {
                 /* Set variables */
-                uint compressedSize   = (uint)data.Length; // Compressed Size
-                // Decompressed Size already set
+                uint compressedSize = (uint)data.Length; // Compressed Size
+                // Decompressed Size is not known
 
                 uint Cpointer = 0x0; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
 
-                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+                byte[] compressedData       = data.ReadBytes(0x0, compressedSize); // Compressed Data
+                List<byte> decompressedData = new List<byte>(); // Decompressed Data
 
-                while (Cpointer < compressedSize && Dpointer < decompressedSize)
+                while (Cpointer < compressedSize)
                 {
                     byte Cflag = compressedData[Cpointer];
                     Cpointer++;
@@ -37,7 +37,7 @@ namespace puyo_tools
                         if ((Cflag & (1 << i)) > 0)
                         {
                             /* No */
-                            decompressedData[Dpointer] = compressedData[Cpointer];
+                            decompressedData.Add(compressedData[Cpointer]);
                             Cpointer++;
                             Dpointer++;
                         }
@@ -58,9 +58,13 @@ namespace puyo_tools
                             {
                                 byte first  = compressedData[Cpointer];
                                 byte second = compressedData[Cpointer + 1];
-                                Cpointer   += 2;
+                                Cpointer += 2;
 
-                                offset       = (uint)((second << 8 | first) >> 3) | 0xFFFFE000;
+                                /* Make sure we are not out of range */
+                                if (Cpointer >= compressedSize)
+                                    break;
+
+                                offset = (uint)((second << 8 | first) >> 3) | 0xFFFFE000;
                                 amountToCopy = first & (uint)0x7;
 
                                 if (amountToCopy == 0)
@@ -82,9 +86,8 @@ namespace puyo_tools
                                         i = 0;
                                         Cflag = compressedData[Cpointer];
                                         Cpointer++;
-                                    
                                     }
-                                    offset       = (amountToCopy << 1);
+                                    offset = (amountToCopy << 1);
                                     amountToCopy = offset | (uint)((Cflag & (1 << i)) > 0 ? 0x1 : 0x0);
                                 }
                                 offset = (compressedData[Cpointer] | 0xFFFFFF00);
@@ -94,27 +97,23 @@ namespace puyo_tools
 
                             /* Now copy the data */
                             for (int j = 0; j < amountToCopy; j++)
-                                decompressedData[Dpointer + j] = decompressedData[Dpointer + offset + j];
+                                decompressedData.Add(decompressedData[(int)(Dpointer + offset + j)]);
 
                             Dpointer += amountToCopy;
                         }
 
                         /* Make sure we are not out of range */
-                        if (Cpointer >= compressedSize || Dpointer >= decompressedSize)
+                        if (Cpointer >= compressedSize)
                             break;
                     }
                 }
 
-                return new MemoryStream(decompressedData);
+                return new MemoryStream(decompressedData.ToArray());
             }
             catch
             {
                 return null;
             }
-        }
-        public override MemoryStream Decompress(ref Stream data)
-        {
-            return null;
         }
 
         /* Compress */

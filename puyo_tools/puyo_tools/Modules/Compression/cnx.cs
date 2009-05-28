@@ -26,7 +26,7 @@ namespace puyo_tools
                 uint Cpointer = 0x10; // Compressed Pointer
                 uint Dpointer = 0x0;  // Decompressed Pointer
 
-                byte[] compressedData   = StreamConverter.ToByteArray(data, 0x0, compressedSize); // Compressed Data
+                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
                 byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
 
                 /* Ok, let's decompress the data */
