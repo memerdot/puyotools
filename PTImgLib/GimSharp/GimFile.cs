@@ -117,7 +117,8 @@ namespace GimSharp
                 GimDataOffset    = 0x30;
             }
 
-            if (GimPaletteOffset > 0)
+            // Some files do not have a palette. Trying to get a palette will throw an exception.
+            if (GimPaletteOffset > 0x00)
             {
                 // Get Palette Information
                 GimPaletteFormatCode = Compressed[GimPaletteOffset + 0x14];
