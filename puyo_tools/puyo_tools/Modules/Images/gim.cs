@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Drawing;
-using System.Diagnostics;
 using System.Drawing.Imaging;
 using Extensions;
 using GimSharp;
@@ -30,69 +29,6 @@ namespace puyo_tools
             catch (Exception f)
             {
                 System.Windows.Forms.MessageBox.Show(f.ToString());
-                return null;
-            }
-        }
-
-        public Bitmap Unpack2(ref Stream data)
-        {
-            try
-            {
-                /* Check to see if GimConv exists. */
-                string gimConvFileName = "tools" + Path.DirectorySeparatorChar + "GimConv" + Path.DirectorySeparatorChar + "GimConv.exe";
-                if (!File.Exists(gimConvFileName))
-                    return null;
-
-                /* Save the data to a temporary file. */
-                string tempFileName = Path.GetTempFileName();
-                tempFileName = Path.ChangeExtension(tempFileName, ".gim");
-
-                /* Create the temporary output file. */
-                string tempOutputFileName = Path.GetTempFileName();
-                tempOutputFileName = Path.ChangeExtension(tempOutputFileName, ".png");
-
-                FileStream tempFile = new FileStream(tempFileName, FileMode.Append, FileAccess.Write);
-                tempFile.Write(StreamConverter.ToByteArray(data, 0, (int)data.Length), 0, (int)data.Length);
-                tempFile.Close();
-
-                /* Now, run GimConv to convert the file to a PNG. */
-
-                /* Set up the process information. */
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.WindowStyle      = ProcessWindowStyle.Hidden;
-                startInfo.FileName         = gimConvFileName;
-                startInfo.Arguments        = String.Format("\"{0}\" -o \"{1}\"", tempFileName, tempOutputFileName);
-
-                /* Run GimConv. */
-                Process gimConv;
-                gimConv = Process.Start(startInfo);
-                gimConv.WaitForExit();
-                gimConv.Close();
-
-                /* Load the new output image, if it exists. */
-                if (File.Exists(tempOutputFileName))
-                {
-                    /* Create a new Bitmap and return it. */
-                    FileStream file = new FileStream(tempOutputFileName, FileMode.Open, FileAccess.Read);
-                    //Bitmap image = new Bitmap(tempOutputFileName);
-                    Bitmap image = new Bitmap(file);
-                    file.Close();
-
-                    /* Delete our temporary images. */
-                    File.Delete(tempFileName);
-                    File.Delete(tempOutputFileName);
-
-                    return image;
-                }
-
-                /* There was an error converting to PNG. */
-                File.Delete(tempFileName);
-
-                return null;
-            }
-
-            catch
-            {
                 return null;
             }
         }
