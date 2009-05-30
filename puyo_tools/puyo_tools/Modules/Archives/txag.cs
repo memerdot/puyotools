@@ -8,7 +8,7 @@ namespace puyo_tools
     {
         /*
          * TXAG archives are TXD archives in the Sonic Storybook Series.
-         * They are named TXAG to reduce confusion with Sonic Heroes TXD files.
+         * They are named TXAG to reduce confusion with Renderware TXD files.
          * They contain GVR images.
         */
 

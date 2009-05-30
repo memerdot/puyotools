@@ -206,8 +206,9 @@ namespace puyo_tools
         {
             string file = FileSelectionDialog.OpenFile("Select Image",
                 "Supported Images (*.cnx;*.gim;*.gmp;*.gvr;*.svr)|*.cnx;*.gim;*.gmp;*.gvr;*.svr|" +
+                "CNX Compressed GMP/PVR Image (*.cnx)|*.cnx|" +
                 "GIM Image (*.gim)|*.gim|" +
-                "GMP Image (*.cnx;*.gmp)|*.cnx;*.gmp|" +
+                "GMP Image (*.gmp)|*.gmp|" +
                 "GVR Image (*.gvr)|*.gvr|" +
                 "SVR Image (*.svr)|*.svr");
 
