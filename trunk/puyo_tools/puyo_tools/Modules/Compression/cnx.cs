@@ -62,7 +62,7 @@ namespace puyo_tools
                             case 2:
                                 uint temp_word = BitConverter.ToUInt16(compressedData, (int)Cpointer).SwapEndian();
 
-                                uint off = (temp_word >> 5) + 1;
+                                uint off = (temp_word >> 5)   + 1;
                                 uint len = (temp_word & 0x1F) + 4;
 
                                 Cpointer += 2;
