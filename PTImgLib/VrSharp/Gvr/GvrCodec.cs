@@ -16,6 +16,7 @@ namespace VrSharp
     // GVR Data Formats
     public enum GvrDataFormat : byte
     {
+        Format00 = 0x00,
         Format02 = 0x02,
         Format03 = 0x03,
         Format04 = 0x04,
@@ -84,6 +85,15 @@ namespace VrSharp
     }
 
     // GVR Data Format Classes
+    public class GvrDataCodec_00 : GvrDataCodec
+    {
+        public GvrDataCodec_00()
+        {
+            Decode = new GvrDataDecoder_00();
+            Encode = null;
+            Format = GvrDataFormat.Format00;
+        }
+    }
     public class GvrDataCodec_02 : GvrDataCodec
     {
         public GvrDataCodec_02()
@@ -180,6 +190,7 @@ namespace VrSharp
             GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
 
             // Add the Data Formats
+            GvrDataCodecs.Add(0x00, new GvrDataCodec_00());
             GvrDataCodecs.Add(0x02, new GvrDataCodec_02());
             GvrDataCodecs.Add(0x03, new GvrDataCodec_03());
             GvrDataCodecs.Add(0x04, new GvrDataCodec_04());

@@ -14,6 +14,7 @@ namespace VrSharp
     public enum SvrDataFormat : byte
     {
         Format60 = 0x60,
+        Format62 = 0x62,
         Format64 = 0x64,
         Format68 = 0x68,
         Format69 = 0x69,
@@ -73,6 +74,15 @@ namespace VrSharp
             Format = SvrDataFormat.Format60;
         }
     }
+    public class SvrDataCodec_62 : SvrDataCodec
+    {
+        public SvrDataCodec_62()
+        {
+            Decode = new SvrDataDecoder_62();
+            Encode = null;
+            Format = SvrDataFormat.Format62;
+        }
+    }
     public class SvrDataCodec_64 : SvrDataCodec
     {
         public SvrDataCodec_64()
@@ -95,7 +105,7 @@ namespace VrSharp
     {
         public SvrDataCodec_69()
         {
-            Decode = null;
+            Decode = new SvrDataDecoder_69();
             Encode = null;
             Format = SvrDataFormat.Format69;
         }
@@ -137,6 +147,7 @@ namespace VrSharp
 
             // Add the Data Formats
             SvrDataCodecs.Add(0x60, new SvrDataCodec_60());
+            SvrDataCodecs.Add(0x62, new SvrDataCodec_62());
             SvrDataCodecs.Add(0x64, new SvrDataCodec_64());
             SvrDataCodecs.Add(0x68, new SvrDataCodec_68());
             SvrDataCodecs.Add(0x69, new SvrDataCodec_69());
