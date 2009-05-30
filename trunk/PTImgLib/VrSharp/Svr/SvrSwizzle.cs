@@ -7,7 +7,11 @@ namespace VrSharp
         // Unswizzle a 4-bit PS2 texture
         public static void UnSwizzle4(byte[] Buf, int Width, int Height, int Where)
         {
-            // Make a copy of the swizzled input
+            // Don't unswizzle if dimenions are smaller than 128x128
+            if (Width < 128 || Height < 128)
+                return;
+
+            // Make a copy of the swizzled input and clear buffer
             byte[] Swizzled = new byte[Buf.Length - Where];
             Array.Copy(Buf, Where, Swizzled, 0, Swizzled.Length);
 
@@ -17,7 +21,7 @@ namespace VrSharp
                 {
                     // get the pen
                     int index = y * Width + x;
-                    byte uPen = (byte)(Buf[Where + (index >> 1)] >> (4 - (index & 1) * 4) & 0xf);
+                    //byte uPen = (byte)(Swizzled[index >> 1] >> ((index & 1) * 4) & 0xF);
 
                     // swizzle
                     int pageX = x & (~0x7f);
@@ -45,16 +49,8 @@ namespace VrSharp
                     int byte_num = (x >> 3) & 3;     // 0,1,2,3
                     int bits_set = (y >> 1) & 1;     // 0,1            (lower/upper 4 bits)
 
-                    //byte setPix = Swizzled[page_location + block_location + column_location + byte_num];
-
-                    if ((index & 1) == 0)
-                        Buf[Where + (index >> 1)] = 0x0;
-
-                    Buf[Where + (index >> 1)] |= (byte)((Swizzled[page_location + block_location + column_location + byte_num] & -bits_set));
-
-                    //Buf[Where + (index >> 1)] |= (byte)((setPix & (-bits_set)) | (uPen << (bits_set * 4)));
-
-                    //Buf[Where + ((setPix & (-bits_set)) | (uPen << (bits_set * 4)))] = setPix;
+                    byte uPen = (byte)(Swizzled[page_location + block_location + column_location + byte_num] >> ((index & 1) * 4) & 0xF);
+                    Buf[Where + (index >> 1)] = (byte)((Buf[Where + (index >> 1)] & -bits_set) | (uPen << (bits_set * 4)));
                 }
             }
         }
@@ -62,6 +58,10 @@ namespace VrSharp
         // Unswizzle an 8-bit PS2 texture
         public static void UnSwizzle8(byte[] Buf, int Width, int Height, int Where)
         {
+            // Don't unswizzle if dimenions are smaller than 128x64
+            if (Width < 128 || Height < 64)
+                return;
+
             // Make a copy of the swizzled input
             byte[] Swizzled = new byte[Buf.Length - Where];
             Array.Copy(Buf, Where, Swizzled, 0, Swizzled.Length);

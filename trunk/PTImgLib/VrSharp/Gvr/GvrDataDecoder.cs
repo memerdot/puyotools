@@ -6,6 +6,84 @@ namespace VrSharp
     {
     }
 
+    // Format 00
+    public class GvrDataDecoder_00 : GvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[0][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 8;
+        }
+        public override int GetChunkHeight()
+        {
+            return 8;
+        }
+        public override int GetChunkBpp()
+        {
+            return 4;
+        }
+        public override int GetPaletteSize()
+        {
+            return 0;
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            int PixelPointer = 0;
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Get entry
+                    byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> (4 - (PixelPointer % 2) * 4)) & 0xF);
+
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = 0xFF;
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)(entry * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)(entry * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)(entry * 255 / 16);
+                    PixelPointer++;
+                }
+            }
+
+            Pointer += (PixelPointer >> 1);
+
+            return true;
+        }
+    }
+
     // Format 02
     public class GvrDataDecoder_02 : GvrDataDecoder
     {
