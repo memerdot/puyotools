@@ -102,6 +102,7 @@
     <Compile Include="Modules\Images\gim.cs" />
     <Compile Include="Modules\Images\gmp.cs" />
     <Compile Include="Modules\Images\gvr.cs" />
+    <Compile Include="Modules\Images\pvr.cs" />
     <Compile Include="Modules\Images\svr.cs" />
     <Compile Include="NumberExtensions.cs" />
     <Compile Include="ObjectConverter.cs" />

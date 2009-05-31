@@ -78,18 +78,6 @@ namespace puyo_tools
 
                 /* Ok, do special checks now */
 
-                /* PVR file */
-                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) < 64) ||
-                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) < 64))
-                {
-                    format    = GraphicFormat.PVR;
-                    //converter = new PVR();
-                    converter = null;
-                    name      = "PVR";
-                    ext       = ".pvr";
-                    return;
-                }
-
                 /* GVR File */
                 if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
                     (data.ReadString(0x0, 4) == GraphicHeader.GCIX && data.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
@@ -102,9 +90,20 @@ namespace puyo_tools
                     return;
                 }
 
+                /* PVR file */
+                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) < 0x60) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) < 0x60))
+                {
+                    format    = GraphicFormat.PVR;
+                    converter = new PVR();
+                    name      = "PVR";
+                    ext       = ".pvr";
+                    return;
+                }
+
                 /* SVR File */
-                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) > 64) ||
-                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) > 64))
+                if ((data.ReadString(0x0, 4) == GraphicHeader.GBIX && data.ReadString(0x10, 4) == GraphicHeader.PVRT && data.ReadByte(0x19) >= 0x60) ||
+                    (data.ReadString(0x0, 4) == GraphicHeader.PVRT && data.ReadByte(0x9) >= 0x60))
                 {
                     format    = GraphicFormat.SVR;
                     converter = new SVR();
