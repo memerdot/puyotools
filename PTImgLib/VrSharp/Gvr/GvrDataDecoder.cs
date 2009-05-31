@@ -71,9 +71,9 @@ namespace VrSharp
                     byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> (4 - (PixelPointer % 2) * 4)) & 0xF);
 
                     Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = 0xFF;
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)(entry * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)(entry * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)(entry * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)(entry * 0xFF / 0xF);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)(entry * 0xFF / 0xF);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)(entry * 0xFF / 0xF);
                     PixelPointer++;
                 }
             }
@@ -143,10 +143,10 @@ namespace VrSharp
             {
                 for (int x2 = 0; x2 < GetChunkWidth(); x2++)
                 {
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)((Input[Pointer] >> 4) * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)((Input[Pointer] & 0xF) * 255 / 16);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = (byte)((Input[Pointer] >> 4)  * 0xFF / 0xF);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = (byte)((Input[Pointer] & 0xF) * 0xFF / 0xF);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = (byte)((Input[Pointer] & 0xF) * 0xFF / 0xF);
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = (byte)((Input[Pointer] & 0xF) * 0xFF / 0xF);
                     Pointer++;
                 }
             }

@@ -38,9 +38,9 @@ namespace GimSharp
                     ushort entry = BitConverter.ToUInt16(Input, Pointer);
 
                     Output[((y * width) + x) * 4 + 0] = 0xFF;
-                    Output[((y * width) + x) * 4 + 1] = (byte)((((entry) << 3) & 0xF8) | (((entry) >> 2) & 0x07));
-                    Output[((y * width) + x) * 4 + 2] = (byte)((((entry) >> 3) & 0xFC) | (((entry) >> 9) & 0x03));
-                    Output[((y * width) + x) * 4 + 3] = (byte)((((entry) >> 8) & 0xF8) | ((entry) >> 13));
+                    Output[((y * width) + x) * 4 + 1] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
+                    Output[((y * width) + x) * 4 + 2] = (byte)(((entry >> 5)  & 0x3F) * 0xFF / 0x3F);
+                    Output[((y * width) + x) * 4 + 3] = (byte)(((entry >> 11) & 0x1F) * 0xFF / 0x1F);
                     Pointer += 2;
                 }
             }
@@ -85,10 +85,10 @@ namespace GimSharp
                     // Get entry
                     ushort entry = BitConverter.ToUInt16(Input, Pointer);
 
-                    Output[((y * width) + x) * 4 + 0] = (byte)(((entry >> 15) & 0x01) * 255);
-                    Output[((y * width) + x) * 4 + 1] = (byte)(((entry >> 0)  & 0x1F) * 255 / 32);
-                    Output[((y * width) + x) * 4 + 2] = (byte)(((entry >> 5)  & 0x1F) * 255 / 32);
-                    Output[((y * width) + x) * 4 + 3] = (byte)(((entry >> 10) & 0x1F) * 255 / 32);
+                    Output[((y * width) + x) * 4 + 0] = (byte)(((entry >> 15) & 0x01) * 0xFF);
+                    Output[((y * width) + x) * 4 + 1] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
+                    Output[((y * width) + x) * 4 + 2] = (byte)(((entry >> 5)  & 0x1F) * 0xFF / 0x1F);
+                    Output[((y * width) + x) * 4 + 3] = (byte)(((entry >> 10) & 0x1F) * 0xFF / 0x1F);
                     Pointer += 2;
                 }
             }
@@ -134,10 +134,10 @@ namespace GimSharp
                     // Get entry
                     ushort entry = BitConverter.ToUInt16(Input, Pointer);
 
-                    Output[((y * width) + x) * 4 + 0] = (byte)(((entry >> 12) & 0xF) * 255 / 16);
-                    Output[((y * width) + x) * 4 + 1] = (byte)(((entry >> 0)  & 0xF) * 255 / 16);
-                    Output[((y * width) + x) * 4 + 2] = (byte)(((entry >> 4)  & 0xF) * 255 / 16);
-                    Output[((y * width) + x) * 4 + 3] = (byte)(((entry >> 8)  & 0xF) * 255 / 16);
+                    Output[((y * width) + x) * 4 + 0] = (byte)(((entry >> 12) & 0xF) * 0xFF / 0xF);
+                    Output[((y * width) + x) * 4 + 1] = (byte)(((entry >> 0)  & 0xF) * 0xFF / 0xF);
+                    Output[((y * width) + x) * 4 + 2] = (byte)(((entry >> 4)  & 0xF) * 0xFF / 0xF);
+                    Output[((y * width) + x) * 4 + 3] = (byte)(((entry >> 8)  & 0xF) * 0xFF / 0xF);
                     Pointer += 2;
                 }
             }

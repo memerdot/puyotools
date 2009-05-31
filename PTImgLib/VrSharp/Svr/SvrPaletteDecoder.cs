@@ -39,17 +39,17 @@ namespace VrSharp
 
                 if ((entry & 0x8000) != 0)
                 {
-                    Palette[i][0] = (byte)0xFF;
-                    Palette[i][1] = (byte)(((entry >> 10) & 0x1f) * 255 / 32);
-                    Palette[i][2] = (byte)(((entry >> 5) & 0x1f) * 255 / 32);
-                    Palette[i][3] = (byte)(((entry >> 0) & 0x1f) * 255 / 32);
+                    Palette[i][0] = 0xFF;
+                    Palette[i][1] = (byte)(((entry >> 10) & 0x1F) * 0xFF / 0x1F);
+                    Palette[i][2] = (byte)(((entry >> 5)  & 0x1F) * 0xFF / 0x1F);
+                    Palette[i][3] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
                 }
                 else
                 {
-                    Palette[i][0] = (byte)(((entry >> 12) & 0x07) * 255 / 8);
-                    Palette[i][1] = (byte)(((entry >> 8) & 0x0f) * 255 / 16);
-                    Palette[i][2] = (byte)(((entry >> 4) & 0x0f) * 255 / 16);
-                    Palette[i][3] = (byte)(((entry >> 0) & 0x0f) * 255 / 16);
+                    Palette[i][0] = (byte)(((entry >> 12) & 0x07) * 0xFF / 0x07);
+                    Palette[i][1] = (byte)(((entry >> 8)  & 0x0F) * 0xFF / 0x0F);
+                    Palette[i][2] = (byte)(((entry >> 4)  & 0x0F) * 0xFF / 0x0F);
+                    Palette[i][3] = (byte)(((entry >> 0)  & 0x0F) * 0xFF / 0x0F);
                 }
                 Pointer += 2;
             }

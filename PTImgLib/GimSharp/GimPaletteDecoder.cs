@@ -28,9 +28,9 @@ namespace GimSharp
                 ushort entry = BitConverter.ToUInt16(Buf, Pointer);
 
                 Palette[i][0] = 0xFF;
-                Palette[i][1] = (byte)((((entry) << 3) & 0xF8) | (((entry) >> 2) & 0x07));
-                Palette[i][2] = (byte)((((entry) >> 3) & 0xFC) | (((entry) >> 9) & 0x03));
-                Palette[i][3] = (byte)((((entry) >> 8) & 0xF8) | ((entry) >> 13));
+                Palette[i][1] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
+                Palette[i][2] = (byte)(((entry >> 5)  & 0x3F) * 0xFF / 0x3F);
+                Palette[i][3] = (byte)(((entry >> 11) & 0x1F) * 0xFF / 0x1F);
                 Pointer += 2;
             }
 
@@ -54,10 +54,10 @@ namespace GimSharp
                 // Get entry
                 ushort entry = BitConverter.ToUInt16(Buf, Pointer);
 
-                Palette[i][0] = (byte)(((entry >> 15) & 0x01) * 255);
-                Palette[i][1] = (byte)(((entry >> 0)  & 0x1F) * 255 / 32);
-                Palette[i][2] = (byte)(((entry >> 5)  & 0x1F) * 255 / 32);
-                Palette[i][3] = (byte)(((entry >> 10) & 0x1F) * 255 / 32);
+                Palette[i][0] = (byte)(((entry >> 15) & 0x01) * 0xFF);
+                Palette[i][1] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
+                Palette[i][2] = (byte)(((entry >> 5)  & 0x1F) * 0xFF / 0x1F);
+                Palette[i][3] = (byte)(((entry >> 10) & 0x1F) * 0xFF / 0x1F);
                 Pointer += 2;
             }
 
@@ -81,10 +81,10 @@ namespace GimSharp
                 // Get entry
                 ushort entry = BitConverter.ToUInt16(Buf, Pointer);
 
-                Palette[i][0] = (byte)(((entry >> 12) & 0xF) * 255);
-                Palette[i][1] = (byte)(((entry >> 0)  & 0xF) * 255 / 16);
-                Palette[i][2] = (byte)(((entry >> 4)  & 0xF) * 255 / 16);
-                Palette[i][3] = (byte)(((entry >> 8)  & 0xF) * 255 / 16);
+                Palette[i][0] = (byte)(((entry >> 12) & 0xF) * 0xFF);
+                Palette[i][1] = (byte)(((entry >> 0)  & 0xF) * 0xFF / 0xF);
+                Palette[i][2] = (byte)(((entry >> 4)  & 0xF) * 0xFF / 0xF);
+                Palette[i][3] = (byte)(((entry >> 8)  & 0xF) * 0xFF / 0xF);
                 Pointer += 2;
             }
 

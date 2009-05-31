@@ -6,7 +6,7 @@ namespace VrSharp
     {
     }
 
-    // Format 02 (ARGB1555)
+    // Format 02 (8-bit Lum with Alpha)
     public class GvrPaletteDecoder_02 : GvrPaletteDecoder
     {
         public override int GetBpp()
@@ -20,10 +20,10 @@ namespace VrSharp
             {
                 Palette[i] = new byte[4];
 
-                Palette[i][0] = (byte)((Buf[Pointer] >> 4) * 255 / 16);
-                Palette[i][1] = (byte)((Buf[Pointer] & 0xF) * 255 / 16);
-                Palette[i][2] = (byte)((Buf[Pointer] & 0xF) * 255 / 16);
-                Palette[i][3] = (byte)((Buf[Pointer] & 0xF) * 255 / 16);
+                Palette[i][0] = (byte)((Buf[Pointer] >> 4)  * 0xFF / 0xF);
+                Palette[i][1] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
+                Palette[i][2] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
+                Palette[i][3] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
                 Pointer++;
             }
 
@@ -49,9 +49,9 @@ namespace VrSharp
                 ushort entry = ColorConversions.swap16(BitConverter.ToUInt16(Buf, Pointer));
 
                 Palette[i][0] = 0xFF;
-                Palette[i][1] = (byte)((((entry) >> 8) & 0xF8) | ((entry) >> 13));
-                Palette[i][2] = (byte)((((entry) >> 3) & 0xFC) | (((entry) >> 9) & 0x03));
-                Palette[i][3] = (byte)((((entry) << 3) & 0xF8) | (((entry) >> 2) & 0x07));
+                Palette[i][1] = (byte)(((entry >> 11) & 0x1F) * 0xFF / 0x1F);
+                Palette[i][2] = (byte)(((entry >> 5)  & 0x3F) * 0xFF / 0x3F);
+                Palette[i][3] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
 
                 Pointer += 2;
             }
@@ -79,17 +79,17 @@ namespace VrSharp
 
                 if ((entry & 0x8000) != 0)
                 {
-                    Palette[i][0] = (byte)0xFF;
-                    Palette[i][1] = (byte)(((entry >> 10) & 0x1F) * 255 / 32);
-                    Palette[i][2] = (byte)(((entry >> 5)  & 0x1F) * 255 / 32);
-                    Palette[i][3] = (byte)(((entry >> 0)  & 0x1F) * 255 / 32);
+                    Palette[i][0] = 0xFF;
+                    Palette[i][1] = (byte)(((entry >> 10) & 0x1F) * 0xFF / 0x1F);
+                    Palette[i][2] = (byte)(((entry >> 5)  & 0x1F) * 0xFF / 0x1F);
+                    Palette[i][3] = (byte)(((entry >> 0)  & 0x1F) * 0xFF / 0x1F);
                 }
                 else
                 {
-                    Palette[i][0] = (byte)(((entry >> 12) & 0x07) * 255 / 8);
-                    Palette[i][1] = (byte)(((entry >> 8)  & 0x0F) * 255 / 16);
-                    Palette[i][2] = (byte)(((entry >> 4)  & 0x0F) * 255 / 16);
-                    Palette[i][3] = (byte)(((entry >> 0)  & 0x0F) * 255 / 16);
+                    Palette[i][0] = (byte)(((entry >> 12) & 0x07) * 0xFF / 0x7);
+                    Palette[i][1] = (byte)(((entry >> 8)  & 0x0F) * 0xFF / 0xF);
+                    Palette[i][2] = (byte)(((entry >> 4)  & 0x0F) * 0xFF / 0xF);
+                    Palette[i][3] = (byte)(((entry >> 0)  & 0x0F) * 0xFF / 0xF);
                 }
                 Pointer += 2;
             }

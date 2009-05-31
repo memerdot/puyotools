@@ -16,15 +16,15 @@ namespace VrSharp
     // PVR Data Formats
     public enum PvrDataFormat : byte
     {
-        SquareTwiddled = 0x01,
+        Format01 = 0x01,
         SquareTwiddledMipMaps = 0x02,
         Vq = 0x03,
         VqMipMaps = 0x04,
-        Index8 = 0x05,
+        Format05 = 0x05,
         Index4 = 0x06,
-        Index8ExternPalette = 0x07,
+        Format07 = 0x07,
         Index4ExternPalette = 0x08,
-        Rectangle = 0x09,
+        Format09 = 0x09,
         RectangleStride = 0x0B,
         RectangleTwiddled = 0x0C,
         SmallVq = 0x10,
@@ -42,6 +42,71 @@ namespace VrSharp
     }
 
     // PVR Palette Format Classes
+    public class PvrPaletteCodec_Argb1555 : PvrPaletteCodec
+    {
+        public PvrPaletteCodec_Argb1555()
+        {
+            Decode = new PvrPaletteDecoder_Argb1555();
+            Encode = null;
+            Format = PvrPaletteFormat.Argb1555;
+        }
+    }
+    public class PvrPaletteCodec_Rgb565 : PvrPaletteCodec
+    {
+        public PvrPaletteCodec_Rgb565()
+        {
+            Decode = new PvrPaletteDecoder_Rgb565();
+            Encode = null;
+            Format = PvrPaletteFormat.Rgb565;
+        }
+    }
+    public class PvrPaletteCodec_Argb4444 : PvrPaletteCodec
+    {
+        public PvrPaletteCodec_Argb4444()
+        {
+            Decode = new PvrPaletteDecoder_Argb4444();
+            Encode = null;
+            Format = PvrPaletteFormat.Argb4444;
+        }
+    }
+
+    // PVR Data Format Classes
+    public class PvrDataCodec_01 : PvrDataCodec
+    {
+        public PvrDataCodec_01()
+        {
+            Decode = new PvrDataDecoder_01();
+            Encode = null;
+            Format = PvrDataFormat.Format01;
+        }
+    }
+    public class PvrDataCodec_05 : PvrDataCodec
+    {
+        public PvrDataCodec_05()
+        {
+            Decode = new PvrDataDecoder_05();
+            Encode = null;
+            Format = PvrDataFormat.Format05;
+        }
+    }
+    public class PvrDataCodec_07 : PvrDataCodec
+    {
+        public PvrDataCodec_07()
+        {
+            Decode = new PvrDataDecoder_07();
+            Encode = null;
+            Format = PvrDataFormat.Format07;
+        }
+    }
+    public class PvrDataCodec_09 : PvrDataCodec
+    {
+        public PvrDataCodec_09()
+        {
+            Decode = new PvrDataDecoder_09();
+            Encode = null;
+            Format = PvrDataFormat.Format09;
+        }
+    }
 
     // VrCodecs is a static class for containing codecs
     // Register your codecs here in the initialize function.
@@ -56,8 +121,15 @@ namespace VrSharp
         public static void Initalize()
         {
             // Add the Palette Formats
+            PvrPaletteCodecs.Add(0x00, new PvrPaletteCodec_Argb1555());
+            PvrPaletteCodecs.Add(0x01, new PvrPaletteCodec_Rgb565());
+            PvrPaletteCodecs.Add(0x02, new PvrPaletteCodec_Argb4444());
 
             // Add the Data Formats
+            PvrDataCodecs.Add(0x01, new PvrDataCodec_01());
+            PvrDataCodecs.Add(0x05, new PvrDataCodec_05());
+            PvrDataCodecs.Add(0x07, new PvrDataCodec_07());
+            PvrDataCodecs.Add(0x09, new PvrDataCodec_09());
 
             init = true;
         }

@@ -184,7 +184,7 @@ namespace VrSharp
             {
                 CompressedData = Compressed;
             }
-            if (!IsGvr() && !IsSvr()) throw new NotVrException("The file sent to SetCompressedData() is not a Vr file.");
+            if (!IsGvr() && !IsPvr() && !IsSvr()) throw new NotVrException("The file sent to SetCompressedData() is not a Vr file.");
 
 
             // Get Format Code
@@ -192,8 +192,6 @@ namespace VrSharp
 
             if (IsGvr())
             {
-                //VrFileWidth = Compressed[0x1C] << 8 | Compressed[0x1D];
-                //VrFileHeight = Compressed[0x1E] << 8 | Compressed[0x1F];
                 if (IsMagic(Compressed, GvrtMagic, 0x0))
                     VrFileOffset = 0x0;
                 else
@@ -201,15 +199,15 @@ namespace VrSharp
 
 
                 VrPaletteFormatCode = Compressed[0xA + VrFileOffset];
-                VrDataFormatCode = Compressed[0xB + VrFileOffset];
+                VrDataFormatCode    = Compressed[0xB + VrFileOffset];
 
                 VrPaletteCodec = GvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
-                VrDataCodec = GvrCodecs.GetDataCodec(VrDataFormatCode);
+                VrDataCodec    = GvrCodecs.GetDataCodec(VrDataFormatCode);
 
-                VrFileWidth = Compressed[0xC + VrFileOffset] << 8 | Compressed[0xD + VrFileOffset];
+                VrFileWidth  = Compressed[0xC + VrFileOffset] << 8 | Compressed[0xD + VrFileOffset];
                 VrFileHeight = Compressed[0xE + VrFileOffset] << 8 | Compressed[0xF + VrFileOffset];
             }
-            else
+            else if (IsPvr())
             {
                 if (IsMagic(Compressed, PvrtMagic, 0x0))
                     VrFileOffset = 0x0;
@@ -219,64 +217,57 @@ namespace VrSharp
                 VrPaletteFormatCode = Compressed[0x8 + VrFileOffset];
                 VrDataFormatCode = Compressed[0x9 + VrFileOffset];
 
-                VrPaletteCodec = SvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
-                VrDataCodec = SvrCodecs.GetDataCodec(VrDataFormatCode);
+                VrPaletteCodec = PvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
+                VrDataCodec    = PvrCodecs.GetDataCodec(VrDataFormatCode);
 
-                VrFileWidth = BitConverter.ToUInt16(Compressed, 0xC + VrFileOffset);
+                VrFileWidth  = BitConverter.ToUInt16(Compressed, 0xC + VrFileOffset);
                 VrFileHeight = BitConverter.ToUInt16(Compressed, 0xE + VrFileOffset);
+            }
+            else if (IsSvr())
+            {
+                if (IsMagic(Compressed, PvrtMagic, 0x0))
+                    VrFileOffset = 0x0;
+                else
+                    VrFileOffset = 0x10;
 
-                //VrFileWidth = Compressed[0x1C] | Compressed[0x1D] << 8;
-                //VrFileHeight = Compressed[0x1E] | Compressed[0x1F] << 8;
+                VrPaletteFormatCode = Compressed[0x8 + VrFileOffset];
+                VrDataFormatCode    = Compressed[0x9 + VrFileOffset];
+
+                VrPaletteCodec = SvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
+                VrDataCodec    = SvrCodecs.GetDataCodec(VrDataFormatCode);
+
+                VrFileWidth  = BitConverter.ToUInt16(Compressed, 0xC + VrFileOffset);
+                VrFileHeight = BitConverter.ToUInt16(Compressed, 0xE + VrFileOffset);
             }
 
             DecompressedData = new byte[VrFileWidth * VrFileHeight * 4];
 
-            //VrCodec = VrCodecs.GetCodec(FormatCodeString(VrPixelFormatCode));
-            //if (VrCodec == null)
-            if (VrPaletteCodec == null || VrDataCodec == null)
-            {
-                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Format: 0x" + FormatCodeString(VrPixelFormatCode));
-            }
+            // Throw an exception if the palette or data codec does not exist
+            if (VrPaletteCodec == null && VrDataCodec == null)
+                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Palette Format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0') + " and Data Format " + VrDataFormatCode.ToString("X").PadLeft(2, '0'));
+            else if (VrPaletteCodec == null)
+                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Palette Format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0'));
+            else if (VrDataCodec == null)
+                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Data Format " + VrDataFormatCode.ToString("X").PadLeft(2, '0'));
 
             try
             {
-                //VrDecoder = VrCodec.Decode;
-                //VrEncoder = VrCodec.Encode;
-
                 VrPaletteDecoder = VrPaletteCodec.Decode;
-                VrDataDecoder = VrDataCodec.Decode;
+                VrDataDecoder    = VrDataCodec.Decode;
 
                 VrDataDecoder.Initialize(VrFileWidth, VrFileHeight, VrPaletteDecoder);
-
-                //VrDecoder.Initialize(CompressedData, VrFileWidth, VrFileHeight);
             }
             catch (Exception e)
             {
-                throw new VrCodecLoadingException("The codec for format 0x" + FormatCodeString(VrPixelFormatCode) + " could not be loaded.", e);
+                throw new VrCodecLoadingException("The palette or data codec for palette format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0') + " and data format " + VrDataFormatCode.ToString("X").PadLeft(2, '0') + " could not be loaded.", e);
             }
-
-            /*if (VrDataDecoder.NeedExternalPalette())
-            {
-                if (ExternalPalette != null)
-                {
-                    VrDecoder.SendExternalPalette(ExternalPalData);
-                }
-                else
-                {
-                    throw new VrCodecNeedsPaletteException("The codec for format 0x" + FormatCodeString(VrPixelFormatCode) + " requires an external palette. The application must catch and handle this exception in order to use Vr files which need external palette data.");
-                }
-            }*/
 
             if (VrDataDecoder.NeedExternalPalette() && ExternalPalette == null)
             {
-                throw new VrCodecNeedsPaletteException("The codec for format 0x" + FormatCodeString(VrPixelFormatCode) + " requires an external palette. The application must catch and handle this exception in order to use Vr files which need external palette data.");
+                throw new VrCodecNeedsPaletteException("The codec for data format " + VrDataFormatCode.ToString("X").PadLeft(2, '0') + " requires an external palette. The application must catch and handle this exception in order to use Vr files which need external palette data.");
             }
 
-            //VrCodecChunkWidth = VrDecoder.GetChunkWidth();
-            //VrCodecChunkHeight = VrDecoder.GetChunkHeight();
-            //VrCodecChunkLength = VrDecoder.GetChunkSize();
-
-            VrCodecChunkWidth = VrDataDecoder.GetChunkWidth();
+            VrCodecChunkWidth  = VrDataDecoder.GetChunkWidth();
             VrCodecChunkHeight = VrDataDecoder.GetChunkHeight();
             VrCodecChunkLength = VrDataDecoder.GetChunkSize();
 
@@ -285,10 +276,6 @@ namespace VrSharp
 
             if ((VrFileHeight / VrCodecChunkHeight) * VrCodecChunkHeight != VrFileHeight)
                 Console.WriteLine("Warning: Image VrFileHeight is not divisible by " + VrCodecChunkHeight);
-
-            //int ptr = 0x20;
-
-            //VrDecoder.DecodeFormatHeader(ref CompressedData, ref ptr);
 
             int Pointer = 0x10 + VrFileOffset;
 
@@ -308,7 +295,6 @@ namespace VrSharp
                 for (int x = 0; x < VrFileWidth / VrCodecChunkWidth; x++)
                 {
                     VrDataDecoder.DecodeChunk(ref CompressedData, ref Pointer, ref DecompressedData, x * VrCodecChunkWidth, y * VrCodecChunkHeight);
-                    //VrDecoder.DecodeChunk(ref CompressedData, ref ptr, ref DecompressedData, x * VrCodecChunkWidth, y * VrCodecChunkHeight);
                 }
             }
 
@@ -445,6 +431,34 @@ namespace VrSharp
             File.Close();
 
             return IsGvr(FileContents);
+        }
+        // public bool IsPvr()
+        // Return Value: True if the Data Magic is equivalant to that of a PVR file
+        //               False if not.
+        // Description: This function will allow you to validate that the file you have is PVR.
+        static public bool IsPvr(byte[] FileContents)
+        {
+            if (FileContents.Length < 0x10) return false;
+
+            if (IsMagic(FileContents, GbixMagic, 0x0) && FileContents.Length >= 0x20 && IsMagic(FileContents, PvrtMagic, 0x10) && FileContents[0x19]< 0x60)
+                return true;
+            if (IsMagic(FileContents, PvrtMagic, 0x0) && FileContents[0x9] < 0x60)
+                return true;
+
+            return false;
+        }
+        public bool IsPvr()
+        {
+            return IsPvr(CompressedData);
+        }
+        static public bool IsPvr(string Filename)
+        {
+            FileStream File = new FileStream(Filename, FileMode.Open);
+            byte[] FileContents = new byte[SvrMagic.Length];
+            File.Read(FileContents, 0, FileContents.Length);
+            File.Close();
+
+            return IsPvr(FileContents);
         }
         // public bool IsSvr()
         // Return Value: True if the Data Magic is equivalant to that of a SVR file
