@@ -160,6 +160,15 @@ namespace puyo_tools
                 AboutDialog.Close();
             };
 
+            /* Credits */
+            /*AboutDialog.Controls.Add(new Label() {
+                Text = 
+                    "Lightning - ssr-one-util, which was used to add support for Storybook Archives\n\n" +
+                    "drx - CNX and LZ01 decompression\n",
+                Location = new Point(8, 8),
+                Size = new Size(AboutDialog.Size.Width - 16, bottom.Location.Y - 8),
+            });*/
+
             bottom.Controls.Add(close);
             AboutDialog.Controls.Add(bottom);
 

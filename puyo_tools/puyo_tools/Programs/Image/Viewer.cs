@@ -205,11 +205,12 @@ namespace puyo_tools
         private void OpenImage()
         {
             string file = FileSelectionDialog.OpenFile("Select Image",
-                "Supported Images (*.cnx;*.gim;*.gmp;*.gvr;*.svr)|*.cnx;*.gim;*.gmp;*.gvr;*.svr|" +
+                "Supported Images (*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.svr)|*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.svr|" +
                 "CNX Compressed GMP/PVR Image (*.cnx)|*.cnx|" +
                 "GIM Image (*.gim)|*.gim|" +
                 "GMP Image (*.gmp)|*.gmp|" +
                 "GVR Image (*.gvr)|*.gvr|" +
+                "PVR Image (*.pvr)|*.pvr|" +
                 "SVR Image (*.svr)|*.svr");
 
             /* Don't continue if a file wasn't selected */
@@ -400,6 +401,8 @@ namespace puyo_tools
             string paletteFile = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename);
             if (imageClass.Format == GraphicFormat.GVR)
                 paletteFile += ".gvp";
+            else if (imageClass.Format == GraphicFormat.PVR)
+                paletteFile += ".pvp";
             else if (imageClass.Format == GraphicFormat.SVR)
                 paletteFile += ".svp";
 
