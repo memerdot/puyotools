@@ -17,6 +17,19 @@ namespace VrSharp
             }
         }
 
+        public static void UnTwiddle4(ref byte[] Buf, int Pointer, int Width, int Height)
+        {
+            // Make a copy of the twiddled input
+            byte[] Twiddled = new byte[Buf.Length - Pointer];
+            Array.Copy(Buf, Pointer, Twiddled, 0, Twiddled.Length);
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                    Buf[Pointer + ((y * Width) + x >> 1)] = Twiddled[TwiddlePosition(x) | (TwiddlePosition(y) << 1)];
+            }
+        }
+
         public static int TwiddlePosition(int x)
         {
             int pos = 0;

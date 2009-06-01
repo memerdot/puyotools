@@ -75,10 +75,10 @@ namespace VrSharp
                 // Get Palette Entry
                 uint entry = BitConverter.ToUInt32(Buf, Pointer);
 
-                Palette[i][0] = (byte)(((entry >> 24) & 0xFF) == 0x80 ? 0xFF : (((entry >> 24) & 0x7F) << 1));
-                Palette[i][1] = (byte)(entry & 0xFF);
-                Palette[i][2] = (byte)((entry >> 8)  & 0xFF);
-                Palette[i][3] = (byte)((entry >> 16) & 0xFF);
+                Palette[i][0] = (byte)(((entry >> 24) & 0xFF) * 0xFF / 0x80);
+                Palette[i][1] = (byte)((entry >> 16)  & 0xFF);
+                Palette[i][2] = (byte)((entry >> 8)   & 0xFF);
+                Palette[i][3] = (byte)((entry >> 0)   & 0xFF);
 
                 Pointer += 4;
             }
