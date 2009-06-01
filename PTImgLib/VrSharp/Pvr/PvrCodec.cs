@@ -27,6 +27,7 @@ namespace VrSharp
         Format09 = 0x09,
         RectangleStride = 0x0B,
         RectangleTwiddled = 0x0C,
+        Format0D = 0x0D,
         SmallVq = 0x10,
         SmallVqMipMaps = 0x11,
     }
@@ -107,6 +108,15 @@ namespace VrSharp
             Format = PvrDataFormat.Format09;
         }
     }
+    public class PvrDataCodec_0D : PvrDataCodec
+    {
+        public PvrDataCodec_0D()
+        {
+            Decode = new PvrDataDecoder_0D();
+            Encode = null;
+            Format = PvrDataFormat.Format0D;
+        }
+    }
 
     // VrCodecs is a static class for containing codecs
     // Register your codecs here in the initialize function.
@@ -130,6 +140,7 @@ namespace VrSharp
             PvrDataCodecs.Add(0x05, new PvrDataCodec_05());
             PvrDataCodecs.Add(0x07, new PvrDataCodec_07());
             PvrDataCodecs.Add(0x09, new PvrDataCodec_09());
+            PvrDataCodecs.Add(0x0D, new PvrDataCodec_0D());
 
             init = true;
         }
