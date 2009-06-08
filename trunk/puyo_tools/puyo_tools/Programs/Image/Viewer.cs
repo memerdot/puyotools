@@ -21,102 +21,21 @@ namespace puyo_tools
         ToolStripStatusLabel statusStripText;
         ToolStripComboBox backColorSelect;
         string imageName = String.Empty;
-        bool openedFromArchive = false;
+        bool openedFromArchive;
 
         public Image_Viewer()
         {
-            /* Set up the form */
-            FormContent.Create(this, "Puyo Tools Image Viewer", new Size(512, 256));
-
-            /* Set up the background color selection */
-            backColorSelect = new ToolStripComboBox() {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-            };
-            backColorSelect.Items.AddRange(new string[] { "White", "Blue", "Black" });
-            backColorSelect.SelectedIndex    = 0;
-            backColorSelect.MaxDropDownItems = backColorSelect.Items.Count;
-            backColorSelect.SelectedIndexChanged += new EventHandler(ChangeBackColor);
-
-            /* Set up the toolstrip */
-            ToolStrip toolStrip = new ToolStrip(new ToolStripItem[] {
-                new ToolStripButton("Open", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("open"), delegate(object sender, EventArgs e) { OpenImage(); }),
-                new ToolStripSeparator(),
-                new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
-                new ToolStripSeparator(),
-                new ToolStripLabel("Background Color: "),
-                backColorSelect,
-            });
-            this.Controls.Add(toolStrip);
-
-            /* Set up the status strip */
-            statusStrip = new StatusStrip() {
-                SizingGrip = false,
-            };
-            statusStripText = new ToolStripStatusLabel() {
-                Size = new Size(statusStrip.Size.Width, statusStrip.Size.Height),
-            };
-
-            statusStrip.Items.Add(statusStripText);
-            this.Controls.Add(statusStrip);
-            
-            /* Set up the image panel */
-            imagePanel = new Panel() {
-                Location   = new Point(0, 25),
-                Size       = new Size(this.Size.Width, 512),
-                AutoScroll = true,
-            };
-
-            imagePanel.Controls.Add(image);
-            this.Controls.Add(imagePanel);
-
+            openedFromArchive = false;
+            CreateDisplay();
             this.ShowDialog();
         }
 
         /* Loaded from the Archive Explorer */
         public Image_Viewer(Stream stream, string filename)
         {
-            /* Set up the form */
+            /* Create display */
             openedFromArchive = true;
-            FormContent.Create(this, "Puyo Tools Image Viewer", new Size(512, 256));
-
-            /* Set up the background color selection */
-            backColorSelect = new ToolStripComboBox() {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-            };
-            backColorSelect.Items.AddRange(new string[] { "White", "Blue", "Black" });
-            backColorSelect.SelectedIndex    = 0;
-            backColorSelect.MaxDropDownItems = backColorSelect.Items.Count;
-            backColorSelect.SelectedIndexChanged += new EventHandler(ChangeBackColor);
-
-            /* Set up the toolstrip */
-            ToolStrip toolStrip = new ToolStrip(new ToolStripItem[] {
-                new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
-                new ToolStripSeparator(),
-                new ToolStripLabel("Background Color: "),
-                backColorSelect,
-            });
-            this.Controls.Add(toolStrip);
-
-            /* Set up the status strip */
-            statusStrip = new StatusStrip() {
-                SizingGrip = false,
-            };
-            statusStripText = new ToolStripStatusLabel() {
-                Size = new Size(statusStrip.Size.Width, statusStrip.Size.Height),
-            };
-
-            statusStrip.Items.Add(statusStripText);
-            this.Controls.Add(statusStrip);
-            
-            /* Set up the image panel */
-            imagePanel = new Panel() {
-                Location   = new Point(0, 25),
-                Size       = new Size(this.Size.Width, 512),
-                AutoScroll = true,
-            };
-
-            imagePanel.Controls.Add(image);
-            this.Controls.Add(imagePanel);
+            CreateDisplay();
 
             /* Now load the image */
             Bitmap bitmap;
@@ -142,8 +61,26 @@ namespace puyo_tools
         /* Loaded from the Archive Explorer */
         public Image_Viewer(Stream stream, string filename, Stream palette)
         {
-            /* Set up the form */
+            /* Create display */
             openedFromArchive = true;
+            CreateDisplay();
+
+            /* Now load the image */
+            Bitmap bitmap = LoadImage(ref stream, filename, palette);
+
+            /* Only bother if an image was actually produced */
+            if (bitmap != null && !bitmap.Size.IsEmpty)
+            {
+                DisplayImage(bitmap, filename);
+                this.ShowDialog();
+            }
+            else
+                this.Dispose();
+        }
+
+        private void CreateDisplay()
+        {
+            /* Set up the form */
             FormContent.Create(this, "Puyo Tools Image Viewer", new Size(512, 256));
 
             /* Set up the background color selection */
@@ -151,18 +88,35 @@ namespace puyo_tools
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
             };
-            backColorSelect.Items.AddRange(new string[] { "White", "Blue", "Black" });
+            backColorSelect.Items.AddRange(new string[] { "White", "Black", "Red", "Green", "Blue" });
             backColorSelect.SelectedIndex = 0;
             backColorSelect.MaxDropDownItems = backColorSelect.Items.Count;
             backColorSelect.SelectedIndexChanged += new EventHandler(ChangeBackColor);
 
             /* Set up the toolstrip */
-            ToolStrip toolStrip = new ToolStrip(new ToolStripItem[] {
-                new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
-                new ToolStripSeparator(),
-                new ToolStripLabel("Background Color: "),
-                backColorSelect,
-            });
+            ToolStrip toolStrip;
+
+            if (openedFromArchive)
+            {
+                toolStrip = new ToolStrip(new ToolStripItem[] {
+                    new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
+                    new ToolStripSeparator(),
+                    new ToolStripLabel("Background Color: "),
+                    backColorSelect,
+                });
+            }
+            else
+            {
+                toolStrip = new ToolStrip(new ToolStripItem[] {
+                    new ToolStripButton("Open", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("open"), delegate(object sender, EventArgs e) { OpenImage(); }),
+                    new ToolStripSeparator(),
+                    new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
+                    new ToolStripSeparator(),
+                    new ToolStripLabel("Background Color: "),
+                    backColorSelect,
+                });
+            }
+
             this.Controls.Add(toolStrip);
 
             /* Set up the status strip */
@@ -188,29 +142,17 @@ namespace puyo_tools
 
             imagePanel.Controls.Add(image);
             this.Controls.Add(imagePanel);
-
-            /* Now load the image */
-            Bitmap bitmap = LoadImage(ref stream, filename, palette);
-
-            /* Only bother if an image was actually produced */
-            if (bitmap != null && !bitmap.Size.IsEmpty)
-            {
-                DisplayImage(bitmap, filename);
-                this.ShowDialog();
-            }
-            else
-                this.Dispose();
         }
 
         private void OpenImage()
         {
             string file = FileSelectionDialog.OpenFile("Select Image",
-                "Supported Images (*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.svr)|*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.svr|" +
+                "Supported Images (*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.pvz;*.svr)|*.cnx;*.gim;*.gmp;*.gvr;*.pvr;*.pvz;*.svr|" +
                 "CNX Compressed GMP/PVR Image (*.cnx)|*.cnx|" +
                 "GIM Image (*.gim)|*.gim|" +
                 "GMP Image (*.gmp)|*.gmp|" +
                 "GVR Image (*.gvr)|*.gvr|" +
-                "PVR Image (*.pvr)|*.pvr|" +
+                "PVR Image (*.pvr;*.pvz)|*.pvr;*.pvz|" +
                 "SVR Image (*.svr)|*.svr");
 
             /* Don't continue if a file wasn't selected */
@@ -333,9 +275,6 @@ namespace puyo_tools
                         imagePanel.Location = new Point((this.ClientSize.Width / 2) - (bitmap.Size.Width / 2), imagePanel.Location.Y);
                     else
                         imagePanel.Location = new Point(0, imagePanel.Location.Y);
-
-                    /* Center image on screen */
-                    imagePanel.Location = new Point(0, imagePanel.Location.Y);
                 }
                 else
                 {
@@ -362,8 +301,10 @@ namespace puyo_tools
             switch (((ToolStripComboBox)sender).SelectedIndex)
             {
                 case 0: image.BackColor = Color.White; break;
-                case 1: image.BackColor = Color.Blue;  break;
-                case 2: image.BackColor = Color.Black; break;
+                case 1: image.BackColor = Color.Black; break;
+                case 2: image.BackColor = Color.Red;   break;
+                case 3: image.BackColor = Color.Green; break;
+                case 4: image.BackColor = Color.Blue;  break;
             }
         }
 

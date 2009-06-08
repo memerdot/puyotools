@@ -92,7 +92,7 @@ namespace puyo_tools
             return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
 
-        public override Stream Pack(ref Bitmap image)
+        public override Stream Pack(ref Stream image)
         {
             return null;
         }

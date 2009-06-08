@@ -26,6 +26,8 @@ namespace puyo_tools
                 new ToolStripMenuItem("Archive Explorer", null, LaunchProgram), // Explorer
                 new ToolStripMenuItem("Select Files",     null, LaunchProgram), // Converter
                 new ToolStripMenuItem("Select Directory", null, LaunchProgram), // Converter
+                new ToolStripMenuItem("Select Files",     null, LaunchProgram), // Image Encoder
+                new ToolStripMenuItem("Select Directory", null, LaunchProgram), // Image Encoder
                 new ToolStripMenuItem("Image Viewer",     null, LaunchProgram), // Viewer
             };
 
@@ -98,7 +100,11 @@ namespace puyo_tools
                             programItem[8],
                             programItem[9],
                         }),
-                        programItem[10],
+                        new ToolStripMenuItem("Encoder", null, new ToolStripItem[] {
+                            programItem[10],
+                            programItem[11],
+                        }),
+                        programItem[12],
                     }),
                     new ToolStripSeparator(),
                     new ToolStripButton("About", null, About),
@@ -127,7 +133,9 @@ namespace puyo_tools
             else if (sender == programItem[7]) program = new Archive_Explorer();
             else if (sender == programItem[8]) program = new Image_Convert();
             else if (sender == programItem[9]) program = new Image_Convert(true);
-            else if (sender == programItem[10]) program = new Image_Viewer();
+            else if (sender == programItem[10]) program = new Image_Encoder();
+            else if (sender == programItem[11]) program = new Image_Encoder(true);
+            else if (sender == programItem[12]) program = new Image_Viewer();
         }
 
         [STAThread]

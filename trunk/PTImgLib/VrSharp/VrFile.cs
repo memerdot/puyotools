@@ -39,22 +39,22 @@ namespace VrSharp
     public class VrFile
     {
         // - Variables -
-        static private byte[] GbixMagic = // GBIX Magic
+        static public byte[] GbixMagic = // GBIX Magic
             { 0x47, 0x42, 0x49, 0x58 };
         static private byte[] GcixMagic = // GCIX Magic
             { 0x47, 0x43, 0x49, 0x58 };
 
         static private byte[] GvrtMagic = // GVR Magic
             { 0x47, 0x56, 0x52, 0x54 };
-        static private byte[] PvrtMagic = // SVR & PVR Magic
+        static public byte[] PvrtMagic = // SVR & PVR Magic
             { 0x50, 0x56, 0x52, 0x54 };
 
         static private byte[] GvrMagic = // GVR Magic
             { 0x47, 0x43, 0x49, 0x58 };
         static private byte[] SvrMagic = // SVR Magic
             { 0x47, 0x42, 0x49, 0x58 };
-        private byte[] CompressedData;   // GVR Data
-        private byte[] DecompressedData; // Regular, Decompressed Data
+        public byte[] CompressedData;   // GVR Data
+        public byte[] DecompressedData; // Regular, Decompressed Data
         private byte[] ExternalPalette = null;  // External Palette Data
 
         private int VrFileHeight;
@@ -108,6 +108,9 @@ namespace VrSharp
             }
             ExternalPalette = Palette;
             SetCompressedData(VrFile);
+        }
+        public VrFile()
+        {
         }
 
         // VrFile(byte[] VrFile)

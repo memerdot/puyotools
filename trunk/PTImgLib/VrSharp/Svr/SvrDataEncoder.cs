@@ -2,7 +2,4 @@
 
 namespace VrSharp
 {
-    public abstract class SvrDataEncoder
-    {
-    }
 }

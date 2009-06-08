@@ -49,8 +49,8 @@ namespace VrSharp
                     int byte_num = (x >> 3) & 3;     // 0,1,2,3
                     int bits_set = (y >> 1) & 1;     // 0,1            (lower/upper 4 bits)
 
-                    byte uPen = (byte)(Swizzled[page_location + block_location + column_location + byte_num] >> ((index & 1) * 4) & 0xF);
-                    Buf[Where + (index >> 1)] = (byte)((Buf[Where + (index >> 1)] & -bits_set) | (uPen << (bits_set * 4)));
+                    byte uPen = (byte)(Swizzled[page_location + block_location + column_location + byte_num] >> ((x % 2) * 4) & 0xF);
+                    Buf[Where + (index >> 1)] = (byte)((Buf[Where + (index >> 1)] & ~(0xF << ((x % 2) * 4))) | (uPen << (bits_set * 4)));
                 }
             }
         }

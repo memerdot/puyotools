@@ -32,7 +32,7 @@ namespace puyo_tools
             }
         }
 
-        public override Stream Pack(ref Bitmap data)
+        public override Stream Pack(ref Stream data)
         {
             return null;
         }

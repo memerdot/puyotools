@@ -81,6 +81,7 @@
     <Compile Include="Modules\Compression\lzss.cs" />
     <Compile Include="Modules\Compression\onz.cs" />
     <Compile Include="Modules\Compression\prs.cs" />
+    <Compile Include="Modules\Compression\pvz.cs" />
     <Compile Include="Modules\Compression\sbc.cs" />
     <Compile Include="Modules\Images.cs" />
     <Compile Include="Modules\Images\bmd.cs" />
@@ -123,6 +124,9 @@
     </Compile>
     <Compile Include="Modules\Archives\snt.cs" />
     <Compile Include="Programs\Image\Convert.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Programs\Image\ImageEncoder.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Programs\Image\Viewer.cs">

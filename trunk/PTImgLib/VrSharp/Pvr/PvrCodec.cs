@@ -18,8 +18,8 @@ namespace VrSharp
     {
         Format01 = 0x01,
         SquareTwiddledMipMaps = 0x02,
-        Vq = 0x03,
-        VqMipMaps = 0x04,
+        Format03 = 0x03,
+        Format04 = 0x04,
         Format05 = 0x05,
         Index4 = 0x06,
         Format07 = 0x07,
@@ -48,7 +48,7 @@ namespace VrSharp
         public PvrPaletteCodec_Argb1555()
         {
             Decode = new PvrPaletteDecoder_Argb1555();
-            Encode = null;
+            Encode = new PvrPaletteEncoder_Argb1555();
             Format = PvrPaletteFormat.Argb1555;
         }
     }
@@ -57,7 +57,7 @@ namespace VrSharp
         public PvrPaletteCodec_Rgb565()
         {
             Decode = new PvrPaletteDecoder_Rgb565();
-            Encode = null;
+            Encode = new PvrPaletteEncoder_Rgb565();
             Format = PvrPaletteFormat.Rgb565;
         }
     }
@@ -66,7 +66,7 @@ namespace VrSharp
         public PvrPaletteCodec_Argb4444()
         {
             Decode = new PvrPaletteDecoder_Argb4444();
-            Encode = null;
+            Encode = new PvrPaletteEncoder_Argb4444();
             Format = PvrPaletteFormat.Argb4444;
         }
     }
@@ -77,8 +77,26 @@ namespace VrSharp
         public PvrDataCodec_01()
         {
             Decode = new PvrDataDecoder_01();
-            Encode = null;
+            Encode = new PvrDataEncoder_01();
             Format = PvrDataFormat.Format01;
+        }
+    }
+    public class PvrDataCodec_03 : PvrDataCodec
+    {
+        public PvrDataCodec_03()
+        {
+            Decode = new PvrDataDecoder_03();
+            Encode = null;
+            Format = PvrDataFormat.Format03;
+        }
+    }
+    public class PvrDataCodec_04 : PvrDataCodec
+    {
+        public PvrDataCodec_04()
+        {
+            Decode = new PvrDataDecoder_04();
+            Encode = null;
+            Format = PvrDataFormat.Format04;
         }
     }
     public class PvrDataCodec_05 : PvrDataCodec
@@ -104,7 +122,7 @@ namespace VrSharp
         public PvrDataCodec_09()
         {
             Decode = new PvrDataDecoder_09();
-            Encode = null;
+            Encode = new PvrDataEncoder_09();
             Format = PvrDataFormat.Format09;
         }
     }
@@ -137,6 +155,8 @@ namespace VrSharp
 
             // Add the Data Formats
             PvrDataCodecs.Add(0x01, new PvrDataCodec_01());
+            PvrDataCodecs.Add(0x03, new PvrDataCodec_03());
+            PvrDataCodecs.Add(0x04, new PvrDataCodec_04());
             PvrDataCodecs.Add(0x05, new PvrDataCodec_05());
             PvrDataCodecs.Add(0x07, new PvrDataCodec_07());
             PvrDataCodecs.Add(0x09, new PvrDataCodec_09());

@@ -26,7 +26,7 @@ namespace VrSharp
         }
         public override int GetChunkBpp()
         {
-            return 0;
+            return paletteDecoder.GetBpp();
         }
         public override int GetPaletteSize()
         {
@@ -62,7 +62,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle(ref Input, Pointer, width * 2, height);
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
 
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
@@ -83,27 +83,27 @@ namespace VrSharp
         }
     }
 
-    // Format 05
-    public class PvrDataDecoder_05 : PvrDataDecoder
+    // Format 03
+    public class PvrDataDecoder_03 : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
-        byte[][] Palette = new byte[16][];
+        byte[][] Palette = new byte[1024][];
         int width, height;
         VrPaletteDecoder paletteDecoder;
 
         // Return a value functions
         public override int GetChunkWidth()
         {
-            return width;
+            return 2;
         }
         public override int GetChunkHeight()
         {
-            return height;
+            return 2;
         }
         public override int GetChunkBpp()
         {
-            return 4;
+            return 8;
         }
         public override int GetPaletteSize()
         {
@@ -141,7 +141,176 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle4(ref Input, Pointer, width / 2, height);
+            if (x1 == 0 && y1 == 0)
+                PvrTwiddle.UnTwiddle(ref Input, Pointer, width / 2, height / 2, GetChunkBpp());
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Get entry
+                    short entry = (short)((Input[Pointer] * 4) + ((y2 * GetChunkWidth()) + x2));
+
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                }
+            }
+
+            Pointer++;
+
+            return true;
+        }
+    }
+
+    // Format 04
+    public class PvrDataDecoder_04 : PvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[1024][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 2;
+        }
+        public override int GetChunkHeight()
+        {
+            return 2;
+        }
+        public override int GetChunkBpp()
+        {
+            return 8;
+        }
+        public override int GetPaletteSize()
+        {
+            return Palette.Length * (paletteDecoder.GetBpp() / 8);
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width  = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // Untwiddle image
+            if (x1 == 0 && y1 == 0)
+            {
+                // Set pointer to correct position because the file contains mipmaps
+                Pointer++;
+                for (int i = 1; i < (width >> 1); i <<= 1)
+                    Pointer += (i * i);
+
+                PvrTwiddle.UnTwiddle(ref Input, Pointer, width / 2, height / 2, GetChunkBpp());
+            }
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Get entry
+                    short entry = (short)((Input[Pointer] * 4) + ((y2 * GetChunkWidth()) + x2));
+
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                }
+            }
+
+            Pointer++;
+
+            return true;
+        }
+    }
+
+    // Format 05
+    public class PvrDataDecoder_05 : PvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[16][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return width;
+        }
+        public override int GetChunkHeight()
+        {
+            return height;
+        }
+        public override int GetChunkBpp()
+        {
+            return 4;
+        }
+        public override int GetPaletteSize()
+        {
+            return Palette.Length * (paletteDecoder.GetBpp() / 8);
+        }
+        public override bool NeedExternalPalette()
+        {
+            return true;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width  = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // Untwiddle image
+            PvrTwiddle.UnTwiddle4(ref Input, Pointer, width, height);
 
             int PixelPointer = 0;
 
@@ -152,10 +321,10 @@ namespace VrSharp
                     // Get entry
                     byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> ((PixelPointer % 2) * 4)) & 0xF);
 
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[entry][1];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[entry][2];
-                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[entry][3];
+                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 3] = Palette[entry][3];
                     PixelPointer++;
                 }
             }
@@ -216,7 +385,7 @@ namespace VrSharp
             // Set correct number of entries
             Palette = new byte[BitConverter.ToInt16(Input, 0xE)][];
 
-            paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+            paletteDecoder.DecodePalette(ref Input, Pointer, BitConverter.ToInt16(Input, 0xE), ref Palette);
 
             return true;
         }
@@ -227,7 +396,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height);
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
 
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
@@ -265,7 +434,7 @@ namespace VrSharp
         }
         public override int GetChunkBpp()
         {
-            return 0;
+            return paletteDecoder.GetBpp();
         }
         public override int GetPaletteSize()
         {
@@ -339,7 +508,7 @@ namespace VrSharp
         }
         public override int GetChunkBpp()
         {
-            return 0;
+            return paletteDecoder.GetBpp();
         }
         public override int GetPaletteSize()
         {
@@ -375,7 +544,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle(ref Input, Pointer, width * 2, height);
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
 
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
@@ -391,6 +560,87 @@ namespace VrSharp
                     Pointer += (paletteDecoder.GetBpp() / 8);
                 }
             }
+
+            return true;
+        }
+    }
+
+    // Format 10
+    public class PvrDataDecoder_10 : PvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[64][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return 2;
+        }
+        public override int GetChunkHeight()
+        {
+            return 2;
+        }
+        public override int GetChunkBpp()
+        {
+            return 4;
+        }
+        public override int GetPaletteSize()
+        {
+            return Palette.Length * (paletteDecoder.GetBpp() / 8);
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // Untwiddle image
+            if (x1 == 0 && y1 == 0)
+                PvrTwiddle.UnTwiddle(ref Input, Pointer, width / 2, height / 2, GetChunkBpp());
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Get entry
+                    short entry = (short)((Input[Pointer] * 4) + ((y2 * GetChunkWidth()) + x2));
+
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                }
+            }
+
+            Pointer++;
 
             return true;
         }

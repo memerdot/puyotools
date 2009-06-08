@@ -11,6 +11,11 @@ namespace puyo_tools
     /* PVR Images */
     class PVR : ImageClass
     {
+        public PvrPaletteFormat PaletteFormat = PvrPaletteFormat.Argb1555;
+        public PvrDataFormat DataFormat = PvrDataFormat.Format01;
+        public bool GbixHeader = true;
+        public uint GlobalIndex = 0;
+
         public PVR()
         {
         }
@@ -41,9 +46,22 @@ namespace puyo_tools
             return Unpack(ref data, null);
         }
 
-        public override Stream Pack(ref Bitmap data)
+        public override Stream Pack(ref Stream data)
         {
-            return null;
+            /* Convert the image to a PVR */
+            /* Right now Argb1555 Square Twiddled */
+            try
+            {
+                ImgFile imageInput         = new ImgFile(data.ReadBytes(0, (int)data.Length));
+                PvrFileEncoder imageOutput = new PvrFileEncoder(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), PaletteFormat, DataFormat, GbixHeader, GlobalIndex);
+
+                return new MemoryStream(imageOutput.GetCompressedData());
+            }
+            catch (Exception f)
+            {
+                System.Windows.Forms.MessageBox.Show(f.ToString());
+                return null;
+            }
         }
 
         /* Check to see if this is a PVR */

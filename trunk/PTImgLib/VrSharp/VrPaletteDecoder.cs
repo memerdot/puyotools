@@ -15,5 +15,11 @@ namespace VrSharp
 
     public abstract class VrPaletteEncoder
     {
+        // This encodes the palette.
+        // Buf is the color data in Argb8888 format
+        public abstract bool EncodePalette(ref byte[] Buf, int Pointer, int Colors, ref uint[] Palette);
+
+        // Get bits per pixel of the palette
+        public abstract int GetBpp();
     }
 }
