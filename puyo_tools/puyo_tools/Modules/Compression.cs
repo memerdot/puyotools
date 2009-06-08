@@ -120,6 +120,13 @@ namespace puyo_tools
                         compressor = new PRS();
                         name       = "PRS";
                         return;
+
+                    case ".pvz": // PVZ
+                        format     = CompressionFormat.PVZ;
+                        compressor = new PVZ();
+                        name       = "PVZ";
+                        return;
+
                 }
 
                 /* Unknown or unsupported compression */
@@ -174,6 +181,7 @@ namespace puyo_tools
         LZSS,
         ONZ,
         PRS,
+        PVZ,
     }
 
     /* Compression Header */

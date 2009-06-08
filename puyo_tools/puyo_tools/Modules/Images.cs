@@ -38,7 +38,8 @@ namespace puyo_tools
         /* Pack image */
         public Stream Pack()
         {
-            return Converter.Pack(ref imageData);
+            //return Converter.Pack(ref imageData);
+            return null;
         }
 
         /* Output Directory */
@@ -195,7 +196,7 @@ namespace puyo_tools
     {
         /* Image Functions */
         public abstract Bitmap Unpack(ref Stream data);   // Unpack image
-        public abstract Stream Pack(ref Bitmap data);     // Pack Image
+        public abstract Stream Pack(ref Stream data);     // Pack Image
         public abstract bool Check(ref Stream data);      // Check Image
         public abstract Images.Information Information(); // Image Information
         public virtual Bitmap Unpack(ref Stream data, Stream palette) // Unpack image (with external palette file)

@@ -99,7 +99,7 @@ namespace puyo_tools
             /* Compression Format */
             FormContent.Add(compressionSettings, compressionFormat,
                 //new string[] {"CNX", "CXLZ", "LZ01", "LZSS"},
-                new string[] {"CXLZ", "LZSS"},
+                new string[] {"CXLZ", "LZSS", "PVZ"},
                 new Point(8, 36),
                 new Size(120, 16));
 
@@ -162,6 +162,7 @@ namespace puyo_tools
                         {
                             case 0: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
                             case 1: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
+                            case 2: compressor = new PVZ();  format = CompressionFormat.PVZ;  break;
                             //case 0: compressor = new CNX();  format = CompressionFormat.CNX;  break;
                             //case 1: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
                             //case 2: compressor = new LZ01(); format = CompressionFormat.LZ01; break;
