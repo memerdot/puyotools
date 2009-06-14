@@ -9,10 +9,14 @@ using ImgSharp;
 namespace puyo_tools
 {
     /* GVR Images */
-    class GVR : ImageClass
+    class GVR : ImageModule
     {
         public GVR()
         {
+            Name = "GVR";
+            Extension = ".gvr";
+            CanEncode = false;
+            CanDecode = true;
         }
 
         /* Convert the GVR to an image */
@@ -46,7 +50,7 @@ namespace puyo_tools
         }
 
         /* Check to see if this is a GVR */
-        public override bool Check(ref Stream input)
+        public override bool Check(ref Stream input, string filename)
         {
             try
             {

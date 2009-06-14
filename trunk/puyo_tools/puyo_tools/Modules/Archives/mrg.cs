@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace puyo_tools
 {
-    public class MRG : ArchiveClass
+    public class MRG : ArchiveModule
     {
         /*
          * MRG files are archives that contain files (duh!).
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public MRG()
         {
+            Name       = "MRG";
+            Extension  = ".mrg";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.mrg" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.MRG();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -34,10 +43,10 @@ namespace puyo_tools
                     string filename = data.ReadString(0x20 + (i * 0x30), 32); // Name
                     string fileext  = data.ReadString(0x10 + (i * 0x30), 4);  // Extension
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x14 + (i * 0x30)), // Offset
                         data.ReadUInt(0x18 + (i * 0x30)), // Length
-                        (filename == string.Empty ? string.Empty : filename) + (fileext == string.Empty ? string.Empty : '.' + fileext) // Filename
+                        (filename == String.Empty ? String.Empty : filename) + (fileext == string.Empty ? string.Empty : '.' + fileext) // Filename
                     );
                 }
 
@@ -60,11 +69,15 @@ namespace puyo_tools
 
                 /* Create the header data. */
                 offsetList          = new uint[files.Length];
-                MemoryStream header = new MemoryStream(Number.RoundUp(0x10 + (files.Length * 0x30), blockSize));
+                MemoryStream header = new MemoryStream(Number.RoundUp(0x8, blockSize) + (Number.RoundUp(0xB, blockSize) * files.Length) + (Number.RoundUp(0x20, blockSize) * files.Length));
 
                 /* Write out the identifier and number of files */
                 header.Write(ArchiveHeader.MRG, 4);
                 header.Write(files.Length);
+
+                // Write null bytes
+                while (header.Position % blockSize != 0)
+                    header.Write(PaddingByte);
 
                 /* Set the offset */
                 uint offset = (uint)header.Capacity;
@@ -82,6 +95,10 @@ namespace puyo_tools
                     offsetList[i] = offset;
                     header.Write(offset);
                     header.Write(length);
+
+                    // Write null bytes
+                    while (header.Position % blockSize != 0)
+                        header.Write(PaddingByte);
 
                     /* Write the filename */
                     header.Write(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 31, 32);
@@ -111,23 +128,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "MRG";
-            string Ext    = ".mrg";
-            string Filter = "MRG Archive (*.mrg)|*.mrg|MRZ Archive (*.mrz)|*.mrz";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 32 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

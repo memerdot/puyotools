@@ -79,7 +79,7 @@ namespace puyo_tools
             /* Check based on archive format */
             Archive archive = new Archive(data, null);
             if (archive.Format != ArchiveFormat.NULL)
-                return archive.ArchiveName + " Archive";
+                return archive.Name + " Archive";
 
             /* Check based on image format */
             Images images = new Images(data, null);

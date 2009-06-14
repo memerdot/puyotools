@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class SNT : ArchiveClass
+    public class SNT : ArchiveModule
     {
         /*
          * SNT files are archives that contains SVR or GIM files.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public SNT()
         {
+            Name       = "SNT";
+            Extension  = ".snt";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.snt" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.SNT();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -38,7 +47,7 @@ namespace puyo_tools
                     uint length = data.ReadUInt(0x3C + (files * 0x14) + (i * 0x8));
 
                     /* Check for filenames */
-                    string filename = string.Empty;
+                    string filename = String.Empty;
                     if (containsFilenames)
                         filename = data.ReadString(0x40 + (files * 0x1C) + (i * 0x40), 64);
 
@@ -49,11 +58,11 @@ namespace puyo_tools
                         if (filenameOffset < length)
                             filename = Path.GetFileNameWithoutExtension(data.ReadString(offset + filenameOffset, (int)(length - filenameOffset)));
 
-                        if (filename != string.Empty)
-                            filename += ".gim";
+                        if (filename != String.Empty)
+                            filename += (filename.IsAllUpperCase() ? ".GIM" : ".gim");
                     }
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         offset,  // Offset
                         length,  // Length
                         filename // Filename
@@ -75,16 +84,16 @@ namespace puyo_tools
             try
             {
                 /* Create variables from settings */
-                blockSize         = 8;
-                bool addFilenames = settings[0];
-                bool pspSnt       = settings[1];
+                blockSize           = 8;
+                bool ps2Snt         = settings[0];
+                bool storeFilenames = settings[1];
 
                 /* Create the header data. */
-                offsetList        = new uint[files.Length];
+                offsetList          = new uint[files.Length];
                 MemoryStream header = new MemoryStream(0x3C + (files.Length * 0x1C));
 
                 /* Start with the NIF header */
-                header.Write((pspSnt ? ArchiveHeader.NUIF : ArchiveHeader.NSIF), 4);
+                header.Write((ps2Snt ? ArchiveHeader.NSIF : ArchiveHeader.NUIF), 4);
                 header.Write(0x18);
                 header.Write(0x01);
                 header.Write(0x20);
@@ -100,7 +109,7 @@ namespace puyo_tools
                 header.Write(0x01);
 
                 /* NTL Header */
-                header.Write((pspSnt ? ArchiveHeader.NUTL : ArchiveHeader.NSTL), 4);
+                header.Write((ps2Snt ? ArchiveHeader.NSTL : ArchiveHeader.NUTL), 4);
                 header.Write(0x14 + ((uint)files.Length * 0x1C) + ntl_size);
                 header.Write(0x10);
                 header.Write(0x00);
@@ -119,7 +128,7 @@ namespace puyo_tools
                 }
 
                 /* Set the intial offset */
-                if (addFilenames)
+                if (storeFilenames)
                     header.Capacity += 0x4 + (0x40 * files.Length);
                 uint offset = (uint)header.Capacity;
 
@@ -137,7 +146,7 @@ namespace puyo_tools
                 }
 
                 /* Do we want to add filenames? */
-                if (addFilenames)
+                if (storeFilenames)
                 {
                     header.Write("FLST");
                     for (int i = 0; i < files.Length; i++)
@@ -179,12 +188,12 @@ namespace puyo_tools
 
                 /* Pad data before NEND */
                 while (footer.Position % blockSize != 0)
-                    footer.WriteByte(PaddingByte());
+                    footer.WriteByte(PaddingByte);
 
                 /* Add the NEND stuff and then pad file */
                 footer.Write("NEND");
                 while (footer.Position < footer.Capacity)
-                    footer.Write(PaddingByte());
+                    footer.Write(PaddingByte);
 
                 return footer;
             }
@@ -209,29 +218,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "SNT";
-            string Ext    = ".snt";
-            string Filter = "GNT Archive (*.snt)|*.snt";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 8, -1 };
-            string[] Settings = new string[] {
-                "PSP SNT Archive",
-                "Add Filenames",
-            };
-            bool[] DefaultSettings = new bool[] {
-                false,
-                false,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

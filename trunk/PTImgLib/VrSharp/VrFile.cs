@@ -41,7 +41,7 @@ namespace VrSharp
         // - Variables -
         static public byte[] GbixMagic = // GBIX Magic
             { 0x47, 0x42, 0x49, 0x58 };
-        static private byte[] GcixMagic = // GCIX Magic
+        static public byte[] GcixMagic = // GCIX Magic
             { 0x47, 0x43, 0x49, 0x58 };
 
         static private byte[] GvrtMagic = // GVR Magic
@@ -60,7 +60,7 @@ namespace VrSharp
         private int VrFileHeight;
         private int VrFileWidth;
 
-        private uint VrPixelFormatCode;
+        private uint VrFormatCode;
 
         private int VrCodecHeaderLength;
         private int VrCodecChunkWidth;
@@ -70,13 +70,13 @@ namespace VrSharp
         private VrCodec VrCodec;
         private VrEncoder VrEncoder;
 
-        private VrPaletteCodec VrPaletteCodec;
+        private VrPaletteCodec VrPixelCodec;
         private VrDataCodec VrDataCodec;
 
         private VrPaletteDecoder VrPaletteDecoder;
         private VrDataDecoder VrDataDecoder;
 
-        private byte VrPaletteFormatCode;
+        private byte VrPixelFormatCode;
         private byte VrDataFormatCode;
 
         private int VrFileOffset;
@@ -191,7 +191,7 @@ namespace VrSharp
 
 
             // Get Format Code
-            VrPixelFormatCode = (uint)(Compressed[0x18] << 24 | Compressed[0x19] << 16 | Compressed[0x1A] << 8 | Compressed[0x1B]);
+            VrFormatCode = (uint)(Compressed[0x18] << 24 | Compressed[0x19] << 16 | Compressed[0x1A] << 8 | Compressed[0x1B]);
 
             if (IsGvr())
             {
@@ -201,11 +201,11 @@ namespace VrSharp
                     VrFileOffset = 0x10;
 
 
-                VrPaletteFormatCode = Compressed[0xA + VrFileOffset];
-                VrDataFormatCode    = Compressed[0xB + VrFileOffset];
+                VrPixelFormatCode = Compressed[0xA + VrFileOffset];
+                VrDataFormatCode  = Compressed[0xB + VrFileOffset];
 
-                VrPaletteCodec = GvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
-                VrDataCodec    = GvrCodecs.GetDataCodec(VrDataFormatCode);
+                VrPixelCodec = GvrCodecs.GetPaletteCodec(VrPixelFormatCode);
+                VrDataCodec  = GvrCodecs.GetDataCodec(VrDataFormatCode);
 
                 VrFileWidth  = Compressed[0xC + VrFileOffset] << 8 | Compressed[0xD + VrFileOffset];
                 VrFileHeight = Compressed[0xE + VrFileOffset] << 8 | Compressed[0xF + VrFileOffset];
@@ -217,11 +217,11 @@ namespace VrSharp
                 else
                     VrFileOffset = 0x10;
 
-                VrPaletteFormatCode = Compressed[0x8 + VrFileOffset];
-                VrDataFormatCode = Compressed[0x9 + VrFileOffset];
+                VrPixelFormatCode = Compressed[0x8 + VrFileOffset];
+                VrDataFormatCode  = Compressed[0x9 + VrFileOffset];
 
-                VrPaletteCodec = PvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
-                VrDataCodec    = PvrCodecs.GetDataCodec(VrDataFormatCode);
+                VrPixelCodec = PvrCodecs.GetPixelCodec(VrPixelFormatCode);
+                VrDataCodec  = PvrCodecs.GetDataCodec(VrDataFormatCode);
 
                 VrFileWidth  = BitConverter.ToUInt16(Compressed, 0xC + VrFileOffset);
                 VrFileHeight = BitConverter.ToUInt16(Compressed, 0xE + VrFileOffset);
@@ -233,11 +233,11 @@ namespace VrSharp
                 else
                     VrFileOffset = 0x10;
 
-                VrPaletteFormatCode = Compressed[0x8 + VrFileOffset];
-                VrDataFormatCode    = Compressed[0x9 + VrFileOffset];
+                VrPixelFormatCode = Compressed[0x8 + VrFileOffset];
+                VrDataFormatCode  = Compressed[0x9 + VrFileOffset];
 
-                VrPaletteCodec = SvrCodecs.GetPaletteCodec(VrPaletteFormatCode);
-                VrDataCodec    = SvrCodecs.GetDataCodec(VrDataFormatCode);
+                VrPixelCodec = SvrCodecs.GetPaletteCodec(VrPixelFormatCode);
+                VrDataCodec  = SvrCodecs.GetDataCodec(VrDataFormatCode);
 
                 VrFileWidth  = BitConverter.ToUInt16(Compressed, 0xC + VrFileOffset);
                 VrFileHeight = BitConverter.ToUInt16(Compressed, 0xE + VrFileOffset);
@@ -246,23 +246,23 @@ namespace VrSharp
             DecompressedData = new byte[VrFileWidth * VrFileHeight * 4];
 
             // Throw an exception if the palette or data codec does not exist
-            if (VrPaletteCodec == null && VrDataCodec == null)
-                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Palette Format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0') + " and Data Format " + VrDataFormatCode.ToString("X").PadLeft(2, '0'));
-            else if (VrPaletteCodec == null)
-                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Palette Format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0'));
+            if (VrPixelCodec == null && VrDataCodec == null)
+                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Pixel Format " + VrPixelFormatCode.ToString("X").PadLeft(2, '0') + " and Data Format " + VrDataFormatCode.ToString("X").PadLeft(2, '0'));
+            else if (VrPixelCodec == null)
+                throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Pixel Format " + VrPixelFormatCode.ToString("X").PadLeft(2, '0'));
             else if (VrDataCodec == null)
                 throw new VrNoSuitableCodecException("No Acceptable Vr Codec Found For Data Format " + VrDataFormatCode.ToString("X").PadLeft(2, '0'));
 
             try
             {
-                VrPaletteDecoder = VrPaletteCodec.Decode;
+                VrPaletteDecoder = VrPixelCodec.Decode;
                 VrDataDecoder    = VrDataCodec.Decode;
 
                 VrDataDecoder.Initialize(VrFileWidth, VrFileHeight, VrPaletteDecoder);
             }
             catch (Exception e)
             {
-                throw new VrCodecLoadingException("The palette or data codec for palette format " + VrPaletteFormatCode.ToString("X").PadLeft(2, '0') + " and data format " + VrDataFormatCode.ToString("X").PadLeft(2, '0') + " could not be loaded.", e);
+                throw new VrCodecLoadingException("The palette or data codec for pixel format " + VrPixelFormatCode.ToString("X").PadLeft(2, '0') + " and data format " + VrDataFormatCode.ToString("X").PadLeft(2, '0') + " could not be loaded.", e);
             }
 
             if (VrDataDecoder.NeedExternalPalette() && ExternalPalette == null)
@@ -274,10 +274,10 @@ namespace VrSharp
             VrCodecChunkHeight = VrDataDecoder.GetChunkHeight();
             VrCodecChunkLength = VrDataDecoder.GetChunkSize();
 
-            if ((VrFileWidth / VrCodecChunkWidth) * VrCodecChunkWidth != VrFileWidth)
+            if (VrFileWidth % VrCodecChunkWidth != 0)
                 Console.WriteLine("Warning: Image VrFileWidth is not divisible by " + VrCodecChunkWidth);
 
-            if ((VrFileHeight / VrCodecChunkHeight) * VrCodecChunkHeight != VrFileHeight)
+            if (VrFileHeight % VrCodecChunkHeight != 0)
                 Console.WriteLine("Warning: Image VrFileHeight is not divisible by " + VrCodecChunkHeight);
 
             int Pointer = 0x10 + VrFileOffset;
@@ -316,7 +316,7 @@ namespace VrSharp
             DecompressedData = Decompressed;
 
             // Set the data passed to us
-            VrPixelFormatCode = (ushort)FormatCode;
+            //VrPixelFormatCode = (ushort)FormatCode;
             VrFileWidth = Width;
             VrFileHeight = Height;
 

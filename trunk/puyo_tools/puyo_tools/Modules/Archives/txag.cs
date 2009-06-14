@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class TXAG : ArchiveClass
+    public class TXAG : ArchiveModule
     {
         /*
          * TXAG archives are TXD archives in the Sonic Storybook Series.
@@ -15,6 +15,15 @@ namespace puyo_tools
         /* Main Method */
         public TXAG()
         {
+            Name       = "Storybook TXD";
+            Extension  = ".txd";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.txd" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.TXAG();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -33,10 +42,10 @@ namespace puyo_tools
                 {
                     string filename = data.ReadString(0x10 + (i * 0x28), 32);
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x08 + (i * 0x28)).SwapEndian(), // Offset
                         data.ReadUInt(0x0C + (i * 0x28)).SwapEndian(), // Length
-                        (filename == string.Empty ? string.Empty : filename + ".gvr") // Filename
+                        (filename == String.Empty ? String.Empty : filename + (filename.IsAllUpperCase() ? ".GVR" : ".gvr")) // Filename
                     );
                 }
 
@@ -100,23 +109,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "TXAG";
-            string Ext    = ".txd";
-            string Filter = "TXAG Archive (*.txd)|*.txd";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 64 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

@@ -60,7 +60,11 @@ namespace puyo_tools
                             new Item(programItem[8]),
                             new Item(programItem[9]),
                         }),
-                        new Item(programItem[10]),
+                        new ItemArray("Encoder", new ItemIterator[] {
+                            new Item(programItem[10]),
+                            new Item(programItem[11]),
+                        }),
+                        new Item(programItem[12]),
                     }),
                     new Item(new ToolStripSeparator()),
                     new Item("About", aboutProgram),

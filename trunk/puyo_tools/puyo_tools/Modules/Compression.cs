@@ -8,56 +8,98 @@ namespace puyo_tools
 {
     public class Compression
     {
-        /* Compression format */
-        private CompressionClass Compressor = null;
-        public CompressionFormat Format     = CompressionFormat.NULL;
-        private Stream Data                 = null;
-        private string Filename             = null;
-        private string CompressionName      = null;
-        private bool compress               = false;
+        // The compressor and decompressor objects
+        public CompressionModule Compressor   = null;
+        public CompressionModule Decompressor = null;
 
-        /* Compression Object for decompression */
-        public Compression(Stream dataStream, string dataFilename)
+        private Stream Data     = null;
+        private string Filename = null;
+
+        // Restricted variables
+        public CompressionFormat Format { get; private set; }
+        public string Name              { get; private set; }
+
+        // Compression Dictionary
+        public static Dictionary<CompressionFormat, CompressionModule> Dictionary { get; private set; }
+
+        // Set up compression object for decompression
+        public Compression(Stream data, string filename)
         {
-            /* Set up our compression information */
-            Data              = dataStream;
-            Filename          = dataFilename;
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
 
-            CompressionInformation(ref Data, out Format, out Compressor, out CompressionName);
+            // Set up information and
+            Format   = CompressionFormat.NULL;
+            Name     = null;
+            Data     = data;
+            Filename = filename;
+
+            // Initalize Decompressor
+            InitalizeDecompressor();
         }
 
-        /* Compression object for compression */
-        public Compression(Stream dataStream, string dataFilename, CompressionFormat format, CompressionClass compressor)
+        // Set up compression object for compression
+        public Compression(Stream data, string filename, CompressionFormat format)
         {
-            /* Set up our compression information */
-            Data       = dataStream;
-            Filename   = dataFilename;
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
+
+            // Set up information
+            Name       = null;
+            Data       = data;
+            Filename   = filename;
             Format     = format;
-            Compressor = compressor;
-            compress   = true;
+
+            // Initalize Compressor
+            InitalizeCompressor();
         }
 
         /* Blank compression class, so you can access methods */
         public Compression()
         {
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
+
+            // Set up information
+            Format = CompressionFormat.NULL;
+            Name   = null;
         }
 
         /* Decompress */
         public MemoryStream Decompress()
         {
-            return Compressor.Decompress(ref Data);
+            if (Decompressor == null)
+                throw new Exception("Could not decompress because no decompressor was initalized.");
+
+            return Decompressor.Decompress(ref Data);
         }
 
         /* Compress */
         public MemoryStream Compress()
         {
+            if (Compressor == null)
+                throw new Exception("Could not compress because no compressor was initalized.");
+
             return Compressor.Compress(ref Data, Filename);
         }
 
-        /* Get filename */
-        public string GetFilename()
+        // Get Filename
+        public string DecompressFilename
         {
-            return Compressor.GetFilename(ref Data, Filename);
+            get
+            {
+                return Decompressor.DecompressFilename(ref Data, Filename);
+            }
+        }
+        public string CompressFilename
+        {
+            get
+            {
+                return Compressor.CompressFilename(ref Data, Filename);
+            }
         }
 
         /* Output Directory */
@@ -65,112 +107,65 @@ namespace puyo_tools
         {
             get
             {
-                return (CompressionName == null ? null : CompressionName + (compress ? " Compressed" : " Decompressed"));
+                if (Compressor != null)
+                    return (Name ?? "File Data") + " Compressed";
+                else
+                    return (Name ?? "File Data") + " Decompressed";
             }
         }
 
-        /* Get compression information */
-        private void CompressionInformation(ref Stream data, out CompressionFormat format, out CompressionClass compressor, out string name)
+        // Initalize Decompressor
+        private void InitalizeDecompressor()
         {
-            try
+            // Reset all values
+            Format       = CompressionFormat.NULL;
+            Decompressor = null;
+            Name         = null;
+
+            foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Dictionary)
             {
-                /* Check based on the first 4 bytes */
-                switch (data.ReadString(0x0, 4))
+                if (value.Value.Check(ref Data, Filename))
                 {
-                    case CompressionHeader.CNX: // CNX
-                        format     = CompressionFormat.CNX;
-                        compressor = new CNX();
-                        name       = "CNX";
-                        return;
+                    // This is the compression format
+                    if (value.Value.CanDecompress)
+                    {
+                        Format       = value.Key;
+                        Decompressor = value.Value;
+                        Name         = Decompressor.Name;
+                    }
 
-                    case CompressionHeader.CXLZ: // CXLZ
-                        format     = CompressionFormat.CXLZ;
-                        compressor = new CXLZ();
-                        name       = "CXLZ";
-                        return;
-
-                    case CompressionHeader.LZ01: // LZ01
-                        format     = CompressionFormat.LZ01;
-                        compressor = new LZ01();
-                        name       = "LZ01";
-                        return;
+                    break;
                 }
-
-                /* Check compression based on the first byte */
-                switch (data.ReadString(0x0, 1))
-                {
-                    case CompressionHeader.LZSS: // LZSS
-                        format     = CompressionFormat.LZSS;
-                        compressor = new LZSS();
-                        name       = "LZSS";
-                        return;
-
-                    case CompressionHeader.ONZ: // ONZ
-                        format     = CompressionFormat.ONZ;
-                        compressor = new ONZ();
-                        name       = "ONZ";
-                        return;
-                }
-
-                /* Check file extension */
-                switch (Path.GetExtension(Filename).ToLower())
-                {
-                    case ".prs": // PRS
-                        format     = CompressionFormat.PRS;
-                        compressor = new PRS();
-                        name       = "PRS";
-                        return;
-
-                    case ".pvz": // PVZ
-                        format     = CompressionFormat.PVZ;
-                        compressor = new PVZ();
-                        name       = "PVZ";
-                        return;
-
-                }
-
-                /* Unknown or unsupported compression */
-                throw new CompressionFormatNotSupported();
-            }
-            catch (CompressionFormatNotSupported)
-            {
-                /* Unknown or unsupported compression */
-                format     = CompressionFormat.NULL;
-                compressor = null;
-                name       = null;
-                return;
-            }
-            catch
-            {
-                /* An error occured. */
-                format     = CompressionFormat.NULL;
-                compressor = null;
-                name       = null;
-                return;
             }
         }
 
-        /* Get compression information, used for compressing */
-        public void CompressorInformation(CompressionFormat format, out CompressionClass compressor, out string name)
+        // Initalize Compressor
+        private void InitalizeCompressor()
         {
-            switch (format)
+            // Get compressor based on compression format
+            if (Dictionary.ContainsKey(Format) && Dictionary[Format].CanCompress)
             {
-                case CompressionFormat.CXLZ:
-                    compressor = new CXLZ();
-                    name       = "CXLZ";
-                    return;
-                case CompressionFormat.LZSS:
-                    compressor = new LZSS();
-                    name       = "LZSS";
-                    return;
+                Compressor = Dictionary[Format];
+                Name       = Compressor.Name;
             }
+        }
 
-            compressor = null;
-            name       = null;
-            return;
+        // Initalize Compression Dictionary
+        private static void InitalizeDictionary()
+        {
+            Dictionary = new Dictionary<CompressionFormat, CompressionModule>();
+
+            // Add all the entries to the dictionary
+            Dictionary.Add(CompressionFormat.CNX,  new CNX());
+            Dictionary.Add(CompressionFormat.CXLZ, new CXLZ());
+            Dictionary.Add(CompressionFormat.LZ01, new LZ01());
+            Dictionary.Add(CompressionFormat.LZSS, new LZSS());
+            Dictionary.Add(CompressionFormat.ONZ,  new ONZ());
+            Dictionary.Add(CompressionFormat.PRS,  new PRS());
+            Dictionary.Add(CompressionFormat.PVZ,  new PVZ());
         }
     }
-
+    
     /* Compression Format */
     public enum CompressionFormat : byte
     {
@@ -195,12 +190,22 @@ namespace puyo_tools
             ONZ  = "\x11";
     }
 
-    public abstract class CompressionClass
+    public abstract class CompressionModule
     {
+        // Variables
+        public string Name        { get; protected set; }
+        public bool CanCompress   { get; protected set; }
+        public bool CanDecompress { get; protected set; }
+
         /* Compression Functions */
         public abstract MemoryStream Decompress(ref Stream data); // Decompress Data
         public abstract MemoryStream Compress(ref Stream data, string filename); // Compress Data
-        public virtual string GetFilename(ref Stream data, string filename) // Get Filname
+        public abstract bool Check(ref Stream data, string filename); // Check
+        public virtual string DecompressFilename(ref Stream data, string filename) // Get Filename for Decompressed File
+        {
+            return filename;
+        }
+        public virtual string CompressFilename(ref Stream data, string filename) // Get Filename for Compressed File
         {
             return filename;
         }

@@ -5,10 +5,13 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class LZ01 : CompressionClass
+    public class LZ01 : CompressionModule
     {
         public LZ01()
         {
+            Name = "LZ01";
+            CanCompress   = false;
+            CanDecompress = true;
         }
 
         /* Decompress */
@@ -168,6 +171,19 @@ namespace puyo_tools
             {
                 /* Something went wrong */
                 return null;
+            }
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                return (data.ReadString(0x0, 4) == "LZ01");
+            }
+            catch
+            {
+                return false;
             }
         }
     }

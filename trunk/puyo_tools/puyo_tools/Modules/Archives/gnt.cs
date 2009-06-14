@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class GNT : ArchiveClass
+    public class GNT : ArchiveModule
     {
         /*
          * GNT files are archives that contains GVR files.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public GNT()
         {
+            Name       = "GNT";
+            Extension  = ".gnt";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.gnt" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.GNT();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -33,7 +42,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x40 + (files * 0x14) + (i * 0x8)).SwapEndian() + 0x20, // Offset
                         data.ReadUInt(0x3C + (files * 0x14) + (i * 0x8)).SwapEndian(),        // Length
                         (containsFilenames ? data.ReadString(0x40 + (files * 0x1C) + (i * 0x40), 64) : string.Empty) // Filename
@@ -158,12 +167,12 @@ namespace puyo_tools
 
                 /* Pad data before NEND */
                 while (footer.Position % blockSize != 0)
-                    footer.WriteByte(PaddingByte());
+                    footer.WriteByte(PaddingByte);
 
                 /* Add the NEND stuff and then pad file */
                 footer.Write("NEND");
                 while (footer.Position < footer.Capacity)
-                    footer.WriteByte(PaddingByte());
+                    footer.WriteByte(PaddingByte);
 
                 return footer;
             }
@@ -186,27 +195,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "GNT";
-            string Ext    = ".gnt";
-            string Filter = "GNT Archive (*.gnt)|*.gnt";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 8, -1 };
-            string[] Settings = new string[] {
-                "Add Filenames",
-            };
-            bool[] DefaultSettings = new bool[] {
-                false,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

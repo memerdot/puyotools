@@ -27,6 +27,9 @@ namespace puyo_tools
         private ComboBox
             compressionFormat = new ComboBox(); // Compression Format
 
+        private List<string> CompressionNames = new List<string>();
+        private List<CompressionFormat> CompressionFormats = new List<CompressionFormat>();
+
 
         private Button
             startWorkButton = new Button(); // Start Work Button
@@ -46,6 +49,9 @@ namespace puyo_tools
             if (files == null || files.Length == 0)
                 return;
 
+            // Initalize Compression Formats
+            InitalizeCompressionFormats();
+
             showOptions();
         }
 
@@ -64,6 +70,9 @@ namespace puyo_tools
                 files = Files.FindFilesInDirectory(directory, true);
             else
                 files = Files.FindFilesInDirectory(directory, false);
+
+            // Initalize compression formats
+            InitalizeCompressionFormats();
 
             /* Show Options */
             showOptions();
@@ -98,8 +107,7 @@ namespace puyo_tools
 
             /* Compression Format */
             FormContent.Add(compressionSettings, compressionFormat,
-                //new string[] {"CNX", "CXLZ", "LZ01", "LZSS"},
-                new string[] {"CXLZ", "LZSS", "PVZ"},
+                CompressionNames.ToArray(),
                 new Point(8, 36),
                 new Size(120, 16));
 
@@ -155,22 +163,8 @@ namespace puyo_tools
                     string outputDirectory, outputFilename;
                     using (FileStream inputStream = new FileStream(fileList[i], FileMode.Open, FileAccess.Read))
                     {
-                        /* Set up the compressor to use */
-                        CompressionClass compressor = null;
-                        CompressionFormat format    = CompressionFormat.NULL;
-                        switch (compressionFormat.SelectedIndex)
-                        {
-                            case 0: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
-                            case 1: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
-                            case 2: compressor = new PVZ();  format = CompressionFormat.PVZ;  break;
-                            //case 0: compressor = new CNX();  format = CompressionFormat.CNX;  break;
-                            //case 1: compressor = new CXLZ(); format = CompressionFormat.CXLZ; break;
-                            //case 2: compressor = new LZ01(); format = CompressionFormat.LZ01; break;
-                            //case 3: compressor = new LZSS(); format = CompressionFormat.LZSS; break;
-                        }
-
-                        /* Set up the decompressor */
-                        Compression compression = new Compression(inputStream, Path.GetFileName(fileList[i]), format, compressor);
+                        // Setup the decompressor
+                        Compression compression = new Compression(inputStream, Path.GetFileName(fileList[i]), CompressionFormats[compressionFormat.SelectedIndex]);
 
                         /* Set up the output directories and file names */
                         outputDirectory = Path.GetDirectoryName(fileList[i]) + (compressSameDir.Checked ? String.Empty : Path.DirectorySeparatorChar + "Compressed");
@@ -204,6 +198,23 @@ namespace puyo_tools
             /* Close the status box now */
             status.Close();
             this.Close();
+        }
+
+        // Initalize Compression Formats
+        private void InitalizeCompressionFormats()
+        {
+            // Set up compression object, so the directory gets initalized.
+            Compression compression = new Compression();
+
+            foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
+            {
+                if (value.Value.CanCompress)
+                {
+                    // Since we can compress this format, add it to the list
+                    CompressionNames.Add(value.Value.Name);
+                    CompressionFormats.Add(value.Key);
+                }
+            }
         }
     }
 }

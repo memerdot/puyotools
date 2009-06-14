@@ -40,29 +40,33 @@ namespace puyo_tools
         private TabControl settingsBox;
         private TabPage[] settingsPages;
 
-        /* Archive & Compression Information */
-        private List<ArchiveInformation> archiveInformation = new List<ArchiveInformation>();
-        private List<CompressionInformation> compressionInformation = new List<CompressionInformation>();
+        // Archive & Compression Information
+        private List<string> ArchiveNames           = new List<string>();
+        private List<ArchiveFormat> ArchiveFormats  = new List<ArchiveFormat>();
+        private List<int[]> ArchiveBlockSizes       = new List<int[]>();
+        private List<List<Control>> ArchiveSettings = new List<List<Control>>();
+        private List<string[]> ArchiveFilters       = new List<string[]>();
 
-        /* Archive & Compression Formats */
+        private List<string> CompressionNames              = new List<string>();
+        private List<CompressionFormat> CompressionFormats = new List<CompressionFormat>();
+
+        // Archive & Compression Formats
         ToolStripComboBox archiveFormatList;
         ToolStripComboBox compressionFormatList;
 
         public Archive_Create()
         {
-
             /* Set up the form */
-            FormContent.Create(this, "Archive - Create", new Size(640, 400));
+            FormContent.Create(this, "Archive - Create", new Size(680, 400));
 
             /* Fill the archive & compression formats */
-            initalizeArchiveInformation();
-            initalizeCompressionInformation();
+            InitalizeArchiveFormats();
+            InitalizeCompressionFormats();
 
             /* Create the combobox that contains the archive formats */
             archiveFormatList               = new ToolStripComboBox();
             archiveFormatList.DropDownStyle = ComboBoxStyle.DropDownList;
-            foreach (ArchiveInformation archiveInfo in archiveInformation)
-                archiveFormatList.Items.Add(archiveInfo.Name);
+            archiveFormatList.Items.AddRange(ArchiveNames.ToArray());
 
             archiveFormatList.SelectedIndex         = 0;
             archiveFormatList.MaxDropDownItems      = archiveFormatList.Items.Count;
@@ -72,8 +76,7 @@ namespace puyo_tools
             compressionFormatList               = new ToolStripComboBox();
             compressionFormatList.DropDownStyle = ComboBoxStyle.DropDownList;
             compressionFormatList.Items.Add("Do Not Compress");
-            foreach (CompressionInformation compressionInfo in compressionInformation)
-                compressionFormatList.Items.Add(compressionInfo.Name);
+            compressionFormatList.Items.AddRange(CompressionNames.ToArray());
 
             compressionFormatList.SelectedIndex    = 0;
             compressionFormatList.MaxDropDownItems = compressionFormatList.Items.Count;
@@ -120,15 +123,15 @@ namespace puyo_tools
             /* Settings Box */
             settingsBox = new TabControl() {
                 Location = new Point(436, 32),
-                Size     = new Size(196, 328),
+                Size     = new Size(236, 328),
             };
 
             /* Set up the settings */
-            settingsPages = new TabPage[archiveInformation.Count];
-            blockSizes    = new ComboBox[archiveInformation.Count];
-            for (int i = 0; i < archiveInformation.Count; i++)
+            settingsPages = new TabPage[ArchiveNames.Count];
+            blockSizes    = new ComboBox[ArchiveBlockSizes.Count];
+            for (int i = 0; i < ArchiveNames.Count; i++)
             {
-                settingsPages[i] = new TabPage(archiveInformation[i].Name + " Settings") {
+                settingsPages[i] = new TabPage(ArchiveNames[i] + " Settings") {
                     UseVisualStyleBackColor = true,
                 };
 
@@ -146,27 +149,42 @@ namespace puyo_tools
                     DropDownStyle = ComboBoxStyle.DropDown,
                 };
 
-                for (int j = 0; j < archiveInformation[i].BlockSize.Length; j++)
+                for (int j = 0; j < ArchiveBlockSizes[i].Length; j++)
                 {
                     /* If the last element is -1, we aren't allowed to edit it */
-                    if (archiveInformation[i].BlockSize[j] == -1)
+                    if (ArchiveBlockSizes[i][j] == -1)
                     {
                         blockSizes[i].Enabled = false;
                         break;
                     }
-                    blockSizes[i].Items.Add(archiveInformation[i].BlockSize[j].ToString());
+                    blockSizes[i].Items.Add(ArchiveBlockSizes[i][j].ToString());
                 }
 
                 blockSizes[i].SelectedIndex    = 0;
                 blockSizes[i].MaxDropDownItems = blockSizes[i].Items.Count;
                 settingsPages[i].Controls.Add(blockSizes[i]);
 
-
-                for (int j = 0; j < archiveInformation[i].Settings.Length; j++)
+                int yPos = 0;
+                for (int j = 0; j < ArchiveSettings[i].Count; j++)
                 {
-                    archiveInformation[i].Settings[j].Location = new Point(8, 32 + (j * 24));
-                    archiveInformation[i].Settings[j].Size     = new Size(settingsBox.Size.Width - 16, 16);
-                    settingsPages[i].Controls.Add(archiveInformation[i].Settings[j]);
+                    // See if this is a panel, which can contain multiple items
+                    // so we can set the space between everything properly
+                    int ItemsInOption = 1;
+                    if (ArchiveSettings[i][j] is Panel)
+                    {
+                        ItemsInOption = ArchiveSettings[i][j].Controls.Count;
+                        for (int k = 0; k < ItemsInOption; k++)
+                        {
+                            ArchiveSettings[i][j].Controls[k].Location = new Point(0, k * 20);
+                            ArchiveSettings[i][j].Controls[k].Size     = new Size(settingsBox.Size.Width - 16, 16);
+                        }
+                    }
+
+                    ArchiveSettings[i][j].Location = new Point(8, 32 + yPos);
+                    ArchiveSettings[i][j].Size     = new Size(settingsBox.Size.Width - 16, 16 * ItemsInOption + ((ItemsInOption - 1) * 8));
+                    settingsPages[i].Controls.Add(ArchiveSettings[i][j]);
+
+                    yPos += (ItemsInOption * 20) + 4;
                 }
             }
 
@@ -207,7 +225,7 @@ namespace puyo_tools
             try
             {
                 /* Get output filename */
-                string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, archiveInformation[archiveFormatList.SelectedIndex].Filter);
+                string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
 
                 if (output_filename == null || output_filename == String.Empty)
                     return;
@@ -217,17 +235,17 @@ namespace puyo_tools
                 renameAllFiles.Enabled  = false;
 
                 /* Start creating the archive */
-                Archive archive = new Archive(archiveInformation[archiveFormatList.SelectedIndex].Format, Path.GetFileName(output_filename), archiveInformation[archiveFormatList.SelectedIndex].Archiver);
+                Archive archive = new Archive(ArchiveFormats[archiveFormatList.SelectedIndex], Path.GetFileName(output_filename));
 
                 using (FileStream outputStream = new FileStream(output_filename, FileMode.Create, FileAccess.ReadWrite))
                 {
                     /* Make sure block size is a number */
                     int blockSize = 0;
                     if (!int.TryParse(blockSizes[archiveFormatList.SelectedIndex].Text, out blockSize) || blockSize < 1)
-                        blockSize = archiveInformation[archiveFormatList.SelectedIndex].BlockSize[0];
+                        blockSize = ArchiveBlockSizes[archiveFormatList.SelectedIndex][0];
 
                     /* Create and write the header */
-                    bool[] settings = getSettings(archiveFormatList.SelectedIndex);
+                    bool[] settings = GetSettings(archiveFormatList.SelectedIndex);
                     uint[] offsetList;
                     MemoryStream header = archive.CreateHeader(fileList.ToArray(), archiveFilenames.ToArray(), blockSize, settings, out offsetList);
                     outputStream.Write(header);
@@ -270,7 +288,7 @@ namespace puyo_tools
                     /* Compress the data if we want to */
                     if (compressionFormatList.SelectedIndex != 0)
                     {
-                        Compression compression     = new Compression(outputStream, output_filename, compressionInformation[compressionFormatList.SelectedIndex - 1].Format, compressionInformation[compressionFormatList.SelectedIndex - 1].Compressor);
+                        Compression compression     = new Compression(outputStream, output_filename, CompressionFormats[compressionFormatList.SelectedIndex - 1]);
                         MemoryStream compressedData = compression.Compress();
                         if (compressedData != null)
                         {
@@ -502,55 +520,57 @@ namespace puyo_tools
             }
         }
 
-        /* Initalize Settings */
-        private void initalizeArchiveInformation()
+        // Initalize Archive Formats
+        private void InitalizeArchiveFormats()
         {
-            /* Get archive compression formats */
+            // Set up archive object, so the directory gets initalized.
             Archive archive = new Archive();
-            foreach (ArchiveFormat format in Enum.GetValues(typeof(ArchiveFormat)))
+
+            foreach (KeyValuePair<ArchiveFormat, ArchiveModule> value in Archive.Dictionary)
             {
-                ArchiveClass archiver;
-                string name, filter;
-                int[] blockSize;
-                CheckBox[] settings;
-
-                archive.CreationInformation(format, out archiver, out name, out filter, out blockSize, out settings);
-
-                /* If the format doesn't exist, move onto the next format */
-                if (archiver == null)
-                    continue;
-
-                /* Add all the stuff */
-                archiveInformation.Add(new ArchiveInformation(format, archiver, name, filter, blockSize, settings));
+                if (value.Value.CanPack)
+                {
+                    // Since we can pack this format, add it to the list
+                    ArchiveNames.Add(value.Value.Name);
+                    ArchiveFormats.Add(value.Key);
+                    ArchiveBlockSizes.Add(value.Value.PackSettings.BlockSizes);
+                    ArchiveSettings.Add(value.Value.PackSettings.Settings);
+                    ArchiveFilters.Add(value.Value.Filter);
+                }
             }
         }
-        private void initalizeCompressionInformation()
+
+        // Initalize Compression Formats
+        private void InitalizeCompressionFormats()
         {
-            /* Get compression formats */
+            // Set up compression object, so the directory gets initalized.
             Compression compression = new Compression();
-            foreach (CompressionFormat format in Enum.GetValues(typeof(CompressionFormat)))
+
+            foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
             {
-                CompressionClass compressor;
-                string name;
-
-                compression.CompressorInformation(format, out compressor, out name);
-
-                /* If the format doesn't exist, move onto the next format */
-                if (compressor == null)
-                    continue;
-
-                /* Add all the stuff */
-                compressionInformation.Add(new CompressionInformation(format, compressor, name));
+                if (value.Value.CanCompress)
+                {
+                    // Since we can compress this format, add it to the list
+                    CompressionNames.Add(value.Value.Name);
+                    CompressionFormats.Add(value.Key);
+                }
             }
         }
 
-        /* Get the settings for each archive format */
-        private bool[] getSettings(int formatIndex)
+        // Get Settings from the archive format
+        private bool[] GetSettings(int format)
         {
-            bool[] settings = new bool[archiveInformation[formatIndex].Settings.Length];
+            bool[] settings = new bool[ArchiveSettings[format].Count];
 
             for (int i = 0; i < settings.Length; i++)
-                settings[i] = archiveInformation[formatIndex].Settings[i].Checked;
+            {
+                // If this is a panel, we check if the first option was checked
+                // For now, assume if it's in a panel it contains radio buttons
+                if (ArchiveSettings[format][i] is Panel)
+                    settings[i] = (ArchiveSettings[format][i].Controls[0] as RadioButton).Checked;
+                else
+                    settings[i] = (ArchiveSettings[format][i] as CheckBox).Checked;
+            }
 
             return settings;
         }
@@ -560,12 +580,12 @@ namespace puyo_tools
         {
             /* Archive Information */
             private ArchiveFormat _Format;
-            private ArchiveClass _Archiver;
+            private ArchiveModule _Archiver;
             private string _Name, _Filter;
             private int[] _BlockSize;
             private CheckBox[] _Settings;
 
-            public ArchiveInformation(ArchiveFormat format, ArchiveClass archiver, string name, string filter, int[] blockSize, CheckBox[] settings)
+            public ArchiveInformation(ArchiveFormat format, ArchiveModule archiver, string name, string filter, int[] blockSize, CheckBox[] settings)
             {
                 _Format    = format;
                 _Archiver  = archiver;
@@ -580,7 +600,7 @@ namespace puyo_tools
             {
                 get { return _Format; }
             }
-            public ArchiveClass Archiver
+            public ArchiveModule Archiver
             {
                 get { return _Archiver; }
             }
@@ -599,36 +619,6 @@ namespace puyo_tools
             public CheckBox[] Settings
             {
                 get { return _Settings; }
-            }
-        }
-
-        /* Archive Creation Settings */
-        public class CompressionInformation
-        {
-            /* Archive Information */
-            private CompressionFormat _Format;
-            private CompressionClass _Compressor;
-            private string _Name;
-
-            public CompressionInformation(CompressionFormat format, CompressionClass compressor, string name)
-            {
-                _Format     = format;
-                _Compressor = compressor;
-                _Name       = name;
-            }
-
-            /* Return values */
-            public CompressionFormat Format
-            {
-                get { return _Format; }
-            }
-            public CompressionClass Compressor
-            {
-                get { return _Compressor; }
-            }
-            public string Name
-            {
-                get { return _Name; }
             }
         }
     }

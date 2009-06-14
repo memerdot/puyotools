@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class MDL : ArchiveClass
+    public class MDL : ArchiveModule
     {
         /*
          * MDL files are archives that contain PVM, NJ, and NM files.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public MDL()
         {
+            Name       = "MDL";
+            Extension  = ".mdl";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.mdl" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.MDL();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -33,7 +42,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x10 + (i * 0xC)), // Offset
                         data.ReadUInt(0x0C + (i * 0xC)), // Length
                         (containsFilenames ? data.ReadString(0xC + (files * 0xC) + (i * 0x40), 64) : string.Empty) // Filename
@@ -106,33 +115,13 @@ namespace puyo_tools
         {
             try
             {
-                return (input.ReadUShort(0x0) == 0x2);
+                return (input.ReadUShort(0x0) == 0x2 &&
+                    Path.GetExtension(filename).ToLower() == ".mdl");
             }
             catch
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "MDL";
-            string Ext    = ".mdl";
-            string Filter = "MDL Archive (*.mdl)|*.mdl";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 4096 };
-            string[] Settings = new string[] {
-                "Add Filenames",
-            };
-            bool[] DefaultSettings = new bool[] {
-                false,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

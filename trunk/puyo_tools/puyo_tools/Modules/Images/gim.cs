@@ -8,11 +8,15 @@ using ImgSharp;
 
 namespace puyo_tools
 {
-    public class GIM : ImageClass
+    public class GIM : ImageModule
     {
         /* GIM Images */
         public GIM()
         {
+            Name = "GIM";
+            Extension = ".gim";
+            CanEncode = false;
+            CanDecode = true;
         }
 
         /* Unpack a GIM into a Bitmap */
@@ -38,7 +42,7 @@ namespace puyo_tools
         }
 
         /* Check to see if this is a GIM */
-        public override bool Check(ref Stream input)
+        public override bool Check(ref Stream input, string filename)
         {
             try
             {

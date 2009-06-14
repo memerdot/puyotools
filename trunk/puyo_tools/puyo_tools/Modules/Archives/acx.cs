@@ -4,19 +4,28 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class ACX : ArchiveClass
+    public class ACX : ArchiveModule
     {
         /*
          * ACX files are archives that contains ADX files.
          * No filenames are stored in the ACX file.
         */
 
-        /* Main Method */
+        // Main Method
         public ACX()
         {
+            Name       = "ACX";
+            Extension  = ".acx";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.acx" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.ACX();
         }
 
-        /* Get the offsets, lengths, and filenames of all the files */
+        // Get file list containing the entries in the archive
         public override ArchiveFileList GetFileList(ref Stream data)
         {
             try
@@ -33,7 +42,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (int i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x8 + (i * 0x8)).SwapEndian(), // Offset
                         data.ReadUInt(0xC + (i * 0x8)).SwapEndian(), // Length
                         (containsFilenames ? data.ReadString(0xC + (files * 0x8) + (i * 0x40), 64) : string.Empty) // Filename
@@ -49,7 +58,7 @@ namespace puyo_tools
             }
         }
 
-        /* Create a header for an archive */
+        // Create a header for the archive
         public override MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
             try
@@ -101,39 +110,18 @@ namespace puyo_tools
             }
         }
 
-        /* Checks to see if the input stream is an ACX archive */
+        // Check to see if the following data is an ACX
         public override bool Check(ref Stream input, string filename)
         {
             try
             {
                 return (input.ReadString(0x0, 4, false) == ArchiveHeader.ACX &&
-                    Path.GetExtension(filename) == ".acx");
+                    Path.GetExtension(filename).ToLower() == ".acx");
             }
             catch
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "ACX";
-            string Ext    = ".acx";
-            string Filter = "ACX Archive (*.acx)|*.acx";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 4, 2048 };
-            string[] Settings = new string[] {
-                "Add Filenames",
-            };
-            bool[] DefaultSettings = new bool[] {
-                false,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

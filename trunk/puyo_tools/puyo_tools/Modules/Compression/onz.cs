@@ -5,10 +5,13 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class ONZ : CompressionClass
+    public class ONZ : CompressionModule
     {
         public ONZ()
         {
+            Name = "ONZ";
+            CanCompress   = false;
+            CanDecompress = true;
         }
 
         /* Decompress */
@@ -186,14 +189,34 @@ namespace puyo_tools
             }
         }
 
-        /* Get Filename */
-        public override string GetFilename(ref Stream data, string filename)
+        // Get Filename
+        public override string DecompressFilename(ref Stream data, string filename)
         {
             /* Only return a different extension if the current one is onz */
-            if (Path.GetExtension(filename).Substring(1).ToLower() == "onz")
-                return Path.GetFileNameWithoutExtension(filename) + ".one";
+            if (Path.GetExtension(filename).ToLower() == ".onz")
+                return Path.GetFileNameWithoutExtension(filename) + (Path.GetExtension(filename).IsAllUpperCase() ? ".ONE" : ".one");
 
             return filename;
+        }
+        public override string CompressFilename(ref Stream data, string filename)
+        {
+            return Path.GetFileNameWithoutExtension(filename) + (Path.GetExtension(filename).IsAllUpperCase() ? ".ONZ" : ".onz");
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                // Because this can conflict with other compression formats we are going to add a check them too
+                return (data.ReadString(0x0, 1) == "\x11" &&
+                    !Compression.Dictionary[CompressionFormat.PRS].Check(ref data, filename) &&
+                    !Compression.Dictionary[CompressionFormat.PVZ].Check(ref data, filename));
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

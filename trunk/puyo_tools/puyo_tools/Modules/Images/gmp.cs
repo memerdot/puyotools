@@ -6,11 +6,15 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class GMP : ImageClass
+    public class GMP : ImageModule
     {
         /* GMP Images */
         public GMP()
         {
+            Name = "GMP";
+            Extension = ".gmp";
+            CanEncode = false;
+            CanDecode = true;
         }
 
         /* Unpack a GMP into a Bitmap */
@@ -67,7 +71,7 @@ namespace puyo_tools
         }
 
         /* Check to see if this is a GMP */
-        public override bool Check(ref Stream input)
+        public override bool Check(ref Stream input, string filename)
         {
             try
             {

@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class AFS : ArchiveClass
+    public class AFS : ArchiveModule
     {
         /*
          * AFS files are archives that contains files.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public AFS()
         {
+            Name       = "AFS";
+            Extension  = ".afs";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.afs" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.AFS();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -35,7 +44,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x8 + (i * 0x8)), // Offset
                         data.ReadUInt(0xC + (i * 0x8)), // Length
                         (metadataLocation == 0x0 ? String.Empty : data.ReadString(metadataLocation + (i * 0x30), 32)) // Filename
@@ -106,7 +115,8 @@ namespace puyo_tools
                 /* Create variables from settings */
                 //blockSize = 2048;
                 bool v1                = settings[0];
-                bool storeCreationTime = settings[1];
+                bool storeFilenames    = settings[1];
+                bool storeCreationTime = settings[2];
 
                 /* Create the footer */
                 MemoryStream footer = new MemoryStream(Number.RoundUp(files.Length * 0x30, blockSize));
@@ -115,8 +125,14 @@ namespace puyo_tools
                 {
                     DateTime fileDate = new FileInfo(files[i]).CreationTime;
 
-                    /* Write the filename and file info */
-                    footer.Write(archiveFilenames[i], 31, 32);
+                    // Write the filename and info
+                    if (storeFilenames)
+                        footer.Write(archiveFilenames[i], 31, 32);
+                    else
+                    {
+                        for (int j = 0; j < 32; j++)
+                            footer.WriteByte(0x0);
+                    }
 
                     if (storeCreationTime)
                     {
@@ -160,29 +176,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "AFS";
-            string Ext    = ".afs";
-            string Filter = "AFS Archive (*.afs)|*.afs";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 2048, 32 };
-            string[] Settings = new string[] {
-                "Use AFS v1",
-                "Store Creation Times",
-            };
-            bool[] DefaultSettings = new bool[] {
-                false,
-                true,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

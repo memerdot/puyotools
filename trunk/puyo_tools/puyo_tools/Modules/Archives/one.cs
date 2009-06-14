@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class ONE : ArchiveClass
+    public class ONE : ArchiveModule
     {
         /*
          * ONE Archives are used in PS2 & Wii Sonic Unleashed
@@ -13,6 +13,15 @@ namespace puyo_tools
         /* Main Method */
         public ONE()
         {
+            Name       = "Unleashed ONE";
+            Extension  = ".one";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.one;*.onz" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.ONE();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -29,7 +38,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x40 + (i * 0x40)),      // Offset
                         data.ReadUInt(0x44 + (i * 0x40)),      // Length
                         data.ReadString(0x08 + (i * 0x40), 56) // Filename
@@ -96,23 +105,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "ONE";
-            string Ext    = ".one";
-            string Filter = "ONE Archive (*.one)|*.one|ONZ Archive (*.onz)|*.onz";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 32 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

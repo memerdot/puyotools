@@ -7,7 +7,7 @@ namespace VrSharp
     }
 
     // Format 01
-    public class PvrDataDecoder_01 : PvrDataDecoder
+    public class PvrDataDecoder_SquareTwiddled : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -84,7 +84,7 @@ namespace VrSharp
     }
 
     // Format 03
-    public class PvrDataDecoder_03 : PvrDataDecoder
+    public class PvrDataDecoder_Vq : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -151,10 +151,10 @@ namespace VrSharp
                     // Get entry
                     short entry = (short)((Input[Pointer] * 4) + ((y2 * GetChunkWidth()) + x2));
 
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[entry][0];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[entry][1];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[entry][2];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 3] = Palette[entry][3];
                 }
             }
 
@@ -165,7 +165,7 @@ namespace VrSharp
     }
 
     // Format 04
-    public class PvrDataDecoder_04 : PvrDataDecoder
+    public class PvrDataDecoder_VqMipMaps : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -239,10 +239,10 @@ namespace VrSharp
                     // Get entry
                     short entry = (short)((Input[Pointer] * 4) + ((y2 * GetChunkWidth()) + x2));
 
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[entry][0];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[entry][1];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[entry][2];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 0] = Palette[entry][0];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 1] = Palette[entry][1];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 2] = Palette[entry][2];
+                    Output[((x2 + x1) * height + (y1 + y2)) * 4 + 3] = Palette[entry][3];
                 }
             }
 
@@ -253,7 +253,7 @@ namespace VrSharp
     }
 
     // Format 05
-    public class PvrDataDecoder_05 : PvrDataDecoder
+    public class PvrDataDecoder_Index4 : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -264,11 +264,11 @@ namespace VrSharp
         // Return a value functions
         public override int GetChunkWidth()
         {
-            return width;
+            return Math.Min(width, height);
         }
         public override int GetChunkHeight()
         {
-            return height;
+            return Math.Min(height, width);
         }
         public override int GetChunkBpp()
         {
@@ -310,21 +310,21 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle4(ref Input, Pointer, width, height);
+            PvrTwiddle.UnTwiddle4(ref Input, Pointer, GetChunkWidth(), GetChunkHeight());
 
             int PixelPointer = 0;
 
-            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            for (int x2 = 0; x2 < GetChunkWidth(); x2++)
             {
-                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                for (int y2 = 0; y2 < GetChunkHeight(); y2++)
                 {
                     // Get entry
                     byte entry = (byte)((Input[Pointer + (PixelPointer >> 1)] >> ((PixelPointer % 2) * 4)) & 0xF);
 
-                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 0] = Palette[entry][0];
-                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 1] = Palette[entry][1];
-                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 2] = Palette[entry][2];
-                    Output[((x1 + x2) * height + (y1 + y2)) * 4 + 3] = Palette[entry][3];
+                    Output[((y1 + y2) * width + (x1 + x2)) * 4 + 0] = Palette[entry][0];
+                    Output[((y1 + y2) * width + (x1 + x2)) * 4 + 1] = Palette[entry][1];
+                    Output[((y1 + y2) * width + (x1 + x2)) * 4 + 2] = Palette[entry][2];
+                    Output[((y1 + y2) * width + (x1 + x2)) * 4 + 3] = Palette[entry][3];
                     PixelPointer++;
                 }
             }
@@ -336,7 +336,7 @@ namespace VrSharp
     }
 
     // Format 07
-    public class PvrDataDecoder_07 : PvrDataDecoder
+    public class PvrDataDecoder_Index8 : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -347,11 +347,11 @@ namespace VrSharp
         // Return a value functions
         public override int GetChunkWidth()
         {
-            return width;
+            return Math.Min(width, height);
         }
         public override int GetChunkHeight()
         {
-            return height;
+            return Math.Min(width, height);
         }
         public override int GetChunkBpp()
         {
@@ -396,16 +396,16 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, GetChunkWidth(), GetChunkHeight(), GetChunkBpp());
 
-            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            for (int x2 = 0; x2 < GetChunkWidth(); x2++)
             {
-                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                for (int y2 = 0; y2 < GetChunkHeight(); y2++)
                 {
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 0] = Palette[Input[Pointer]][0];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 1] = Palette[Input[Pointer]][1];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 2] = Palette[Input[Pointer]][2];
-                    Output[((x2 + x1) * width + (y1 + y2)) * 4 + 3] = Palette[Input[Pointer]][3];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[Input[Pointer]][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[Input[Pointer]][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[Input[Pointer]][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[Input[Pointer]][3];
                     Pointer++;
                 }
             }
@@ -415,7 +415,7 @@ namespace VrSharp
     }
 
     // Format 09
-    public class PvrDataDecoder_09 : PvrDataDecoder
+    public class PvrDataDecoder_Rectangle : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -489,7 +489,7 @@ namespace VrSharp
     }
 
     // Format 0D
-    public class PvrDataDecoder_0D : PvrDataDecoder
+    public class PvrDataDecoder_RectangleTwiddled : PvrDataDecoder
     {
         // Set up variables
         bool init = false;
@@ -500,11 +500,11 @@ namespace VrSharp
         // Return a value functions
         public override int GetChunkWidth()
         {
-            return width;
+            return Math.Min(width, height);
         }
         public override int GetChunkHeight()
         {
-            return height;
+            return Math.Min(height, width);
         }
         public override int GetChunkBpp()
         {
@@ -544,7 +544,7 @@ namespace VrSharp
             if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
 
             // Untwiddle image
-            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, GetChunkWidth(), GetChunkHeight(), GetChunkBpp());
 
             for (int y2 = 0; y2 < GetChunkHeight(); y2++)
             {
@@ -566,7 +566,7 @@ namespace VrSharp
     }
 
     // Format 10
-    public class PvrDataDecoder_10 : PvrDataDecoder
+    public class PvrDataDecoder_SmallVq : PvrDataDecoder
     {
         // Set up variables
         bool init = false;

@@ -36,9 +36,12 @@ namespace puyo_tools
         {
             /* Select the files */
             files = FileSelectionDialog.OpenFiles("Select Image Files",
-                "Supported Image Formats (*.gim;*.gvr)|*.gim;*.gvr|" +
-                "GIM Images (*.gim)|*.gim|" + 
-                "GVR Images (*.gvr)|*.gvr|" + 
+                "Supported Image Formats (*.cnx;*.gim;*.gvr;*.pvr;*.pvz;*.svr)|*.cnx;*.gim;*.gvr;*.pvr;*.pvz;*.svr|" +
+                "CNX Compressed Image (*.cnx)|*.cnx|" +
+                "GIM Images (*.gim)|*.gim|" +
+                "GVR Images (*.gvr)|*.gvr|" +
+                "PVR Images (*.pvr;*.pvz)|*.pvr;*.pvz|" +
+                "SVR Images (*.svr)|*.svr|" +
                 "All Files (*.*)|*.*");
 
             /* If no files were selected, don't continue */
@@ -182,7 +185,7 @@ namespace puyo_tools
                                 {
                                     data = decompressedData;
                                     if (useStoredFilename.Checked)
-                                        outputFilename = compression.GetFilename();
+                                        outputFilename = compression.DecompressFilename;
                                 }
                             }
                         }
