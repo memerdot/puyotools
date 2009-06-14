@@ -5,13 +5,16 @@ using System.Collections.Generic;
 
 namespace puyo_tools
 {
-    public class CNX : CompressionClass
+    public class CNX : CompressionModule
     {
         /* CNX cracked by drx (Luke Zapart)
          * <thedrx@gmail.com> */
 
         public CNX()
         {
+            Name = "CNX";
+            CanCompress   = false;
+            CanDecompress = true;
         }
 
         /* Decompress */
@@ -232,11 +235,28 @@ namespace puyo_tools
             }
         }
 
-        /* Get Filename */
-        public override string GetFilename(ref Stream data, string filename)
+        // Get Filename
+        public override string DecompressFilename(ref Stream data, string filename)
         {
             string fileext = data.ReadString(0x4, 3);
             return (fileext == string.Empty ? filename : Path.GetFileNameWithoutExtension(filename) + '.' + fileext);
+        }
+        public override string CompressFilename(ref Stream data, string filename)
+        {
+            return Path.GetFileNameWithoutExtension(filename) + (Path.GetExtension(filename).IsAllUpperCase() ? ".CNX" : ".cnx");
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                return (data.ReadString(0x0, 4) == "CNX\x02");
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /* Search for data that can be compressed */

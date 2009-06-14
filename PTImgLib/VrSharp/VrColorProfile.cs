@@ -14,8 +14,38 @@ using System.Drawing.Imaging;
 
 namespace VrSharp
 {
-    class VrColorQuantize
+    public class VrColorQuantize
     {
+        public static void QuantizeImage(ref byte[] Data, int Colors, int Bpp)
+        {
+            // Data must be compressed data!
+            //OctreeQuantizer Quantizer  = new OctreeQuantizer(Colors, Bpp);
+            //using (Image QuantizedImage = Quantizer.Quantize(ImageConverter))
+            //{
+            //    ImageStream = new MemoryStream();
+            //    QuantizedImage.Save(ImageStream, QuantizedImage.RawFormat);
+            //}
+            //ImageStream.Write(Data, 0, (int)ImageStream.Length);
+        }
+
+        /*public static void BuildPalette(ref byte[] Data, int Width, int Height, int Colors, int Bpp, ref byte[][] Palette)
+        {
+            List<byte[]> PaletteList = new List<byte[]>(Colors);
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    uint Color = BitConverter.ToUInt32(Data, (y * Width) + (x * 4));
+
+                    if (PaletteList.IndexOf(Color) != -1 && PaletteList.Count < PaletteList.Capacity)
+                    {
+                        PaletteList.Add(Color);
+                    }
+                }
+            }
+        }*/
+
         public byte[] QuantizedImage;
         public List<int> NewPalette = new List<int>(256);
         public VrColorQuantize(ref byte[] Data, int Width, int Height)

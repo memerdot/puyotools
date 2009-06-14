@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class VDD : ArchiveClass
+    public class VDD : ArchiveModule
     {
         /*
          * VDD files are archives that contains files.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public VDD()
         {
+            Name       = "VDD";
+            Extension  = ".vdd";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.vdd" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.VDD();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -30,7 +39,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (int i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x14   + (i * 0x18)) * 0x800, // Offset
                         data.ReadUInt(0x18   + (i * 0x18)),         // Length
                         data.ReadString(0x04 + (i * 0x18), 16)      // Filename
@@ -96,23 +105,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "VDD";
-            string Ext    = ".vdd";
-            string Filter = "VDD Archive (*.vdd)|*.vdd";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 2048, -1 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

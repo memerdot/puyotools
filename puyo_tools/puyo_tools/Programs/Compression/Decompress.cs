@@ -187,7 +187,7 @@ namespace puyo_tools
 
                         /* Set up the output directories and file names */
                         outputDirectory = Path.GetDirectoryName(fileList[i]) + (decompressSameDir.Checked ? String.Empty : Path.DirectorySeparatorChar + compression.OutputDirectory);
-                        outputFilename  = (useStoredFilename.Checked ? compression.GetFilename() : Path.GetFileName(fileList[i]));
+                        outputFilename  = (useStoredFilename.Checked ? compression.DecompressFilename : Path.GetFileName(fileList[i]));
 
                         /* Decompress data */
                         MemoryStream decompressedData = compression.Decompress();

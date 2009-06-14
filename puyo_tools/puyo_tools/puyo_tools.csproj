@@ -82,9 +82,7 @@
     <Compile Include="Modules\Compression\onz.cs" />
     <Compile Include="Modules\Compression\prs.cs" />
     <Compile Include="Modules\Compression\pvz.cs" />
-    <Compile Include="Modules\Compression\sbc.cs" />
     <Compile Include="Modules\Images.cs" />
-    <Compile Include="Modules\Images\bmd.cs" />
     <Compile Include="Modules\Archives\spk.cs" />
     <Compile Include="Modules\Compression.cs" />
     <Compile Include="Modules\Compression\cnx.cs" />
@@ -99,7 +97,6 @@
     <Compile Include="Modules\Archives\mrg.cs" />
     <Compile Include="Modules\Archives\tex.cs" />
     <Compile Include="Modules\Archives\vdd.cs" />
-    <Compile Include="Modules\Images\btx.cs" />
     <Compile Include="Modules\Images\gim.cs" />
     <Compile Include="Modules\Images\gmp.cs" />
     <Compile Include="Modules\Images\gvr.cs" />
@@ -107,6 +104,7 @@
     <Compile Include="Modules\Images\svr.cs" />
     <Compile Include="NumberExtensions.cs" />
     <Compile Include="ObjectConverter.cs" />
+    <Compile Include="Modules\ArchivePackSettings.cs" />
     <Compile Include="Programs\Archive\Create.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -142,6 +140,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="StreamExtensions.cs" />
+    <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\PTImgLib\GimSharp\GimSharp.csproj">

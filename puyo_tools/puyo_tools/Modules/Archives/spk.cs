@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class SPK : ArchiveClass
+    public class SPK : ArchiveModule
     {
         /*
          * SPK files are archives that contain LST, HD, and BD files.
@@ -13,6 +13,15 @@ namespace puyo_tools
         /* Main Method */
         public SPK()
         {
+            Name       = "SPK";
+            Extension  = ".spk";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.spk" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.SPK();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -33,7 +42,7 @@ namespace puyo_tools
                     string filename = data.ReadString(0x1C + (i * 0x20), 20); // Name
                     string fileext  = data.ReadString(0x10 + (i * 0x20), 4);  // Extension
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x14 + (i * 0x20)), // Offset
                         data.ReadUInt(0x18 + (i * 0x20)), // Length
                         (filename == string.Empty ? string.Empty : filename) + (fileext == string.Empty ? string.Empty : '.' + fileext) // Filename
@@ -59,11 +68,15 @@ namespace puyo_tools
 
                 /* Create the header data. */
                 offsetList          = new uint[files.Length];
-                MemoryStream header = new MemoryStream(Number.RoundUp(0x10 + (files.Length * 0x20), blockSize));
+                MemoryStream header = new MemoryStream(Number.RoundUp(0x8, blockSize) + (Number.RoundUp(0x20, blockSize) * files.Length));
 
                 /* Write out the identifier and number of files */
                 header.Write(ArchiveHeader.SPK, 4);
                 header.Write(files.Length);
+
+                // Write null bytes
+                while (header.Position % blockSize != 0)
+                    header.Write(PaddingByte);
 
                 /* Set the offset */
                 uint offset = (uint)header.Capacity;
@@ -75,7 +88,7 @@ namespace puyo_tools
 
                     /* Write the file extension */
                     string fileext = Path.GetExtension(archiveFilenames[i]);
-                    header.Write((fileext == string.Empty ? string.Empty : fileext.Substring(1)), 3, 4);
+                    header.Write((fileext == String.Empty ? String.Empty : fileext.Substring(1)), 3, 4);
 
                     /* Write the offsets and lengths */
                     offsetList[i] = offset;
@@ -110,23 +123,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "SPK";
-            string Ext    = ".spk";
-            string Filter = "SPK Archive (*.spk)|*.spk";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 32 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

@@ -101,7 +101,9 @@ namespace puyo_tools
                 toolStrip = new ToolStrip(new ToolStripItem[] {
                     new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
                     new ToolStripSeparator(),
-                    new ToolStripLabel("Background Color: "),
+                    new ToolStripButton("Copy to Clipboard", null, CopyImageToClipboard),
+                    new ToolStripSeparator(),
+                    new ToolStripLabel("Background: "),
                     backColorSelect,
                 });
             }
@@ -112,7 +114,9 @@ namespace puyo_tools
                     new ToolStripSeparator(),
                     new ToolStripButton("Save as PNG", (Bitmap)new ComponentResourceManager(typeof(icons)).GetObject("save"), SaveImage),
                     new ToolStripSeparator(),
-                    new ToolStripLabel("Background Color: "),
+                    new ToolStripButton("Copy to Clipboard", null, CopyImageToClipboard),
+                    new ToolStripSeparator(),
+                    new ToolStripLabel("Background: "),
                     backColorSelect,
                 });
             }
@@ -354,6 +358,20 @@ namespace puyo_tools
             }
 
             return null;
+        }
+
+        /* Copy Image to Clipboard */
+        private void CopyImageToClipboard(object sender, EventArgs e)
+        {
+            /* Copy image to clipboard */
+            if (image.Image != null && !image.Image.Size.IsEmpty)
+            {
+                MemoryStream ms = new MemoryStream();
+                image.Image.Save(ms, ImageFormat.Png);
+                IDataObject dataObject = new DataObject();
+                dataObject.SetData("PNG", false, ms);
+                Clipboard.SetDataObject(dataObject, true);
+            }
         }
     }
 }

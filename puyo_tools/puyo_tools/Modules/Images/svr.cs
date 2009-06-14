@@ -9,10 +9,14 @@ using ImgSharp;
 namespace puyo_tools
 {
     /* SVR Images */
-    class SVR : ImageClass
+    class SVR : ImageModule
     {
         public SVR()
         {
+            Name = "SVR";
+            Extension = ".svr";
+            CanEncode = false;
+            CanDecode = true;
         }
 
         /* Convert the SVR to an image */
@@ -46,12 +50,12 @@ namespace puyo_tools
         }
 
         /* Check to see if this is a SVR */
-        public override bool Check(ref Stream input)
+        public override bool Check(ref Stream input, string filename)
         {
             try
             {
-                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.PVRT && input.ReadByte(0x19) >= 0x60) ||
-                    (input.ReadString(0x0, 4) == GraphicHeader.PVRT && input.ReadByte(0x9) >= 0x60));
+                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.PVRT && input.ReadByte(0x19) >= 0x60 && input.ReadByte(0x19) < 0x70) ||
+                    (input.ReadString(0x0, 4) == GraphicHeader.PVRT && input.ReadByte(0x9) >= 0x60 && input.ReadByte(0x9) < 0x70));
             }
             catch
             {

@@ -7,8 +7,8 @@
     <ProjectGuid>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GvrSharp</RootNamespace>
-    <AssemblyName>GvrSharp</AssemblyName>
+    <RootNamespace>VrSharp</RootNamespace>
+    <AssemblyName>VrSharp</AssemblyName>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -66,12 +66,12 @@
     <Compile Include="Svr\SvrSwizzle.cs" />
     <Compile Include="VrCodec.cs" />
     <Compile Include="VrColorProfile.cs" />
-    <Compile Include="VrDataDecoder.cs" />
+    <Compile Include="VrDataClass.cs" />
     <Compile Include="VrEncoder.cs" />
     <Compile Include="VrExceptions.cs" />
     <Compile Include="VrFile.cs" />
     <Compile Include="VrFileEncoder.cs" />
-    <Compile Include="VrPaletteDecoder.cs" />
+    <Compile Include="VrPaletteClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

@@ -63,7 +63,7 @@ namespace VrSharp
         // Initialization, always called first.
         // Passed to this function is the entire image header (0x20 bytes to be exact)
         // This will allow a VrDecoder to support multiple similar formats.
-        abstract public bool Initialize(int Width, int Height, VrPaletteEncoder PaletteEncoder);
+        abstract public bool Initialize(ref byte[] Input, int Pointer, int Width, int Height, VrPaletteEncoder PaletteEncoder);
 
         // Decode the palette
         // Passed to this function is the file data (no palette) or palette array

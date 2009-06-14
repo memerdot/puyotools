@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class SBA : ArchiveClass
+    public class SBA : ArchiveModule
     {
         /*
          * Storybook Archives contain any type of file that is PRS compressed.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public SBA()
         {
+            Name       = "Storybook ONE";
+            Extension  = ".one";
+            CanPack    = false;
+            CanExtract = true;
+            Translate  = true;
+
+            Filter       = new string[] { Name + " Archive", "*.one" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.SBA();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -30,7 +39,7 @@ namespace puyo_tools
                 /* Now we can get the file offsets, lengths, and filenames */
                 for (uint i = 0; i < files; i++)
                 {
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x4 + (i * 0x2C)), // Offset
                         data.ReadUInt(0x8 + (i * 0x2C)), // Length
                         data.ReadString(0xC + (i * 0x2C), 36) // Filename
@@ -74,7 +83,7 @@ namespace puyo_tools
                     Stream compressedData = stream.Copy(sourceOffset, sourceLength);
 
                     /* Decompress the data */
-                    SBC decompressor = new SBC();
+                    PRS decompressor = new PRS();
                     MemoryStream decompressedData = decompressor.Decompress(ref compressedData, length);
                     if (decompressedData == null)
                         throw new Exception();
@@ -115,23 +124,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "Storybook Archive";
-            string Ext    = ".one";
-            string Filter = "ONE Archive (*.one)|*.one";
-
-            bool Extract = true;
-            bool Create  = false;
-
-            int[] BlockSize   = { 0, -1 };
-            string[] Settings = null;
-            bool[] DefaultSettings = null;
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

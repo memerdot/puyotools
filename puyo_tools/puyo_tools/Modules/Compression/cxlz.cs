@@ -5,10 +5,13 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class CXLZ : CompressionClass
+    public class CXLZ : CompressionModule
     {
         public CXLZ()
         {
+            Name = "CXLZ";
+            CanCompress   = true;
+            CanDecompress = true;
         }
 
         /* Decompress */
@@ -143,6 +146,19 @@ namespace puyo_tools
             {
                 /* Something went wrong */
                 return null;
+            }
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                return (data.ReadString(0x0, 4) == "CXLZ");
+            }
+            catch
+            {
+                return false;
             }
         }
     }

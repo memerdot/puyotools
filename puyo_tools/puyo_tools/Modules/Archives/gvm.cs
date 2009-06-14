@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class GVM : ArchiveClass
+    public class GVM : ArchiveModule
     {
         /*
          * GVM files are archives that contain GVR files only.
@@ -13,6 +13,15 @@ namespace puyo_tools
         /* Main Method */
         public GVM()
         {
+            Name       = "GVM";
+            Extension  = ".gvm";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = true;
+
+            Filter       = new string[] { Name + " Archive", "*.gvm" };
+            PaddingByte  = 0x00;
+            PackSettings = new ArchivePackSettings.GVM();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -32,10 +41,10 @@ namespace puyo_tools
                     /* Get the filename */
                     string filename = data.ReadString(0xA + (i * 0x24), 28);
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         data.ReadUInt(0x2 + (i * 0x24)), // Offset
                         data.ReadUInt(0x6 + (i * 0x24)), // Length
-                        (filename == string.Empty ? string.Empty : filename + ".gvr") // Filename
+                        (filename == String.Empty ? String.Empty : filename + (filename.IsAllUpperCase() ? ".GVR" : ".gvr")) // Filename
                     );
                 }
 
@@ -258,33 +267,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "GVM";
-            string Ext    = ".gvm";
-            string Filter = "GVM Archive (*.gvm)|*.gvm";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 16, -1 };
-            string[] Settings = new string[] {
-                "Add Filenames",
-                "Add GVR Pixel Format",
-                "Add GVR Dimensions",
-                "Add GVR Global Index",
-            };
-            bool[] DefaultSettings = new bool[] {
-                true,
-                true,
-                true,
-                true,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

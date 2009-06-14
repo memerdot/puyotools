@@ -16,6 +16,7 @@ namespace VrSharp
         Format60 = 0x60,
         Format62 = 0x62,
         Format64 = 0x64,
+        Format66 = 0x66,
         Format68 = 0x68,
         Format69 = 0x69,
         Format6A = 0x6A,
@@ -149,10 +150,13 @@ namespace VrSharp
             SvrDataCodecs.Add(0x60, new SvrDataCodec_60());
             SvrDataCodecs.Add(0x62, new SvrDataCodec_62());
             SvrDataCodecs.Add(0x64, new SvrDataCodec_64());
+            SvrDataCodecs.Add(0x66, new SvrDataCodec_68());
             SvrDataCodecs.Add(0x68, new SvrDataCodec_68());
             SvrDataCodecs.Add(0x69, new SvrDataCodec_69());
             SvrDataCodecs.Add(0x6A, new SvrDataCodec_6A());
+            SvrDataCodecs.Add(0x6B, new SvrDataCodec_6A());
             SvrDataCodecs.Add(0x6C, new SvrDataCodec_6C());
+            SvrDataCodecs.Add(0x6D, new SvrDataCodec_6C());
 
             init = true;
         }

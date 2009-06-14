@@ -5,14 +5,22 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class PRS : CompressionClass
+    public class PRS : CompressionModule
     {
         public PRS()
         {
+            Name = "PRS";
+            CanCompress   = false;
+            CanDecompress = true;
         }
 
-        /* Decompress */
+        // Decompress
         public override MemoryStream Decompress(ref Stream data)
+        {
+            return Decompress(ref data, 0);
+        }
+
+        public MemoryStream Decompress(ref Stream data, uint decompressedSize)
         {
             try
             {
@@ -26,7 +34,7 @@ namespace puyo_tools
                 byte[] compressedData       = data.ReadBytes(0x0, compressedSize); // Compressed Data
                 List<byte> decompressedData = new List<byte>(); // Decompressed Data
 
-                while (Cpointer < compressedSize)
+                while (Cpointer < compressedSize && (Dpointer < decompressedSize || decompressedSize == 0))
                 {
                     byte Cflag = compressedData[Cpointer];
                     Cpointer++;
@@ -103,7 +111,7 @@ namespace puyo_tools
                         }
 
                         /* Make sure we are not out of range */
-                        if (Cpointer >= compressedSize)
+                        if (Cpointer >= compressedSize || (Dpointer >= decompressedSize && decompressedSize != 0))
                             break;
                     }
                 }
@@ -126,6 +134,19 @@ namespace puyo_tools
             catch
             {
                 return null;
+            }
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                return (Path.GetExtension(filename) == ".prs");
+            }
+            catch
+            {
+                return false;
             }
         }
     }

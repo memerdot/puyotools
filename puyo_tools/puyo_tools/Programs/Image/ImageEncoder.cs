@@ -41,6 +41,10 @@ namespace puyo_tools
         private StatusMessage
             status; // Status Message
 
+        // Compression Formats
+        private List<string> CompressionNames              = new List<string>();
+        private List<CompressionFormat> CompressionFormats = new List<CompressionFormat>();
+
         public Image_Encoder()
         {
             /* Select the files */
@@ -79,7 +83,10 @@ namespace puyo_tools
         private void showOptions()
         {
             /* Set up the form */
-            FormContent.Create(this, "Image - Encoder", new Size(400, 336));
+            FormContent.Create(this, "Image - Encoder", new Size(400, 316));
+
+            // Fill the compression formats
+            InitalizeCompressionFormats();
 
             /* Files Selected */
             FormContent.Add(this, new Label(),
@@ -95,12 +102,12 @@ namespace puyo_tools
             FormContent.Add(this, imageConversionSettings,
                 "Image Conversion Settings",
                 new Point(8, 32),
-                new Size(this.Size.Width - 24, 192));
+                new Size(this.Size.Width - 24, 172));
 
             /* PVR temporarily */
             /* Palette Format */
             imageConversionSettings.Controls.Add(new Label() {
-                Text     = "PVR Palette Format: ",
+                Text     = "PVR Pixel Format: ",
                 Location = new Point(8, 24),
                 Size     = new Size(112, 16),
             });
@@ -130,8 +137,18 @@ namespace puyo_tools
                 Multiline = false,
                 Location  = new Point(8 + 112, 68),
                 Size      = new Size(112, 16),
+                Text      = "0",
             };
             imageConversionSettings.Controls.Add(globalIndex);
+            addGbix = new CheckBox() {
+                Checked  = true,
+                Location = new Point(8 + 112 + 112 + 4, 72),
+                Size     = new Size(16, 16),
+            };
+            imageConversionSettings.Controls.Add(addGbix);
+            addGbix.Click += delegate(object sender2, EventArgs f) {
+                globalIndex.Enabled = addGbix.Checked;
+            };
 
             /* Import settings from another PVR */
             importSettings = new Button() {
@@ -142,28 +159,22 @@ namespace puyo_tools
             importSettings.Click += new EventHandler(ImportPvrSettings);
             imageConversionSettings.Controls.Add(importSettings);
 
-            /* Add GBIX header */
-            FormContent.Add(imageConversionSettings, addGbix, true,
-                "Add GBIX header.",
-                new Point(8, 128),
-                new Size(imageConversionSettings.Size.Width - 16, 16));
-
             /* Output to same directory */
             FormContent.Add(imageConversionSettings, convertSameDir,
                 "Output file to same directory as source (and overwrite if necessary).",
-                new Point(8, 148),
+                new Point(8, 128),
                 new Size(imageConversionSettings.Size.Width - 16, 16));
 
             /* Delete source file */
             FormContent.Add(imageConversionSettings, deleteSourceImage,
                 "Delete source image (on successful conversion).",
-                new Point(8, 168),
+                new Point(8, 148),
                 new Size(imageConversionSettings.Size.Width - 16, 16));
 
-            /* Decompression Settings */
+            // Compression Settings
             FormContent.Add(this, compressionSettings,
                 "Compression Settings",
-                new Point(8, 232),
+                new Point(8, 212),
                 new Size(this.Size.Width - 24, 64));
 
             /* Compress file */
@@ -174,14 +185,14 @@ namespace puyo_tools
 
             /* Compression Format */
             FormContent.Add(compressionSettings, compressionFormat,
-                new string[] { "PVZ" },
+                CompressionNames.ToArray(),
                 new Point(8, 36),
                 new Size(120, 16));
 
             /* Convert */
             FormContent.Add(this, startWorkButton,
                 "Convert",
-                new Point((this.Width / 2) - 60, 304),
+                new Point((this.Width / 2) - 60, 284),
                 new Size(120, 24),
                 startWork);
 
@@ -231,21 +242,21 @@ namespace puyo_tools
 
                         switch (paletteFormat.SelectedIndex)
                         {
-                            case 0: encoder.PaletteFormat = VrSharp.PvrPaletteFormat.Argb1555; break;
-                            case 1: encoder.PaletteFormat = VrSharp.PvrPaletteFormat.Rgb565;   break;
-                            case 2: encoder.PaletteFormat = VrSharp.PvrPaletteFormat.Argb4444; break;
+                            case 0: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Argb1555; break;
+                            case 1: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Rgb565;   break;
+                            case 2: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Argb4444; break;
                         }
                         switch (dataFormat.SelectedIndex)
                         {
-                            case 0: encoder.DataFormat = VrSharp.PvrDataFormat.Format01; break;
-                            case 1: encoder.DataFormat = VrSharp.PvrDataFormat.Format09; break;
-                            case 2: encoder.DataFormat = VrSharp.PvrDataFormat.Format0D; break;
+                            case 0: encoder.DataFormat = VrSharp.PvrDataFormat.SquareTwiddled; break;
+                            case 1: encoder.DataFormat = VrSharp.PvrDataFormat.Rectangle; break;
+                            case 2: encoder.DataFormat = VrSharp.PvrDataFormat.RectangleTwiddled; break;
                         }
 
-                        /* Make sure global index is a number */
-                        int pvrGlobalIndex;
-                        if (!int.TryParse(globalIndex.Text, out pvrGlobalIndex) || pvrGlobalIndex < 0)
-                            pvrGlobalIndex = 0;
+                        // Set the global index and gbix header
+                        encoder.GbixHeader = addGbix.Checked;
+                        if (!uint.TryParse(globalIndex.Text, out encoder.GlobalIndex) || (int)encoder.GlobalIndex < 0)
+                            encoder.GlobalIndex = 0;
 
                         /* Set up our input and output image */
                         string inputImage  = outputDirectory + Path.DirectorySeparatorChar + outputFilename;
@@ -259,10 +270,10 @@ namespace puyo_tools
                         if (imageData == null)
                             continue;
 
-                        /* Compress image? (force PVZ for now) */
+                        /* Compress image? */
                         if (compressFile.Checked)
                         {
-                            Compression compression = new Compression(imageData, outputFilename, CompressionFormat.PVZ, new PVZ());
+                            Compression compression = new Compression(imageData, outputFilename, CompressionFormats[compressionFormat.SelectedIndex]);
 
                             MemoryStream compressedData = compression.Compress();
                             if (compressedData != null)
@@ -352,6 +363,23 @@ namespace puyo_tools
 
                     /* Set global index */
                     globalIndex.Text = pvrGlobalIndex.ToString();
+                }
+            }
+        }
+
+        // Initalize Compression Formats
+        private void InitalizeCompressionFormats()
+        {
+            // Set up compression object, so the directory gets initalized.
+            Compression compression = new Compression();
+
+            foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
+            {
+                if (value.Value.CanCompress)
+                {
+                    // Since we can compress this format, add it to the list
+                    CompressionNames.Add(value.Value.Name);
+                    CompressionFormats.Add(value.Key);
                 }
             }
         }

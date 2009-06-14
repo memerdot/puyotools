@@ -253,7 +253,7 @@ namespace puyo_tools
                                 {
                                     data = decompressedData;
                                     if (useStoredFilename.Checked)
-                                        outputFilename = compression.GetFilename();
+                                        outputFilename = compression.DecompressFilename;
                                 }
                             }
                         }
@@ -264,11 +264,11 @@ namespace puyo_tools
                             continue;
 
                         ArchiveFileList archiveFileList = archive.GetFileList();
-                        if (archiveFileList == null || archiveFileList.Entries == 0)
+                        if (archiveFileList == null || archiveFileList.Entries.Length == 0)
                             continue;
 
                         /* Set the total files in the archive */
-                        status.TotalFilesLocal = archiveFileList.Entries;
+                        status.TotalFilesLocal = archiveFileList.Entries.Length;
 
                         /* Create the extraction directory */
                         outputDirectory = Path.GetDirectoryName(fileList[i]);
@@ -281,20 +281,20 @@ namespace puyo_tools
                             Directory.CreateDirectory(outputDirectory);
 
                         /* Extract the data */
-                        for (int j = 0; j < archiveFileList.Entries; j++)
+                        for (int j = 0; j < archiveFileList.Entries.Length; j++)
                         {
                             /* Set the file number in the archive */
                             status.CurrentFileLocal = j;
 
                             /* Load the file into a MemoryStream */
-                            MemoryStream outputData = archive.Data.Copy(archiveFileList.Entry[j].Offset, archiveFileList.Entry[j].Length);
+                            MemoryStream outputData = archive.GetData().Copy(archiveFileList.Entries[j].Offset, archiveFileList.Entries[j].Length);
 
                             /* Get the filename we will extract the data to */
                             string extractFilename;
-                            if (extractFilenames.Checked && archiveFileList.Entry[j].FileName != String.Empty)
-                                extractFilename = archiveFileList.Entry[j].FileName;
+                            if (extractFilenames.Checked && archiveFileList.Entries[j].Filename != String.Empty)
+                                extractFilename = archiveFileList.Entries[j].Filename;
                             else
-                                extractFilename = j.ToString().PadLeft(archiveFileList.Entries.Digits(), '0') + FileData.GetFileExtension(ref outputData);
+                                extractFilename = j.ToString().PadLeft(archiveFileList.Entries.Length.Digits(), '0') + FileData.GetFileExtension(ref outputData);
 
                             /* Decompress this data before we write it? */
                             if (decompressExtractedFile.Checked)
@@ -311,7 +311,7 @@ namespace puyo_tools
                                     {
                                         outputData = decompressedData;
                                         if (useStoredFilename.Checked)
-                                            extractFilename = compression.GetFilename();
+                                            extractFilename = compression.DecompressFilename;
                                     }
                                 }
                             }

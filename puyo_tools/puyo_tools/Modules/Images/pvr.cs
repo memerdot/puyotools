@@ -9,15 +9,19 @@ using ImgSharp;
 namespace puyo_tools
 {
     /* PVR Images */
-    class PVR : ImageClass
+    class PVR : ImageModule
     {
-        public PvrPaletteFormat PaletteFormat = PvrPaletteFormat.Argb1555;
-        public PvrDataFormat DataFormat = PvrDataFormat.Format01;
+        public PvrPixelFormat PaletteFormat = PvrPixelFormat.Argb1555;
+        public PvrDataFormat DataFormat = PvrDataFormat.SquareTwiddled;
         public bool GbixHeader = true;
         public uint GlobalIndex = 0;
 
         public PVR()
         {
+            Name = "PVR";
+            Extension = ".pvr";
+            CanEncode = true;
+            CanDecode = true;
         }
 
         /* Convert the PVR to an image */
@@ -65,7 +69,7 @@ namespace puyo_tools
         }
 
         /* Check to see if this is a PVR */
-        public override bool Check(ref Stream input)
+        public override bool Check(ref Stream input, string filename)
         {
             try
             {

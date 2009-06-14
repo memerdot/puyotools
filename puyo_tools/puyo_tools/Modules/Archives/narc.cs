@@ -4,7 +4,7 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class NARC : ArchiveClass
+    public class NARC : ArchiveModule
     {
         /*
          * NARC files are archives used on the Nintendo DS.
@@ -14,6 +14,15 @@ namespace puyo_tools
         /* Main Method */
         public NARC()
         {
+            Name       = "NARC";
+            Extension  = ".narc";
+            CanPack    = true;
+            CanExtract = true;
+            Translate  = false;
+
+            Filter       = new string[] { Name + " Archive", "*.narc;*.carc" };
+            PaddingByte  = 0xFF;
+            PackSettings = new ArchivePackSettings.NARC();
         }
 
         /* Get the offsets, lengths, and filenames of all the files */
@@ -44,7 +53,7 @@ namespace puyo_tools
                     uint length = data.ReadUInt(offset_fatb + 0x10 + (i * 0x8)) - offset;
 
                     /* Get the filename, if the NARC contains filenames */
-                    string filename = string.Empty;
+                    string filename = String.Empty;
                     if (containsFilenames)
                     {
                         /* Ok, since the NARC contains filenames, let's go grab it now */
@@ -53,7 +62,7 @@ namespace puyo_tools
                         offset_filename     += (uint)(filename_length + 1);
                     }
 
-                    fileList.Entry[i] = new ArchiveFileList.FileEntry(
+                    fileList.Entries[i] = new ArchiveFileList.Entry(
                         offset + offset_fimg + 0x8, // Offset
                         length,  // Length
                         filename // Filename
@@ -147,7 +156,7 @@ namespace puyo_tools
 
                     /* Pad the file if we are not at the FIMG section yet */
                     while (header.Position < offset_fimg)
-                        header.WriteByte(PaddingByte());
+                        header.WriteByte(PaddingByte);
                 }
 
                 /* Write out the FIMG header */
@@ -164,12 +173,6 @@ namespace puyo_tools
             }
         }
 
-        /* Padding byte */
-        public override byte PaddingByte()
-        {
-            return 0xFF;
-        }
-
         /* Checks to see if the input stream is a NARC archive */
         public override bool Check(ref Stream input, string filename)
         {
@@ -181,27 +184,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Archive Information */
-        public override Archive.Information Information()
-        {
-            string Name   = "NARC";
-            string Ext    = ".narc";
-            string Filter = "NARC Archive (*.narc)|*.narc";
-
-            bool Extract = true;
-            bool Create  = true;
-
-            int[] BlockSize   = { 4, -1 };
-            string[] Settings = new string[] {
-                "Add Filenames",
-            };
-            bool[] DefaultSettings = new bool[] {
-                true,
-            };
-
-            return new Archive.Information(Name, Extract, Create, Ext, Filter, BlockSize, Settings, DefaultSettings);
         }
     }
 }

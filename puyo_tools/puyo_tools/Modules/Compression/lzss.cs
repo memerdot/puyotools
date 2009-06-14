@@ -5,10 +5,13 @@ using Extensions;
 
 namespace puyo_tools
 {
-    public class LZSS : CompressionClass
+    public class LZSS : CompressionModule
     {
         public LZSS()
         {
+            Name = "LZSS";
+            CanCompress   = true;
+            CanDecompress = true;
         }
 
         /* Decompress */
@@ -146,6 +149,22 @@ namespace puyo_tools
             {
                 /* Something went wrong */
                 return null;
+            }
+        }
+
+        // Check
+        public override bool Check(ref Stream data, string filename)
+        {
+            try
+            {
+                // Because this can conflict with other compression formats we are going to add a check them too
+                return (data.ReadString(0x0, 1) == "\x10" &&
+                    !Compression.Dictionary[CompressionFormat.PRS].Check(ref data, filename) &&
+                    !Compression.Dictionary[CompressionFormat.PVZ].Check(ref data, filename));
+            }
+            catch
+            {
+                return false;
             }
         }
     }

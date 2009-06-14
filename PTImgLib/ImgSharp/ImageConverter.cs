@@ -10,7 +10,7 @@ using System.Drawing;
 
 namespace ImgSharp
 {
-    class ImageConverter
+    public class ImageConverter
     {
         // A little cheating here - I took this code when my own was failing.
         // Turns out it wasn't the problem, but it's convinient to have this

@@ -1,80 +1,105 @@
 ﻿using System;
 using System.IO;
-using Extensions;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using Extensions;
 
 /* Archive Module */
 namespace puyo_tools
 {
     public class Archive
     {
-        /* Archive format */
-        private ArchiveClass Archiver = null;
-        public ArchiveFormat Format   = ArchiveFormat.NULL;
-        public Stream Data            = null;
-        private string Filename       = null;
-        public string ArchiveName     = null;
-        public string FileExt         = null;
+        // The extractor and packer objects
+        private ArchiveModule Extractor = null;
+        private ArchiveModule Packer    = null;
 
-        /* Dictionary */
-        private Dictionary<ArchiveFormat, ArchiveClass> dictionary = null;
+        private Stream Data     = null;
+        private string Filename = null;
+        private bool Translate  = false;
 
-        /* Archive Object for extraction */
-        public Archive(Stream dataStream, string dataFilename)
+        // Restricted variables
+        public ArchiveFormat Format { get; private set; }
+        public string Name          { get; private set; }
+        public string Extension     { get; private set; }
+
+        // Archive Dictionary
+        public static Dictionary<ArchiveFormat, ArchiveModule> Dictionary { get; private set; }
+
+        // Set up archive object for extracting
+        public Archive(Stream data, string filename)
         {
-            /* Set up our archive information */
-            Data     = dataStream;
-            Filename = dataFilename;
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
 
-            ArchiveInformation(ref Data, ref Filename, out Format, out Archiver, out ArchiveName, out FileExt);
+            // Set up information
+            Format    = ArchiveFormat.NULL;
+            Name      = null;
+            Extension = null;
+            Data      = data;
+            Filename  = filename;
 
-            /* Stop if we don't have a supported archive */
-            if (Format == ArchiveFormat.NULL)
-                return;
+            // Set up information and initalize extractor
+            Data     = data;
+            Filename = filename;
 
-            /* Translate the data before we work with it */
-            MemoryStream translatedData = Archiver.TranslateData(ref Data);
-            if (translatedData != null)
-                Data = translatedData;
+            InitalizeExtractor();
+
+            // Translate data if we need to
+            if (Translate)
+                Data = Extractor.TranslateData(ref Data) ?? new MemoryStream();
         }
 
         /* Archive object for creation */
-        public Archive(ArchiveFormat format, string dataFilename, ArchiveClass archiver)
+        public Archive(ArchiveFormat format, string filename)
         {
-            /* Set up our compression information */
-            Filename = dataFilename;
-            Format   = format;
-            Archiver = archiver;
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
+
+            // Set up information
+            Name      = null;
+            Extension = null;
+            Filename  = filename;
+            Format    = format;
+            Packer    = Dictionary[format];
         }
 
         /* Blank archive class, so you can access methods */
         public Archive()
         {
+            // Initalize dictionary if there are no entries in it
+            if (Dictionary == null)
+                InitalizeDictionary();
+
+            // Set up information
+            Format    = ArchiveFormat.NULL;
+            Name      = null;
+            Extension = null;
         }
 
         /* Get file list */
         public ArchiveFileList GetFileList()
         {
-            return Archiver.GetFileList(ref Data);
+            return Extractor.GetFileList(ref Data);
         }
 
         /* Create archive header */
         public MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
-            return Archiver.CreateHeader(files, archiveFilenames, blockSize, settings, out offsetList);
+            return Packer.CreateHeader(files, archiveFilenames, blockSize, settings, out offsetList);
         }
 
         /* Create archive footer */
         public MemoryStream CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref MemoryStream header)
         {
-            return Archiver.CreateFooter(files, archiveFilenames, blockSize, settings, ref header);
+            return Packer.CreateFooter(files, archiveFilenames, blockSize, settings, ref header);
         }
 
         /* Format file to add to the archive */
         public Stream FormatFileToAdd(ref Stream data)
         {
-            return Archiver.FormatFileToAdd(ref data);
+            return Packer.FormatFileToAdd(ref data);
         }
 
         /* Output Directory */
@@ -82,7 +107,7 @@ namespace puyo_tools
         {
             get
             {
-                return (ArchiveName == null ? null : ArchiveName + " Extracted");
+                return (Name ?? "Archive") + " Extracted";
             }
         }
 
@@ -91,7 +116,7 @@ namespace puyo_tools
         {
             get
             {
-                return (FileExt == null ? String.Empty : FileExt);
+                return Extension ?? String.Empty;
             }
         }
 
@@ -100,305 +125,85 @@ namespace puyo_tools
         {
             get
             {
-                return Archiver.PaddingByte();
+                return Packer.PaddingByte;
             }
         }
 
-        /* Get Archive information */
-        private void ArchiveInformation(ref Stream data, ref string filename, out ArchiveFormat format, out ArchiveClass archiver, out string name, out string ext)
+        // Get Data
+        public Stream GetData()
         {
-            try
-            {
-                /* Set up the archive table */
-                InitalizeDictionary();
+            return Data;
+        }
 
-                foreach (KeyValuePair<ArchiveFormat, ArchiveClass> value in dictionary)
+        // Initalize Decoder
+        private void InitalizeExtractor()
+        {
+            foreach (KeyValuePair<ArchiveFormat, ArchiveModule> value in Dictionary)
+            {
+                if (value.Value.Check(ref Data, Filename))
                 {
-                    /* This is a supported archive */
-                    if (dictionary[value.Key].Check(ref data, filename))
+                    // This is the archive format
+                    if (value.Value.CanExtract)
                     {
-                        Information info = dictionary[value.Key].Information();
-
-                        /* We can extract this archive */
-                        if (info.Extract)
-                        {
-                            format   = value.Key;
-                            archiver = value.Value;
-                            name     = info.Name;
-                            ext      = info.Ext;
-                            return;
-                        }
+                        Format    = value.Key;
+                        Extractor = value.Value;
+                        Name      = Extractor.Name;
+                        Extension = Extractor.Extension;
+                        Translate = Extractor.Translate;
                     }
+
+                    break;
                 }
-
-                /* Unknown or unsupported archive */
-                throw new ArchiveFormatNotSupported();
-            }
-            catch (ArchiveFormatNotSupported)
-            {
-                /* Unknown or unsupported archive */
-                format   = ArchiveFormat.NULL;
-                archiver = null;
-                name     = null;
-                ext      = null;
-                return;
-            }
-            catch
-            {
-                /* An error occured. */
-                format   = ArchiveFormat.NULL;
-                archiver = null;
-                name     = null;
-                ext      = null;
-                return;
             }
         }
 
-        /* Get Archive Creation Information */
-        public void CreationInformation(ArchiveFormat format, out ArchiveClass archiver, out string name, out string filter, out int[] blockSize, out CheckBox[] settings)
+        // Initalize Packer
+        private void InitalizePacker()
         {
-            switch (format)
+            // Get archive creator based on compression format
+            if (Dictionary.ContainsKey(Format) && Dictionary[Format].CanPack)
             {
-                case ArchiveFormat.ACX: // ACX Archive
-                    archiver       = new ACX();
-                    name           = "ACX";
-                    filter         = "ACX Archive (*.acx)|*.acx";
-                    blockSize      = new int[] { 4, 2048 };
-                    settings = new CheckBox[] {
-                        new CheckBox() {
-                            Text     = "Add Filenames",
-                            Checked  = false,
-                    }};
-                    return;
-
-                case ArchiveFormat.AFS: // AFS Archive
-                    archiver  = new AFS();
-                    name      = "AFS";
-                    filter    = "AFS Archive (*.afs)|*.afs";
-                    blockSize = new int[] { 2048, 32 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text     = "Use AFS v1",
-                            Checked  = false,
-                        },
-                        new CheckBox() {
-                            Text     = "Store Creation Time",
-                            Checked  = true,
-                        }};
-                    return;
-
-                case ArchiveFormat.GNT: // GNT Archive
-                    archiver  = new GNT();
-                    name      = "GNT";
-                    filter    = "GNT Archive (*.gnt)|*.gnt";
-                    blockSize = new int[] { 8, -1 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text     = "Add Filenames",
-                            Checked  = false,
-                        }};
-                    return;
-
-                case ArchiveFormat.GVM: // GVM Archive
-                    archiver  = new GVM();
-                    name      = "GVM";
-                    filter    = "GVM Archive (*.gvm)|*.gvm";
-                    blockSize = new int[] { 16, -1 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text = "Add Filenames",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text = "Add GVR Pixel Format",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text = "Add GVR Dimensions",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text = "Add GVR Global Index",
-                            Checked = true,
-                        }};
-                    return;
-
-                case ArchiveFormat.MDL: // MDL Archive
-                    archiver  = new MDL();
-                    name      = "MDL";
-                    filter    = "MDL Archive (*.mdl)|*.mdl";
-                    blockSize = new int[] { 4096 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text     = "Add Filenames",
-                            Checked  = false,
-                        }};
-                    return;
-
-                case ArchiveFormat.MRG: // MRG Archive
-                    archiver  = new MRG();
-                    name      = "MRG";
-                    filter    = "MRG Archive (*.mrg)|*.mrg";
-                    blockSize = new int[] { 16 };
-                    settings  = null;
-                    return;
-
-                case ArchiveFormat.NARC: // NARC Archive
-                    archiver  = new NARC();
-                    name      = "NARC";
-                    filter    = "NARC Archive (*.narc)|*.narc|CARC Archive (*.carc)|*.carc";
-                    blockSize = new int[] { 4, -1 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text     = "Add Filenames",
-                            Checked  = true,
-                        }};
-                    return;
-
-                case ArchiveFormat.ONE: // ONE Archive
-                    archiver  = new ONE();
-                    name      = "ONE";
-                    filter    = "ONE Archive (*.one)|*.one|ONZ Archive (*.onz)|*.onz";
-                    blockSize = new int[] { 32 };
-                    settings  = null;
-                    return;
-
-                case ArchiveFormat.PVM: // PVM Archive
-                    archiver  = new PVM();
-                    name      = "PVM";
-                    filter    = "PVM Archive (*.pvm)|*.pvm";
-                    blockSize = new int[] { 16, -1 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text    = "Add Filenames",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text    = "Add PVR Pixel Format",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text    = "Add PVR Dimensions",
-                            Checked = true,
-                        },
-                        new CheckBox() {
-                            Text    = "Add PVR Global Index",
-                            Checked = true,
-                        }};
-                    return;
-
-                case ArchiveFormat.SNT: // SNT Archive
-                    archiver  = new SNT();
-                    name      = "SNT";
-                    filter    = "SNT Archive (*.snt)|*.snt";
-                    blockSize = new int[] { 8, -1 };
-                    settings  = new CheckBox[] {
-                        new CheckBox() {
-                            Text    = "PSP SNT Archive",
-                            Checked = false,
-                        },
-                        new CheckBox() {
-                            Text     = "Add Filenames",
-                            Checked  = false,
-                        }};
-                    return;
-
-                case ArchiveFormat.SPK: // SPK Archive
-                    archiver  = new SPK();
-                    name      = "SPK";
-                    filter    = "SPK Archive (*.spk)|*.spk";
-                    blockSize = new int[] { 16 };
-                    settings  = null;
-                    return;
-
-                case ArchiveFormat.TEX: // TEX Archive
-                    archiver  = new TEX();
-                    name      = "TEX";
-                    filter    = "TEX Archive (*.tex)|*.tex";
-                    blockSize = new int[] { 16 };
-                    settings  = null;
-                    return;
-
-                case ArchiveFormat.TXAG: // TXAG Archive
-                    archiver  = new TXAG();
-                    name      = "TXAG";
-                    filter    = "TXAG Archive (*.txd)|*.txd";
-                    blockSize = new int[] { 64 };
-                    settings  = null;
-                    return;
-
-                case ArchiveFormat.VDD: // VDD Archive
-                    archiver  = new VDD();
-                    name      = "VDD";
-                    filter    = "VDD Archive (*.vdd)|*.vdd";
-                    blockSize = new int[] { 2048, -1 };
-                    settings  = null;
-                    return;
+                Packer = Dictionary[Format];
+                Name   = Packer.Name;
             }
-
-            archiver  = null;
-            name      = null;
-            filter    = null;
-            blockSize = new int[0];
-            settings  = null;
-            return;
         }
 
-        /* Initalize Dictionary */
-        private void InitalizeDictionary()
+        // Initalize Archive Dictionary
+        private static void InitalizeDictionary()
         {
-            dictionary = new Dictionary<ArchiveFormat, ArchiveClass>();
+            Dictionary = new Dictionary<ArchiveFormat, ArchiveModule>();
 
-            /* Add entries to the dictionary */
-            dictionary.Add(ArchiveFormat.ACX,  new ACX());
-            dictionary.Add(ArchiveFormat.AFS,  new AFS());
-            dictionary.Add(ArchiveFormat.GNT,  new GNT());
-            dictionary.Add(ArchiveFormat.GVM,  new GVM());
-            dictionary.Add(ArchiveFormat.MDL,  new MDL());
-            dictionary.Add(ArchiveFormat.MRG,  new MRG());
-            dictionary.Add(ArchiveFormat.NARC, new NARC());
-            dictionary.Add(ArchiveFormat.ONE,  new ONE());
-            dictionary.Add(ArchiveFormat.PVM,  new PVM());
-            dictionary.Add(ArchiveFormat.SBA,  new SBA());
-            dictionary.Add(ArchiveFormat.SNT,  new SNT());
-            dictionary.Add(ArchiveFormat.SPK,  new SPK());
-            dictionary.Add(ArchiveFormat.TEX,  new TEX());
-            dictionary.Add(ArchiveFormat.TXAG, new TXAG());
-            dictionary.Add(ArchiveFormat.VDD,  new VDD());
-        }
-
-        /* Archive Information */
-        public class Information
-        {
-            public string Name   = null;
-            public string Ext    = null;
-            public string Filter = null;
-
-            public bool Extract = false;
-            bool Create  = false;
-
-            int[] BlockSize        = new int[0];
-            string[] Settings      = null;
-            bool[] DefaultSettings = null;
-
-            public Information(string name, bool extract, bool create, string ext, string filter, int[] blockSize, string[] settings, bool[] defaultSettings)
-            {
-                Name   = name;
-                Ext    = ext;
-                Filter = filter;
-
-                Extract = extract;
-                Create  = create;
-
-                BlockSize       = blockSize;
-                Settings        = settings ?? new string[0];
-                DefaultSettings = defaultSettings ?? new bool[0];
-            }
+            // Add all the entries to the dictionary
+            Dictionary.Add(ArchiveFormat.ACX,  new ACX());
+            Dictionary.Add(ArchiveFormat.AFS,  new AFS());
+            Dictionary.Add(ArchiveFormat.GNT,  new GNT());
+            Dictionary.Add(ArchiveFormat.GVM,  new GVM());
+            Dictionary.Add(ArchiveFormat.MDL,  new MDL());
+            Dictionary.Add(ArchiveFormat.MRG,  new MRG());
+            Dictionary.Add(ArchiveFormat.NARC, new NARC());
+            Dictionary.Add(ArchiveFormat.ONE,  new ONE());
+            Dictionary.Add(ArchiveFormat.PVM,  new PVM());
+            Dictionary.Add(ArchiveFormat.SBA,  new SBA());
+            Dictionary.Add(ArchiveFormat.SNT,  new SNT());
+            Dictionary.Add(ArchiveFormat.SPK,  new SPK());
+            Dictionary.Add(ArchiveFormat.TEX,  new TEX());
+            Dictionary.Add(ArchiveFormat.TXAG, new TXAG());
+            Dictionary.Add(ArchiveFormat.VDD,  new VDD());
         }
     }
 
-    public abstract class ArchiveClass
+    public abstract class ArchiveModule
     {
+        // Variables
+        public string Name      { get; protected set; }
+        public string Extension { get; protected set; }
+        public bool CanPack     { get; protected set; }
+        public bool CanExtract  { get; protected set; }
+        public bool Translate   { get; protected set; }
+        public string[] Filter  { get; protected set; }
+        public byte PaddingByte { get; protected set; }
+        public ArchivePackSettings PackSettings { get; protected set; }
+
         /* Archive Functions */
         public abstract ArchiveFileList GetFileList(ref Stream data); // Get Stored Files
         public abstract MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList);
@@ -414,17 +219,9 @@ namespace puyo_tools
         {
             return data;
         }
-        public virtual byte PaddingByte() // Padding Byte
-        {
-            return 0x0;
-        }
         public virtual bool Check(ref Stream input, string filename)
         {
             return false;
-        }
-        public virtual Archive.Information Information()
-        {
-            return null;
         }
     }
 
@@ -473,55 +270,29 @@ namespace puyo_tools
             TXAG = "TXAG";
     }
 
-    /* This contains a list of entries for an archive */
-    /* Archives must be decompressed and translated first */
+    // This contains the file list of an archive
     public class ArchiveFileList
     {
-        private FileEntry[] _Entry;
-        private int _Entries;
+        public Entry[] Entries { get; private set; }
 
         public ArchiveFileList(uint entries)
         {
-            _Entry   = new FileEntry[entries];
-            _Entries = (int)entries;
-        }
-        
-        /* Return values */
-        public FileEntry[] Entry
-        {
-            get { return _Entry; }
-        }
-        public int Entries
-        {
-            get { return _Entries; }
+            Entries = new Entry[entries];
         }
 
-        /* Archive File Entry */
-        public class FileEntry
+        // A file entry in the file list
+        public class Entry
         {
-            private string _FileName = null;
-            private uint _Offset     = 0;
-            private uint _Length     = 0;
+            // Set up variables for the file entries
+            public string Filename { get; private set; }
+            public uint Offset     { get; private set; }
+            public uint Length     { get; private set; }
 
-            public FileEntry(uint offset, uint length, string filename)
+            public Entry(uint offset, uint length, string filename)
             {
-                _Offset   = offset;
-                _Length   = length;
-                _FileName = filename;
-            }
-
-            /* Return Values */
-            public string FileName
-            {
-                get { return _FileName; }
-            }
-            public uint Offset
-            {
-                get { return _Offset; }
-            }
-            public uint Length
-            {
-                get { return _Length; }
+                Offset   = offset;
+                Length   = length;
+                Filename = filename;
             }
         }
     }
