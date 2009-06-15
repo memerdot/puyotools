@@ -5,17 +5,12 @@
 SVR files are the image files used by Sonic Team (Japan) on the Playstation 2. They are similar to PVR used on the Dreamcast but suited for Playstation 2.
 
 == Color Formats ==
-Note: SVR images are stored with their red and blue color channels swapped.
+Note: SVR images are stored with their color channels swapped (BGRA instead of ARGB; BGR instead of RGB).
 
 *Bgr5a3* is Bgr555 when the first bit is one, and Abgr4443 when the first bit is 0.
 {{{
  1 | BBBBB | GGGGG | RRRRR |
  0 | BBBB  | GGGG  | RRRR  | AAA
-}}}
-
-*Bgr565* dedicates 5 bits for the Blue component, 6 bits for the Green component, and 5 bits for the Red component.
-{{{
- BBBBB | GGGGGG | RRRRR
 }}}
 
 *BGRA8888* indicates that there are 8 bits for each for the Blue, Green, Red, and Alpha components. Despite taking up 8 bits, the alpha channel only contains 128 possible values, with 0x80 being fully opaque and 0x00 being fully transparent. The blue, green, and red color channels contain 256 possible values however.
@@ -52,15 +47,20 @@ The header consists of two main parts, each typically consisting of 0x10 bytes. 
  Palette Format
   Known Values:
    * 08: BGR5A3
-   * 09: NGRA8888
+   * 09: BGRA8888
 
 0x19
  Data Format
   Known Values:
-   * 60: Raw data, no palette used.
-   * 64: Swizzled data, 256 colors in the palette, palette stored in a seperate SVP file.
-   * 6A: Swizzled data, 256 colors in the palette.
-   * 6C: Swizzled data, 256 colors in the palette (Identical to 6A?)
+   * 60: Non-palette based image
+   * 62: 4-bit palettized format, palette stored in a seperate SVP file.
+   * 64: 8-bit palettized format, palette stored in a seperate SVP file.
+   * 66: 4-bit palettized format
+   * 68: 4-bit palettized format
+   * 69: 4-bit palettized format
+   * 6A: 8-bit palettized format
+   * 6C: 8-bit palettized format
+   * 6D: 8-bit palettized format
 
 0x1A - 0x1B
  2 bytes. Always zero.
