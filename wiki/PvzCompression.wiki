@@ -2,7 +2,7 @@
 
 = Introduction =
 
-PVZ Compression is a compression format used on the PVR images in Puyo Puyo Fever. Due to the nature of how the compression format works, it can only be used on PVR images with specific data formats.
+PVZ Compression is a [http://en.wikipedia.org/wiki/Run-length_encoding RLE] based compression format used on the PVR images in Puyo Puyo Fever. Due to the nature of how the compression format works, it can only be used on PVR images with specific data formats.
 
 = Format =
 
