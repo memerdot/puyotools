@@ -10,33 +10,34 @@ namespace puyo_tools
     {
         public PVZ()
         {
-            Name = "PVZ";
+            Name          = "PVZ";
             CanCompress   = true;
             CanDecompress = true;
         }
 
-        /* Decompress */
+        // Decompress
         public override MemoryStream Decompress(ref Stream data)
         {
             try
             {
-                /* Set variables */
-                uint compressedSize   = (uint)data.Length;    // Compressed Size
+                // Set variables
+                uint compressedSize   = (uint)data.Length;  // Compressed Size
                 uint decompressedSize = data.ReadUInt(0x0); // Decompressed Size
 
                 uint Cpointer = 0x4; // Compressed Pointer
                 uint Dpointer = 0x0; // Decompressed Pointer
 
                 byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+                byte[] decompressedData = new byte[decompressedSize];          // Decompressed Data
 
                 // This file heavily relies on VrSharp
-                // Check to see if this is a valid file
-                int FileOffset = 0x0;
-                if (data.ReadString(0x4, 4) == "GBIX" && data.ReadString(0x14, 4) == "PVRT")
-                    FileOffset = 0x10;
-                else if (data.ReadString(0x4, 4) != "PVRT")
+                // Check to see if this is a valid PVR file
+                Images images = new Images(data.Copy(0x4, (int)data.Length - 4), null);
+                if (images.Format != GraphicFormat.PVR)
                     throw new Exception();
+
+                // Get correct file offset
+                int FileOffset = (data.ReadString(0x4, 4) == "GBIX" ? 0x10 : 0x0);
 
                 PvrPixelCodec PaletteCodec = PvrCodecs.GetPixelCodec(data.ReadByte(FileOffset + 0xC));
                 PvrDataCodec DataCodec     = PvrCodecs.GetDataCodec(data.ReadByte(FileOffset + 0xD));
@@ -46,7 +47,7 @@ namespace puyo_tools
                 DataCodec.Decode.Initialize(0, 0, PaletteCodec.Decode);
                 int ChunkSize = (DataCodec.Decode.GetChunkBpp() / 8);
 
-                /* Copy the first 16/32 bytes */
+                // Copy the first 16/32 bytes
                 for (int i = 0; i < FileOffset + 0x10; i++)
                 {
                     decompressedData[Dpointer] = compressedData[Cpointer];
@@ -54,7 +55,7 @@ namespace puyo_tools
                     Cpointer++;
                 }
 
-                /* Ok, let's decompress the data */
+                // Ok, let's decompress the data
                 while (Cpointer < compressedSize && Dpointer < decompressedSize)
                 {
                     int copyAmount = compressedData[Cpointer + ChunkSize] + 1;
@@ -66,12 +67,12 @@ namespace puyo_tools
                     Dpointer += (uint)(copyAmount * ChunkSize);
                 }
 
-                /* Alright, return the stream now */
+                // Alright, return the stream now 
                 return new MemoryStream(decompressedData);
             }
             catch
             {
-                /* Something went wrong */
+                // Something went wrong
                 return null;
             }
         }

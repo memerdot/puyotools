@@ -313,45 +313,34 @@ namespace puyo_tools
         {
             try
             {
-                /* get the selected item and the data and filename */
+                // Get the selected item and the data and filename
                 int item = fileListView.SelectedIndices[0] - (level == 0 ? 0 : 1);
                 MemoryStream imageData = ArchiveData[level].Copy(FileList[level].Entries[item].Offset, FileList[level].Entries[item].Length);
                 string filename = FileList[level].Entries[item].Filename;
 
-                /* Check to see if the archive is compressed */
+                // Check to see if the image is compressed
                 Compression compression = new Compression(imageData, filename);
                 if (compression.Format != CompressionFormat.NULL)
                 {
-                    /* Decompress */
+                    // Decompress
                     MemoryStream decompressedData = compression.Decompress();
                     if (decompressedData != null)
                         imageData = decompressedData;
                 }
 
-                /* Check to see if this is an image */
+                // Check to see if this is an image
                 Images image = new Images(imageData, filename);
                 if (image.Format == GraphicFormat.NULL)
                     throw new GraphicFormatNotSupported();
 
-                /* Check to see if a palette file exists */
-                if (image.Format == GraphicFormat.SVR && indexOfFile(Path.GetFileNameWithoutExtension(filename) + ".svp") != -1)
-                {
-                }
-
-                /* Try to open this image if we can */
+                // Try to open this image if we can
                 try
                 {
                     new Image_Viewer(imageData, filename);
                 }
                 catch (GraphicFormatNeedsPalette)
                 {
-                    string paletteFile = Path.GetFileNameWithoutExtension(filename);
-                    if (image.Format == GraphicFormat.GVR)
-                        paletteFile += ".gvp";
-                    else if (image.Format == GraphicFormat.SVR)
-                        paletteFile += ".svp";
-
-                    int index = indexOfFile(paletteFile);
+                    int index = indexOfFile(image.PaletteFilename);
                     if (index == -1)
                         throw new Exception();
                     else
@@ -460,13 +449,28 @@ namespace puyo_tools
                         }
                     }
 
-                    /* Convert the file to a PNG? */
+                    // Convert the file to a PNG?
                     if (extractImageAsPng.Checked)
                     {
                         Images images = new Images(outputData, output_filename);
                         if (images.Format != GraphicFormat.NULL)
                         {
-                            Bitmap imageData = images.Unpack();
+                            Bitmap imageData;
+                            try
+                            {
+                                imageData = images.Unpack();
+                            }
+                            catch (GraphicFormatNeedsPalette)
+                            {
+                                // See if the file exists in the archive
+                                int index = indexOfFile(images.PaletteFilename);
+                                if (index != -1)
+                                    images.Decoder.PaletteData = ArchiveData[level].Copy(FileList[level].Entries[index].Offset, FileList[level].Entries[index].Length);
+
+                                imageData = images.Unpack();
+                            }
+
+                            // Now output the image if it was written
                             if (imageData != null)
                             {
                                 outputData = new MemoryStream();

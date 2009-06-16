@@ -25,10 +25,6 @@ namespace puyo_tools
         // Set up compression object for decompression
         public Compression(Stream data, string filename)
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             // Set up information and
             Format   = CompressionFormat.NULL;
             Name     = null;
@@ -42,10 +38,6 @@ namespace puyo_tools
         // Set up compression object for compression
         public Compression(Stream data, string filename, CompressionFormat format)
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             // Set up information
             Name       = null;
             Data       = data;
@@ -54,18 +46,6 @@ namespace puyo_tools
 
             // Initalize Compressor
             InitalizeCompressor();
-        }
-
-        /* Blank compression class, so you can access methods */
-        public Compression()
-        {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
-            // Set up information
-            Format = CompressionFormat.NULL;
-            Name   = null;
         }
 
         /* Decompress */
@@ -151,7 +131,7 @@ namespace puyo_tools
         }
 
         // Initalize Compression Dictionary
-        private static void InitalizeDictionary()
+        public static void InitalizeDictionary()
         {
             Dictionary = new Dictionary<CompressionFormat, CompressionModule>();
 
@@ -166,7 +146,7 @@ namespace puyo_tools
         }
     }
     
-    /* Compression Format */
+    // Compression Format
     public enum CompressionFormat : byte
     {
         NULL,
@@ -179,7 +159,7 @@ namespace puyo_tools
         PVZ,
     }
 
-    /* Compression Header */
+    // Compression Header
     public static class CompressionHeader
     {
         public const string
@@ -197,7 +177,7 @@ namespace puyo_tools
         public bool CanCompress   { get; protected set; }
         public bool CanDecompress { get; protected set; }
 
-        /* Compression Functions */
+        // Compression Functions
         public abstract MemoryStream Decompress(ref Stream data); // Decompress Data
         public abstract MemoryStream Compress(ref Stream data, string filename); // Compress Data
         public abstract bool Check(ref Stream data, string filename); // Check

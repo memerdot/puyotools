@@ -230,6 +230,9 @@ namespace puyo_tools
                 status.CurrentFile      = i;
                 status.CurrentFileLocal = 0;
 
+                //Set the image file list
+                List<string> imageFileList = new List<string>();
+
                 try
                 {
                     /* Open up the file */
@@ -326,31 +329,8 @@ namespace puyo_tools
                                 Images images = new Images(outputData, extractFilename);
                                 if (images.Format != GraphicFormat.NULL)
                                 {
-                                    /* Set up our input and output image */
-                                    string inputImage  = outputDirectory + Path.DirectorySeparatorChar + extractFilename;
-                                    string outputImage = outputDirectory + Path.DirectorySeparatorChar + (convertSameDir.Checked ? String.Empty : images.OutputDirectory + Path.DirectorySeparatorChar) + Path.GetFileNameWithoutExtension(extractFilename) + ".png";
-
-                                    /* Convert image */
-                                    Bitmap imageData = images.Unpack();
-
-                                    /* Make sure an image was written */
-                                    if (imageData != null)
-                                    {
-                                        outputData = new MemoryStream();
-                                        imageData.Save(outputData, ImageFormat.Png);
-
-                                        /* Create the output directory if it does not exist */
-                                        if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
-                                            Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
-
-                                        /* Output the image */
-                                        using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                            outputStream.Write(outputData);
-
-                                        /* Delete the source image if we want to */
-                                        if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
-                                            File.Delete(inputImage);
-                                    }
+                                    // Add it to the list so we can process it later
+                                    imageFileList.Add(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
                                 }
                             }
 
@@ -374,12 +354,75 @@ namespace puyo_tools
                         }
                     }
 
-                    /* Delete the source archive? */
+                    // Convert images now
+                    if (unpackImage.Checked && imageFileList.Count > 0)
+                    {
+                        // Reset the local file count
+                        status.CurrentFileLocal = 0;
+                        status.TotalFilesLocal  = imageFileList.Count;
+
+                        for (int j = 0; j < imageFileList.Count; j++)
+                        {
+                            // Set the local file count
+                            status.CurrentFileLocal = j;
+
+                            using (FileStream inputData = new FileStream(imageFileList[j], FileMode.Open, FileAccess.Read))
+                            {
+                                Images images = new Images(inputData, imageFileList[j]);
+                                if (images.Format != GraphicFormat.NULL)
+                                {
+                                    // Set up our input and output image
+                                    string inputImage  = imageFileList[j];
+                                    string outputImage = Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + (convertSameDir.Checked ? String.Empty : images.OutputDirectory + Path.DirectorySeparatorChar) + Path.GetFileNameWithoutExtension(inputImage) + ".png";
+
+                                    // Convert image
+                                    Bitmap imageData = null;
+                                    try
+                                    {
+                                        imageData = images.Unpack();
+                                    }
+                                    catch (GraphicFormatNeedsPalette)
+                                    {
+                                        // See if the palette file exists
+                                        if (File.Exists(Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + images.PaletteFilename))
+                                        {
+                                            using (FileStream paletteData = new FileStream(Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + images.PaletteFilename, FileMode.Open, FileAccess.Read))
+                                            {
+                                                images.Decoder.PaletteData = paletteData;
+                                                imageData = images.Unpack();
+                                            }
+                                        }
+                                    }
+
+                                    // Make sure an image was written
+                                    if (imageData != null)
+                                    {
+                                        MemoryStream outputData = new MemoryStream();
+                                        imageData.Save(outputData, ImageFormat.Png);
+
+                                        // Create the output directory if it does not exist
+                                        if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
+                                            Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
+
+                                        // Write the image
+                                        using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
+                                            outputStream.Write(outputData);
+
+                                        // Delete the source image if we want to
+                                        if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
+                                            File.Delete(inputImage);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Delete the source archive now?
                     if (deleteSourceArchive.Checked && File.Exists(fileList[i]))
                     {
                         File.Delete(fileList[i]);
 
-                        /* We have to rename that directory, remember? */
+                        // We have to rename that directory, remember? */
                         if (extractDirSameFilename.Checked)
                             Directory.Move(outputDirectory, fileList[i]);
                     }

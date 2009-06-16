@@ -13,19 +13,19 @@ namespace puyo_tools
     {
         public GVR()
         {
-            Name = "GVR";
+            Name      = "GVR";
             Extension = ".gvr";
             CanEncode = false;
             CanDecode = true;
         }
 
         /* Convert the GVR to an image */
-        public override Bitmap Unpack(ref Stream data, Stream palette)
+        public override Bitmap Unpack(ref Stream data)
         {
             /* Convert the GVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(StreamConverter.ToByteArray(data, 0, (int)data.Length), (palette == null ? null : StreamConverter.ToByteArray(palette, 0, (int)palette.Length)));
+                VrFile imageInput   = new VrFile(data.ToByteArray(), (PaletteData == null ? null : PaletteData.ToByteArray()));
                 ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
 
                 return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
@@ -39,14 +39,16 @@ namespace puyo_tools
                 return null;
             }
         }
-        public override Bitmap Unpack(ref Stream data)
-        {
-            return Unpack(ref data, null);
-        }
 
         public override Stream Pack(ref Stream data)
         {
             return null;
+        }
+
+        // External Palette Filename
+        public override string PaletteFilename(string filename)
+        {
+            return Path.GetFileNameWithoutExtension(filename) + ".gvp";
         }
 
         /* Check to see if this is a GVR */
@@ -62,19 +64,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Image Information */
-        public override Images.Information Information()
-        {
-            string Name   = "GVR";
-            string Ext    = ".gvr";
-            string Filter = "GVR Image (*.gvr)|*.gvr";
-
-            bool Unpack = true;
-            bool Pack   = false;
-
-            return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
     }
 }

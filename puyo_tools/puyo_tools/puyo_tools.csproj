@@ -82,6 +82,7 @@
     <Compile Include="Modules\Compression\onz.cs" />
     <Compile Include="Modules\Compression\prs.cs" />
     <Compile Include="Modules\Compression\pvz.cs" />
+    <Compile Include="Modules\ImageEncoderSettings.cs" />
     <Compile Include="Modules\Images.cs" />
     <Compile Include="Modules\Archives\spk.cs" />
     <Compile Include="Modules\Compression.cs" />

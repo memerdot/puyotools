@@ -146,7 +146,7 @@ namespace puyo_tools
                 Size     = new Size(16, 16),
             };
             imageConversionSettings.Controls.Add(addGbix);
-            addGbix.Click += delegate(object sender2, EventArgs f) {
+            addGbix.CheckedChanged += delegate(object sender2, EventArgs f) {
                 globalIndex.Enabled = addGbix.Checked;
             };
 
@@ -182,12 +182,17 @@ namespace puyo_tools
                 "Compress output image with the following compression:",
                 new Point(8, 20),
                 new Size(compressionSettings.Size.Width - 16, 16));
+            compressFile.CheckedChanged += delegate(object sender2, EventArgs f) {
+                compressionFormat.Enabled = compressFile.Checked;
+            };
+
 
             /* Compression Format */
             FormContent.Add(compressionSettings, compressionFormat,
                 CompressionNames.ToArray(),
                 new Point(8, 36),
                 new Size(120, 16));
+            compressionFormat.Enabled = false;
 
             /* Convert */
             FormContent.Add(this, startWorkButton,
@@ -305,7 +310,7 @@ namespace puyo_tools
             this.Close();
         }
 
-        /* Import PVR settings */
+        // Import PVR settings
         private void ImportPvrSettings(object sender, EventArgs e)
         {
             /* Select Pvr */
@@ -362,6 +367,7 @@ namespace puyo_tools
                     }
 
                     /* Set global index */
+                    addGbix.Checked  = (fileData.ReadString(0x0, 4) == "GBIX");
                     globalIndex.Text = pvrGlobalIndex.ToString();
                 }
             }
@@ -370,9 +376,6 @@ namespace puyo_tools
         // Initalize Compression Formats
         private void InitalizeCompressionFormats()
         {
-            // Set up compression object, so the directory gets initalized.
-            Compression compression = new Compression();
-
             foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
             {
                 if (value.Value.CanCompress)

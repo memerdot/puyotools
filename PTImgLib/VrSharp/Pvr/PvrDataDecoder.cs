@@ -83,6 +83,87 @@ namespace VrSharp
         }
     }
 
+    // Format 02
+    public class PvrDataDecoder_SquareTwiddledMipMaps : PvrDataDecoder
+    {
+        // Set up variables
+        bool init = false;
+        byte[][] Palette = new byte[1][];
+        int width, height;
+        VrPaletteDecoder paletteDecoder;
+
+        // Return a value functions
+        public override int GetChunkWidth()
+        {
+            return width;
+        }
+        public override int GetChunkHeight()
+        {
+            return height;
+        }
+        public override int GetChunkBpp()
+        {
+            return paletteDecoder.GetBpp();
+        }
+        public override int GetPaletteSize()
+        {
+            return 0;
+        }
+        public override bool NeedExternalPalette()
+        {
+            return false;
+        }
+
+        // Initalize
+        public override bool Initialize(int Width, int Height, VrPaletteDecoder PaletteDecoder)
+        {
+            width  = Width;
+            height = Height;
+            paletteDecoder = PaletteDecoder;
+            init = true;
+
+            return true;
+        }
+
+        // Decode Palette
+        public override bool DecodePalette(ref byte[] Input, int Pointer)
+        {
+            if (!init) throw new Exception("Could not decode palette because you have not initalized yet.");
+
+            return true;
+        }
+
+        // Decode Chunk
+        public override bool DecodeChunk(ref byte[] Input, ref int Pointer, ref byte[] Output, int x1, int y1)
+        {
+            if (!init) throw new Exception("Could not decode chunk because you have not initalized yet.");
+
+            // We don't support mipmaps yet, goto the largest image
+            for (int i = 1; i < (width >> 1); i <<= 1)
+                Pointer += (i * i * (GetChunkBpp() / 8));
+
+            // Untwiddle image
+            PvrTwiddle.UnTwiddle(ref Input, Pointer, width, height, GetChunkBpp());
+
+            for (int y2 = 0; y2 < GetChunkHeight(); y2++)
+            {
+                for (int x2 = 0; x2 < GetChunkWidth(); x2++)
+                {
+                    // Get palette for this pixel
+                    paletteDecoder.DecodePalette(ref Input, Pointer, Palette.Length, ref Palette);
+
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 0] = Palette[0][0];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 1] = Palette[0][1];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 2] = Palette[0][2];
+                    Output[((y2 + y1) * width + (x1 + x2)) * 4 + 3] = Palette[0][3];
+                    Pointer += (paletteDecoder.GetBpp() / 8);
+                }
+            }
+
+            return true;
+        }
+    }
+
     // Format 03
     public class PvrDataDecoder_Vq : PvrDataDecoder
     {
@@ -224,7 +305,7 @@ namespace VrSharp
             // Untwiddle image
             if (x1 == 0 && y1 == 0)
             {
-                // Set pointer to correct position because the file contains mipmaps
+                // We don't support mipmaps yet, goto the largest image
                 Pointer++;
                 for (int i = 1; i < (width >> 1); i <<= 1)
                     Pointer += (i * i);

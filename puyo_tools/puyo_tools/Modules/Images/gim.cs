@@ -13,7 +13,7 @@ namespace puyo_tools
         /* GIM Images */
         public GIM()
         {
-            Name = "GIM";
+            Name      = "GIM";
             Extension = ".gim";
             CanEncode = false;
             CanDecode = true;
@@ -53,19 +53,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Image Information */
-        public override Images.Information Information()
-        {
-            string Name   = "GIM";
-            string Ext    = ".gim";
-            string Filter = "GIM Image (*.gim)|*.gim";
-
-            bool Unpack = true;
-            bool Pack   = false;
-
-            return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
     }
 }
