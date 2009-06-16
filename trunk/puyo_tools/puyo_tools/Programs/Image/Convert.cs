@@ -200,8 +200,24 @@ namespace puyo_tools
                         string outputImage = outputDirectory + Path.DirectorySeparatorChar + (convertSameDir.Checked ? String.Empty : images.OutputDirectory + Path.DirectorySeparatorChar) + Path.GetFileNameWithoutExtension(outputFilename) + ".png";
                         outputFilename     = outputImage;
 
-                        /* Convert image */
-                        Bitmap imageData = images.Unpack();
+                        // Convert image
+                        Bitmap imageData = null;
+                        try
+                        {
+                            imageData = images.Unpack();
+                        }
+                        catch (GraphicFormatNeedsPalette)
+                        {
+                            // See if the palette file exists
+                            if (File.Exists(outputDirectory + Path.DirectorySeparatorChar + images.PaletteFilename))
+                            {
+                                using (FileStream paletteData = new FileStream(outputDirectory + Path.DirectorySeparatorChar + images.PaletteFilename, FileMode.Open, FileAccess.Read))
+                                {
+                                    images.Decoder.PaletteData = paletteData;
+                                    imageData = images.Unpack();
+                                }
+                            }
+                        }
 
                         /* Don't continue if an image wasn't created */
                         if (imageData == null)

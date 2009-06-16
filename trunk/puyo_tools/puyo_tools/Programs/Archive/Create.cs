@@ -523,9 +523,6 @@ namespace puyo_tools
         // Initalize Archive Formats
         private void InitalizeArchiveFormats()
         {
-            // Set up archive object, so the directory gets initalized.
-            Archive archive = new Archive();
-
             foreach (KeyValuePair<ArchiveFormat, ArchiveModule> value in Archive.Dictionary)
             {
                 if (value.Value.CanPack)
@@ -543,9 +540,6 @@ namespace puyo_tools
         // Initalize Compression Formats
         private void InitalizeCompressionFormats()
         {
-            // Set up compression object, so the directory gets initalized.
-            Compression compression = new Compression();
-
             foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
             {
                 if (value.Value.CanCompress)

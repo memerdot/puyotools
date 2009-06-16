@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace GimSharp
 {
     // GIM Palette Formats
-    public enum GimPaletteFormat : byte
+    public enum GimPixelFormat : byte
     {
         Rgb565   = 0x00,
         Argb1555 = 0x01,
@@ -29,7 +29,7 @@ namespace GimSharp
     {
         public GimPaletteDecoder Decode;
         public string Encode;
-        public GimPaletteFormat Format;
+        public GimPixelFormat Format;
     }
 
     public abstract class GimDataCodec
@@ -46,7 +46,7 @@ namespace GimSharp
         {
             Decode = new GimPaletteDecoder_Rgb565();
             Encode = null;
-            Format = GimPaletteFormat.Rgb565;
+            Format = GimPixelFormat.Rgb565;
         }
     }
     public class GimPaletteCodec_Argb1555 : GimPaletteCodec
@@ -55,7 +55,7 @@ namespace GimSharp
         {
             Decode = new GimPaletteDecoder_Argb1555();
             Encode = null;
-            Format = GimPaletteFormat.Argb1555;
+            Format = GimPixelFormat.Argb1555;
         }
     }
     public class GimPaletteCodec_Argb4444 : GimPaletteCodec
@@ -64,7 +64,7 @@ namespace GimSharp
         {
             Decode = new GimPaletteDecoder_Argb4444();
             Encode = null;
-            Format = GimPaletteFormat.Argb4444;
+            Format = GimPixelFormat.Argb4444;
         }
     }
     public class GimPaletteCodec_Argb8888 : GimPaletteCodec
@@ -73,7 +73,7 @@ namespace GimSharp
         {
             Decode = new GimPaletteDecoder_Argb8888();
             Encode = null;
-            Format = GimPaletteFormat.Argb8888;
+            Format = GimPixelFormat.Argb8888;
         }
     }
 

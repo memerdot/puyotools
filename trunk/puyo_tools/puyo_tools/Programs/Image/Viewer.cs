@@ -199,7 +199,9 @@ namespace puyo_tools
                     }
                     catch (GraphicFormatNeedsPalette)
                     {
-                        return imageClass.Unpack(LoadPaletteFile(filename, imageClass));
+                        // Load palette data and then unpack again
+                        imageClass.Decoder.PaletteData = LoadPaletteFile(filename, imageClass);
+                        return imageClass.Unpack();
                     }
                 }
             }
@@ -240,7 +242,13 @@ namespace puyo_tools
             {
                 /* Get and return the image */
                 Images imageClass = new Images(data, filename);
-                return imageClass.Unpack(palette);
+                if (imageClass.Format != GraphicFormat.NULL)
+                {
+                    imageClass.Decoder.PaletteData = palette;
+                    return imageClass.Unpack();
+                }
+
+                throw new Exception();
             }
             catch
             {
@@ -342,18 +350,10 @@ namespace puyo_tools
         /* Load Palette File */
         private Stream LoadPaletteFile(string filename, Images imageClass)
         {
-            /* See if a palette file exists */
-            string paletteFile = Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(filename);
-            if (imageClass.Format == GraphicFormat.GVR)
-                paletteFile += ".gvp";
-            else if (imageClass.Format == GraphicFormat.PVR)
-                paletteFile += ".pvp";
-            else if (imageClass.Format == GraphicFormat.SVR)
-                paletteFile += ".svp";
-
-            if (File.Exists(paletteFile))
+            // See if the palette file exists
+            if (File.Exists(imageClass.PaletteFilename))
             {
-                using (FileStream input = new FileStream(paletteFile, FileMode.Open, FileAccess.Read))
+                using (FileStream input = new FileStream(imageClass.PaletteFilename, FileMode.Open, FileAccess.Read))
                     return input.Copy();
             }
 

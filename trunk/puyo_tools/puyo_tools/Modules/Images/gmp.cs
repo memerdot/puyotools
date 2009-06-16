@@ -11,7 +11,7 @@ namespace puyo_tools
         /* GMP Images */
         public GMP()
         {
-            Name = "GMP";
+            Name      = "GMP";
             Extension = ".gmp";
             CanEncode = false;
             CanDecode = true;
@@ -81,19 +81,6 @@ namespace puyo_tools
             {
                 return false;
             }
-        }
-
-        /* Image Information */
-        public override Images.Information Information()
-        {
-            string Name   = "GMP";
-            string Ext    = ".gmp";
-            string Filter = "GMP Image (*.cnx;*.gmp)|*.cnx;*.gmp";
-
-            bool Unpack = true;
-            bool Pack   = false;
-
-            return new Images.Information(Name, Unpack, Pack, Ext, Filter);
         }
 
         public override Stream Pack(ref Stream image)

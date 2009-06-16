@@ -85,6 +85,16 @@ namespace Extensions
         {
             return stream.ReadString(offset, maxLength, true);
         }
+
+        // Copy to a byte array
+        public static byte[] ToByteArray(this Stream stream)
+        {
+            byte[] array = new byte[stream.Length];
+            stream.Position = 0;
+            stream.Read(array, 0, array.Length);
+
+            return array;
+        }
     }
 
     /* Stream Writer Functions */

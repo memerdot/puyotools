@@ -10,8 +10,8 @@ namespace puyo_tools
     public class Images
     {
         /* Image format */
-        private ImageModule Encoder = null;
-        private ImageModule Decoder = null;
+        public ImageModule Encoder { get; private set; }
+        public ImageModule Decoder { get; private set; }
 
         public GraphicFormat Format = GraphicFormat.NULL;
         private Stream Data         = null;
@@ -26,6 +26,7 @@ namespace puyo_tools
         public Images(Stream data, string filename)
         {
             // Set up information and initalize decompressor
+            Decoder  = null;
             Data     = data;
             Filename = filename;
 
@@ -37,16 +38,21 @@ namespace puyo_tools
         {
             return Decoder.Unpack(ref Data);
         }
-        public Bitmap Unpack(Stream palette)
-        {
-            return Decoder.Unpack(ref Data, palette);
-        }
 
         /* Pack image */
         public Stream Pack()
         {
             //return Encoder.Pack(ref imageData);
             return null;
+        }
+
+        // External Palette Filename
+        public string PaletteFilename
+        {
+            get
+            {
+                return Decoder.PaletteFilename(Filename);
+            }
         }
 
         /* Output Directory */
@@ -67,40 +73,15 @@ namespace puyo_tools
             }
         }
 
-        /* Image Information */
-        public class Information
-        {
-            public string Name = null;
-            public string Ext = null;
-            public string Filter = null;
-
-            public bool Unpack = false;
-            public bool Pack  = false;
-
-            public Information(string name, bool unpack, bool pack, string ext, string filter)
-            {
-                Name   = name;
-                Ext    = ext;
-                Filter = filter;
-
-                Unpack = unpack;
-                Pack   = pack;
-            }
-        }
-
         // Initalize Decoder
         private void InitalizeDecoder()
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             foreach (KeyValuePair<GraphicFormat, ImageModule> value in Dictionary)
             {
                 if (Dictionary[value.Key].Check(ref Data, Filename))
                 {
                     // This is the compression format
-                    if (Dictionary[value.Key].CanDecode)
+                    if (value.Value.CanDecode)
                     {
                         Format    = value.Key;
                         Decoder   = value.Value;
@@ -116,10 +97,6 @@ namespace puyo_tools
         // Initalize Compressor
         private void InitalizeEncoder()
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             // Get compressor based on compression format
             if (Dictionary.ContainsKey(Format) && Dictionary[Format].CanEncode)
             {
@@ -129,7 +106,7 @@ namespace puyo_tools
         }
 
         // Initalize Image Dictionary
-        private static void InitalizeDictionary()
+        public static void InitalizeDictionary()
         {
             Dictionary = new Dictionary<GraphicFormat, ImageModule>();
 
@@ -142,7 +119,7 @@ namespace puyo_tools
         }
     }
 
-    /* Image Format */
+    // Image Format
     public enum GraphicFormat : byte
     {
         NULL,
@@ -153,7 +130,7 @@ namespace puyo_tools
         SVR,
     }
 
-    /* Image Header */
+    // Image Header
     public static class GraphicHeader
     {
         public const string
@@ -174,14 +151,18 @@ namespace puyo_tools
         public bool CanEncode   { get; protected set; }
         public bool CanDecode   { get; protected set; }
 
-        /* Image Functions */
-        public abstract Bitmap Unpack(ref Stream data);   // Unpack image
-        public abstract Stream Pack(ref Stream data);     // Pack Image
+        // Other variables
+        public Stream PaletteData   = null;
+        public int PixelFormatIndex = -1;
+        public int DataFormatIndex  = -1;
+
+        // Image Functions
+        public abstract Bitmap Unpack(ref Stream data); // Unpack image
+        public abstract Stream Pack(ref Stream data);   // Pack Image
         public abstract bool Check(ref Stream data, string filename); // Check Image
-        public abstract Images.Information Information(); // Image Information
-        public virtual Bitmap Unpack(ref Stream data, Stream palette) // Unpack image (with external palette file)
+        public virtual string PaletteFilename(string filename) // External Palette Filename
         {
-            return null;
+            return filename;
         }
     }
 }

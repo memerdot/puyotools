@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using Extensions;
 
-/* Archive Module */
+// Archive Module
 namespace puyo_tools
 {
     public class Archive
@@ -28,10 +28,6 @@ namespace puyo_tools
         // Set up archive object for extracting
         public Archive(Stream data, string filename)
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             // Set up information
             Format    = ArchiveFormat.NULL;
             Name      = null;
@@ -50,59 +46,43 @@ namespace puyo_tools
                 Data = Extractor.TranslateData(ref Data) ?? new MemoryStream();
         }
 
-        /* Archive object for creation */
+        // Archive object for creation
         public Archive(ArchiveFormat format, string filename)
         {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
             // Set up information
             Name      = null;
             Extension = null;
             Filename  = filename;
             Format    = format;
-            Packer    = Dictionary[format];
+
+            InitalizePacker();
         }
 
-        /* Blank archive class, so you can access methods */
-        public Archive()
-        {
-            // Initalize dictionary if there are no entries in it
-            if (Dictionary == null)
-                InitalizeDictionary();
-
-            // Set up information
-            Format    = ArchiveFormat.NULL;
-            Name      = null;
-            Extension = null;
-        }
-
-        /* Get file list */
+        // Get file list
         public ArchiveFileList GetFileList()
         {
             return Extractor.GetFileList(ref Data);
         }
 
-        /* Create archive header */
+        // Create archive header
         public MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList)
         {
             return Packer.CreateHeader(files, archiveFilenames, blockSize, settings, out offsetList);
         }
 
-        /* Create archive footer */
+        // Create archive footer
         public MemoryStream CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref MemoryStream header)
         {
             return Packer.CreateFooter(files, archiveFilenames, blockSize, settings, ref header);
         }
 
-        /* Format file to add to the archive */
+        // Format file to add to the archive
         public Stream FormatFileToAdd(ref Stream data)
         {
             return Packer.FormatFileToAdd(ref data);
         }
 
-        /* Output Directory */
+        // Output Directory
         public string OutputDirectory
         {
             get
@@ -111,7 +91,7 @@ namespace puyo_tools
             }
         }
 
-        /* File Extension */
+        // File Extension
         public string FileExtension
         {
             get
@@ -120,7 +100,7 @@ namespace puyo_tools
             }
         }
 
-        /* Padding Byte */
+        // Padding Byte
         public byte PaddingByte
         {
             get
@@ -169,7 +149,7 @@ namespace puyo_tools
         }
 
         // Initalize Archive Dictionary
-        private static void InitalizeDictionary()
+        public static void InitalizeDictionary()
         {
             Dictionary = new Dictionary<ArchiveFormat, ArchiveModule>();
 
@@ -204,7 +184,7 @@ namespace puyo_tools
         public byte PaddingByte { get; protected set; }
         public ArchivePackSettings PackSettings { get; protected set; }
 
-        /* Archive Functions */
+        // Archive Functions
         public abstract ArchiveFileList GetFileList(ref Stream data); // Get Stored Files
         public abstract MemoryStream CreateHeader(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, out uint[] offsetList);
         public virtual MemoryStream CreateFooter(string[] files, string[] archiveFilenames, int blockSize, bool[] settings, ref MemoryStream header)
@@ -225,7 +205,7 @@ namespace puyo_tools
         }
     }
 
-    /* Archive format ID */
+    // Archive Formats
     public enum ArchiveFormat : byte
     {
         NULL, // Unknown Archive Format
@@ -246,7 +226,7 @@ namespace puyo_tools
         VDD,  // VDD
     }
 
-    /* Archive File Header */
+    // Archive File Header
     public static class ArchiveHeader
     {
         public const string

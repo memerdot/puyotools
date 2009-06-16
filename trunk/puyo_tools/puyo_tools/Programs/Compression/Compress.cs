@@ -203,9 +203,6 @@ namespace puyo_tools
         // Initalize Compression Formats
         private void InitalizeCompressionFormats()
         {
-            // Set up compression object, so the directory gets initalized.
-            Compression compression = new Compression();
-
             foreach (KeyValuePair<CompressionFormat, CompressionModule> value in Compression.Dictionary)
             {
                 if (value.Value.CanCompress)

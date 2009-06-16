@@ -11,8 +11,11 @@ namespace puyo_tools
 
         public puyo_tools()
         {
-            /* Create the form */
+            // Create the window
             FormContent.Create(this, "Puyo Tools", new Size(344, 96));
+
+            // Build the menu
+            BuildMenu();
 
             /* Create the tool menu */
             programItem = new ToolStripMenuItem[] { // Prorams
@@ -67,7 +70,7 @@ namespace puyo_tools
                         new Item(programItem[12]),
                     }),
                     new Item(new ToolStripSeparator()),
-                    new Item("About", aboutProgram),
+                    new Item("About", About),
                 });
 
                 /* Setup menu */
@@ -145,6 +148,7 @@ namespace puyo_tools
         [STAThread]
         static void Main(string[] args)
         {
+            Initalize();
             Application.EnableVisualStyles();
             Application.Run(new puyo_tools());
         }
@@ -187,17 +191,20 @@ namespace puyo_tools
             AboutDialog.ShowDialog();
         }
 
-        /* About Puyo Tools */
-        private void aboutProgram(object sender, EventArgs e)
+        // Initalize
+        // THIS MUST BE CALLED OTHERWISE NOTHING WILL WORK
+        // AND YOU WILL GET ERRORS
+        private static void Initalize()
         {
-            MessageBox.Show(this,
-                "Puyo Tools" + "\n" +
-                "Version 0.12 Alpha 4" + "\n\n" +
-                "Written by nmn and Nick Woronekin" + "\n\n" +
-                "Special Thanks:" + "\n" +
-                "Luke Zapart (drx) - CNX Decompressor",
-                "About Puyo Tools",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Initalize the dictionaries
+            Compression.InitalizeDictionary();
+            Archive.InitalizeDictionary();
+            Images.InitalizeDictionary();
+        }
+
+        // Build Menu
+        private static void BuildMenu()
+        {
         }
     }
 }
