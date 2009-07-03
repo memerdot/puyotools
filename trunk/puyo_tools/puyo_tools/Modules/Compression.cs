@@ -147,7 +147,7 @@ namespace puyo_tools
     }
     
     // Compression Format
-    public enum CompressionFormat : byte
+    public enum CompressionFormat
     {
         NULL,
         CNX,

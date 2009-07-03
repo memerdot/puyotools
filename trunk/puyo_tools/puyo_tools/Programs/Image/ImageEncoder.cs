@@ -138,6 +138,11 @@ namespace puyo_tools
                 Location  = new Point(8 + 112, 68),
                 Size      = new Size(112, 16),
                 Text      = "0",
+                MaxLength = 8,
+            };
+            globalIndex.KeyPress += delegate(object sender2, KeyPressEventArgs f) {
+                if (!Char.IsDigit(f.KeyChar) && !Char.IsControl(f.KeyChar))
+                    f.Handled = true;
             };
             imageConversionSettings.Controls.Add(globalIndex);
             addGbix = new CheckBox() {
@@ -259,8 +264,11 @@ namespace puyo_tools
                         }
 
                         // Set the global index and gbix header
+                        // There shouldn't be an error when parsing anymore, so we won't do checks
                         encoder.GbixHeader = addGbix.Checked;
-                        if (!uint.TryParse(globalIndex.Text, out encoder.GlobalIndex) || (int)encoder.GlobalIndex < 0)
+                        if (addGbix.Checked && globalIndex.Text.Length > 0)
+                            encoder.GlobalIndex = uint.Parse(globalIndex.Text);
+                        else
                             encoder.GlobalIndex = 0;
 
                         /* Set up our input and output image */
@@ -275,14 +283,17 @@ namespace puyo_tools
                         if (imageData == null)
                             continue;
 
-                        /* Compress image? */
+                        // Compress image?
                         if (compressFile.Checked)
                         {
                             Compression compression = new Compression(imageData, outputFilename, CompressionFormats[compressionFormat.SelectedIndex]);
 
                             MemoryStream compressedData = compression.Compress();
                             if (compressedData != null)
+                            {
                                 imageData = compressedData;
+                                outputImage = Path.GetDirectoryName(outputImage) + Path.DirectorySeparatorChar + compression.CompressFilename;
+                            }
                         }
 
                         /* Create the output directory if it does not exist */

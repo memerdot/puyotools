@@ -206,7 +206,7 @@ namespace puyo_tools
     }
 
     // Archive Formats
-    public enum ArchiveFormat : byte
+    public enum ArchiveFormat
     {
         NULL, // Unknown Archive Format
         ACX,  // ACX
