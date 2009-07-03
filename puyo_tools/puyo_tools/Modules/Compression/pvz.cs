@@ -107,11 +107,10 @@ namespace puyo_tools
                 if (PixelCodec == null || DataCodec == null)
                     throw new Exception();
 
+                DataCodec.Decode.Initialize(0, 0, PixelCodec.Decode);
                 // We can't compress it if the chunk size is less than 8
                 if (DataCodec.Decode.GetChunkBpp() < 8)
                     throw new Exception("Can't compress 4-bit PVR textures.");
-
-                DataCodec.Decode.Initialize(0, 0, PixelCodec.Decode);
                 int ChunkSize = (DataCodec.Decode.GetChunkBpp() / 8);
 
                 // Start writing the compressed data
@@ -119,7 +118,7 @@ namespace puyo_tools
                 compressedData.Write(decompressedSize);
 
                 /* Write the first 16/32 bytes */
-                compressedData.Write(decompressedData, 0x0, 32 - FileOffset);
+                compressedData.Write(decompressedData, 0x0, 0x10 + FileOffset);
                 Dpointer += (uint)FileOffset + 0x10;
 
                 /* Ok, now let's start creating the compressed data */
@@ -160,9 +159,10 @@ namespace puyo_tools
 
                 return compressedData;
             }
-            catch
+            catch (Exception f)
             {
                 /* Something went wrong */
+                System.Windows.Forms.MessageBox.Show(f.ToString());
                 return null;
             }
         }

@@ -120,7 +120,7 @@ namespace puyo_tools
     }
 
     // Image Format
-    public enum GraphicFormat : byte
+    public enum GraphicFormat
     {
         NULL,
         GIM,

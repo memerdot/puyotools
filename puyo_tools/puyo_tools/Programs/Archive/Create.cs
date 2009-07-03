@@ -144,10 +144,12 @@ namespace puyo_tools
 
                 /* Now add the entries */
                 blockSizes[i] = new ComboBox() {
-                    Location = new Point(72, 4),
-                    Size     = new Size(64, 16),
+                    Location      = new Point(72, 4),
+                    Size          = new Size(64, 16),
                     DropDownStyle = ComboBoxStyle.DropDown,
+                    MaxLength     = 4,
                 };
+                blockSizes[i].KeyPress += CheckBlockSizeText;
 
                 for (int j = 0; j < ArchiveBlockSizes[i].Length; j++)
                 {
@@ -224,7 +226,11 @@ namespace puyo_tools
         {
             try
             {
-                /* Get output filename */
+                // Get archive and compression format
+                int ArchiveFormatIndex     = archiveFormatList.SelectedIndex;
+                int CompressionFormatIndex = compressionFormatList.SelectedIndex;
+
+                // Get output filename
                 string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
 
                 if (output_filename == null || output_filename == String.Empty)
@@ -239,13 +245,15 @@ namespace puyo_tools
 
                 using (FileStream outputStream = new FileStream(output_filename, FileMode.Create, FileAccess.ReadWrite))
                 {
-                    /* Make sure block size is a number */
-                    int blockSize = 0;
-                    if (!int.TryParse(blockSizes[archiveFormatList.SelectedIndex].Text, out blockSize) || blockSize < 1)
-                        blockSize = ArchiveBlockSizes[archiveFormatList.SelectedIndex][0];
+                    // Get the block size
+                    int blockSize;
+                    if (blockSizes[ArchiveFormatIndex].Enabled && blockSizes[ArchiveFormatIndex].Text.Length > 0)
+                        blockSize = int.Parse(blockSizes[ArchiveFormatIndex].Text);
+                    else
+                        blockSize = ArchiveBlockSizes[ArchiveFormatIndex][0];
 
                     /* Create and write the header */
-                    bool[] settings = GetSettings(archiveFormatList.SelectedIndex);
+                    bool[] settings = GetSettings(ArchiveFormatIndex);
                     uint[] offsetList;
                     MemoryStream header = archive.CreateHeader(fileList.ToArray(), archiveFilenames.ToArray(), blockSize, settings, out offsetList);
                     outputStream.Write(header);
@@ -288,7 +296,7 @@ namespace puyo_tools
                     /* Compress the data if we want to */
                     if (compressionFormatList.SelectedIndex != 0)
                     {
-                        Compression compression     = new Compression(outputStream, output_filename, CompressionFormats[compressionFormatList.SelectedIndex - 1]);
+                        Compression compression     = new Compression(outputStream, output_filename, CompressionFormats[CompressionFormatIndex - 1]);
                         MemoryStream compressedData = compression.Compress();
                         if (compressedData != null)
                         {
@@ -503,6 +511,13 @@ namespace puyo_tools
             populateList();
         }
 
+        // Check block size value
+        private void CheckBlockSizeText(object sender, KeyPressEventArgs e)
+        {
+            if (!Char.IsDigit(e.KeyChar) && !Char.IsControl(e.KeyChar))
+                e.Handled = true;
+        }
+
         /* Populate the list */
         private void populateList()
         {
@@ -567,53 +582,6 @@ namespace puyo_tools
             }
 
             return settings;
-        }
-
-        /* Archive Creation Settings */
-        public class ArchiveInformation
-        {
-            /* Archive Information */
-            private ArchiveFormat _Format;
-            private ArchiveModule _Archiver;
-            private string _Name, _Filter;
-            private int[] _BlockSize;
-            private CheckBox[] _Settings;
-
-            public ArchiveInformation(ArchiveFormat format, ArchiveModule archiver, string name, string filter, int[] blockSize, CheckBox[] settings)
-            {
-                _Format    = format;
-                _Archiver  = archiver;
-                _Name      = name;
-                _Filter    = filter;
-                _BlockSize = blockSize;
-                _Settings  = settings ?? new CheckBox[0];
-            }
-
-            /* Return values */
-            public ArchiveFormat Format
-            {
-                get { return _Format; }
-            }
-            public ArchiveModule Archiver
-            {
-                get { return _Archiver; }
-            }
-            public string Name
-            {
-                get { return _Name; }
-            }
-            public string Filter
-            {
-                get { return _Filter; }
-            }
-            public int[] BlockSize
-            {
-                get { return _BlockSize; }
-            }
-            public CheckBox[] Settings
-            {
-                get { return _Settings; }
-            }
         }
     }
 }
