@@ -17,15 +17,19 @@ namespace puyo_tools
             compressionSettings   = new GroupBox(); // Decompression Settings
 
         private CheckBox
-            useStoredFilename = new CheckBox(), // Use stored filename
-            deleteSourceFile = new CheckBox(), // Delete Source file
-            compressSameDir = new CheckBox(), // Output to same directory
-            unpackImage = new CheckBox(), // Unpack image
-            deleteSourceImage = new CheckBox(), // Delete Source Image
-            convertSameDir = new CheckBox(); // Output to same directory
+            useStoredFilename   = new CheckBox(), // Use stored filename
+            deleteSourceFile    = new CheckBox(), // Delete Source file
+            compressSameDir     = new CheckBox(), // Output to same directory
+            unpackImage         = new CheckBox(), // Unpack image
+            deleteSourceImage   = new CheckBox(), // Delete Source Image
+            convertSameDir      = new CheckBox(), // Output to same directory
+            filesizeRestriction = new CheckBox(); // Filesize restriction
 
         private ComboBox
             compressionFormat = new ComboBox(); // Compression Format
+
+        private TextBox
+            filesizeRestrictionSize = new TextBox();
 
         private List<string> CompressionNames = new List<string>();
         private List<CompressionFormat> CompressionFormats = new List<CompressionFormat>();
@@ -81,7 +85,7 @@ namespace puyo_tools
         private void showOptions()
         {
             /* Set up the form */
-            FormContent.Create(this, "Compression - Compress", new Size(400, 156));
+            FormContent.Create(this, "Compression - Compress", new Size(400, 196));
 
             /* Files Selected */
             FormContent.Add(this, new Label(),
@@ -97,7 +101,7 @@ namespace puyo_tools
             FormContent.Add(this, compressionSettings,
                 "Compression Settings",
                 new Point(8, 32),
-                new Size(this.Size.Width - 24, 84));
+                new Size(this.Size.Width - 24, 124));
 
             /* Compression Format */
             FormContent.Add(compressionSettings, new Label(),
@@ -117,10 +121,21 @@ namespace puyo_tools
                 new Point(8, 60),
                 new Size(compressionSettings.Size.Width - 16, 16));
 
+            // Filesize restriction
+            FormContent.Add(compressionSettings, filesizeRestriction,
+                "Don't compress files with a file size smaller than (in bytes):",
+                new Point(8, 80),
+                new Size(compressionSettings.Size.Width - 16, 16));
+            FormContent.Add(compressionSettings, filesizeRestrictionSize,
+                "0",
+                new Point(24, 100),
+                new Size(64, 16));
+            filesizeRestrictionSize.KeyPress += new KeyPressEventHandler(TextBoxIntegersOnly);
+
             /* Convert */
             FormContent.Add(this, startWorkButton,
                 "Compress",
-                new Point((this.Width / 2) - 60, 124),
+                new Point((this.Width / 2) - 60, 164),
                 new Size(120, 24),
                 startWork);
 
@@ -151,6 +166,11 @@ namespace puyo_tools
             foreach (string i in files)
                 fileList.Add(i);
 
+            // Get file size restriction size
+            uint restrictSize = 0;
+            if (filesizeRestriction.Checked && !uint.TryParse(filesizeRestrictionSize.Text, out restrictSize)) // For some reason if this happens
+                restrictSize = 0;
+
             for (int i = 0; i < files.Length; i++)
             {
                 /* Set the current file */
@@ -163,6 +183,10 @@ namespace puyo_tools
                     string outputDirectory, outputFilename;
                     using (FileStream inputStream = new FileStream(fileList[i], FileMode.Open, FileAccess.Read))
                     {
+                        // Check to see if we want to compress this file (filesize restriction)
+                        if (filesizeRestriction.Checked && inputStream.Length < restrictSize)
+                            continue;
+
                         // Setup the decompressor
                         Compression compression = new Compression(inputStream, Path.GetFileName(fileList[i]), CompressionFormats[compressionFormat.SelectedIndex]);
 
@@ -213,6 +237,13 @@ namespace puyo_tools
                     CompressionFormats.Add(value.Key);
                 }
             }
+        }
+
+        // Integer Only
+        private void TextBoxIntegersOnly(object sender, KeyPressEventArgs e)
+        {
+            if (!Char.IsDigit(e.KeyChar) && !Char.IsControl(e.KeyChar))
+                e.Handled = true;
         }
     }
 }

@@ -27,7 +27,7 @@ namespace puyo_tools
         }
 
         /* Button */
-        public static void Add(Form parent, Button content, string text, Point position, Size size, EventHandler onClick)
+        public static void Add(Control parent, Button content, string text, Point position, Size size, EventHandler onClick)
         {
             content.Text     = text;
             content.Location = position;
@@ -188,7 +188,7 @@ namespace puyo_tools
         }
 
         /* Input Box */
-        public static void Add(Form parent, TextBox content, string defaultText, Point position, Size size)
+        public static void Add(Control parent, TextBox content, string defaultText, Point position, Size size)
         {
             content.Location  = position;
             content.Size      = size;
