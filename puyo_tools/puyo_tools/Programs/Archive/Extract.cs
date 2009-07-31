@@ -26,6 +26,7 @@ namespace puyo_tools
             deleteSourceArchive     = new CheckBox(), // Delete source archive
             decompressSourceFile    = new CheckBox(), // Decompress Source File
             decompressExtractedFile = new CheckBox(), // Decompress Extracted File
+            decompressExtractedDir  = new CheckBox(), // Decompress Extracted File to different directory
             useStoredFilename       = new CheckBox(), // Use stored filename
             unpackImage             = new CheckBox(), // Unpack image
             convertSameDir          = new CheckBox(), // Output to same directory
@@ -92,7 +93,7 @@ namespace puyo_tools
         private void showOptions()
         {
             /* Set up the form */
-            FormContent.Create(this, "Archive - Extract", new Size(428, 400));
+            FormContent.Create(this, "Archive - Extract", new Size(428, 420));
 
             /* Files Selected */
             FormContent.Add(this, new Label(),
@@ -144,7 +145,7 @@ namespace puyo_tools
             FormContent.Add(this, decompressionSettings,
                 "Decompression Settings",
                 new Point(8, 184),
-                new Size(this.Size.Width - 24, 84));
+                new Size(this.Size.Width - 24, 104));
 
             /* Decompress file */
             FormContent.Add(decompressionSettings, decompressSourceFile, true,
@@ -158,16 +159,22 @@ namespace puyo_tools
                 new Point(8, 40),
                 new Size(decompressionSettings.Size.Width - 16, 16));
 
+            // Decompress to different directory
+            FormContent.Add(decompressionSettings, decompressExtractedDir,
+                "Place decompressed files in different directory.",
+                new Point(24, 60),
+                new Size(decompressionSettings.Size.Width - 16, 16));
+
             /* Use stored filename */
             FormContent.Add(decompressionSettings, useStoredFilename, true,
                 "Use filename stored in the compressed file.",
-                new Point(8, 60),
+                new Point(8, 80),
                 new Size(decompressionSettings.Size.Width - 16, 16));
 
             /* Image Conversion Settings */
             FormContent.Add(this, imageConversionSettings,
                 "Image Conversion Settings",
-                new Point(8, 276),
+                new Point(8, 296),
                 new Size(this.Size.Width - 24, 84));
 
             /* Unpack image */
@@ -191,7 +198,7 @@ namespace puyo_tools
             /* Extract */
             FormContent.Add(this, startWorkButton,
                 "Extract",
-                new Point((this.Width / 2) - 60, 368),
+                new Point((this.Width / 2) - 60, 388),
                 new Size(120, 24),
                 startWork);
 
@@ -300,7 +307,7 @@ namespace puyo_tools
                                 extractFilename = j.ToString().PadLeft(archiveFileList.Entries.Length.Digits(), '0') + FileData.GetFileExtension(ref outputData);
 
                             /* Decompress this data before we write it? */
-                            if (decompressExtractedFile.Checked)
+                            if (decompressExtractedFile.Checked && !decompressExtractedDir.Checked)
                             {
                                 /* Set up the decompressor */
                                 Compression compression = new Compression(outputData, Path.GetFileName(extractFilename));
@@ -322,6 +329,33 @@ namespace puyo_tools
                             /* Write the data */
                             using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + extractFilename, FileMode.Create, FileAccess.Write))
                                 outputStream.Write(outputData);
+
+                            // Do we want to decompress the file to a different directory?
+                            if (decompressExtractedFile.Checked && decompressExtractedDir.Checked)
+                            {
+                                // Set up the decompressor
+                                Compression compression = new Compression(outputData, Path.GetFileName(extractFilename));
+                                if (compression.Format != CompressionFormat.NULL)
+                                {
+                                    // Decompress data
+                                    MemoryStream decompressedData = compression.Decompress();
+
+                                    // Check to make sure the decompression was successful */
+                                    if (decompressedData != null)
+                                    {
+                                        outputData = decompressedData;
+                                        if (useStoredFilename.Checked)
+                                            extractFilename = compression.DecompressFilename;
+
+                                        // Now write the file to the decompressed directory
+                                        if (!Directory.Exists(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory))
+                                            Directory.CreateDirectory(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory);
+                                        using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory + Path.DirectorySeparatorChar + extractFilename, FileMode.Create, FileAccess.Write))
+                                            outputStream.Write(outputData);
+                                    }
+                                }
+                            }
+
 
                             /* Convert the file to an image? */
                             if (unpackImage.Checked)
