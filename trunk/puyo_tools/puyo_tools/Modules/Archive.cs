@@ -245,7 +245,7 @@ namespace puyo_tools
             NUTL = "NUTL",
             ONE  = "one.",
             PVM  = "PVMH",
-            SPK  = "SPK0",
+            SPK  = "SND0",
             TEX  = "TEX0",
             TXAG = "TXAG";
     }

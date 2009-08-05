@@ -185,6 +185,23 @@ namespace puyo_tools
             return null;
         }
 
+        // Get the filename
+        public override string DecompressFilename(ref Stream data, string filename)
+        {
+            string EmbeddedFilename = data.ReadString(0x10, 32);
+            return (EmbeddedFilename == String.Empty ? filename : EmbeddedFilename);
+        }
+        public override string CompressFilename(ref Stream data, string filename)
+        {
+            switch (Path.GetExtension(filename))
+            {
+                case ".mrg": return Path.GetFileNameWithoutExtension(filename) + ".mrz";
+                case ".tex": return Path.GetFileNameWithoutExtension(filename) + ".tez";
+            }
+
+            return filename;
+        }
+
         // Check
         public override bool Check(ref Stream data, string filename)
         {
