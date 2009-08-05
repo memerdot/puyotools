@@ -138,6 +138,7 @@ namespace puyo_tools
             // Add all the entries to the dictionary
             Dictionary.Add(CompressionFormat.CNX,  new CNX());
             Dictionary.Add(CompressionFormat.CXLZ, new CXLZ());
+            Dictionary.Add(CompressionFormat.LZ00, new LZ00());
             Dictionary.Add(CompressionFormat.LZ01, new LZ01());
             Dictionary.Add(CompressionFormat.LZSS, new LZSS());
             Dictionary.Add(CompressionFormat.ONZ,  new ONZ());
@@ -152,6 +153,7 @@ namespace puyo_tools
         NULL,
         CNX,
         CXLZ,
+        LZ00,
         LZ01,
         LZSS,
         ONZ,
@@ -165,6 +167,7 @@ namespace puyo_tools
         public const string
             CNX  = "CNX\x02",
             CXLZ = "CXLZ",
+            LZ00 = "LZ00",
             LZ01 = "LZ01",
             LZSS = "\x10",
             ONZ  = "\x11";

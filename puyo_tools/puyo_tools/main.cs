@@ -70,7 +70,7 @@ namespace puyo_tools
                         new Item(programItem[12]),
                     }),
                     new Item(new ToolStripSeparator()),
-                    new Item("About", About),
+                    //new Item("About", About), // Hide until I finish it
                 });
 
                 /* Setup menu */
@@ -114,7 +114,7 @@ namespace puyo_tools
                         programItem[12],
                     }),
                     new ToolStripSeparator(),
-                    new ToolStripButton("About", null, About),
+                    //new ToolStripButton("About", null, About), // Hide until I finish it
                 });
                 this.Controls.Add(toolStrip);
 
