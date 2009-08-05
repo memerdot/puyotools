@@ -78,6 +78,7 @@
     <Compile Include="Modules\Archives\pvm.cs" />
     <Compile Include="Modules\Archives\sba.cs" />
     <Compile Include="Modules\Archives\txag.cs" />
+    <Compile Include="Modules\Compression\lz00.cs" />
     <Compile Include="Modules\Compression\lzss.cs" />
     <Compile Include="Modules\Compression\onz.cs" />
     <Compile Include="Modules\Compression\prs.cs" />

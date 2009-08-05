@@ -45,19 +45,19 @@ namespace puyo_tools
         {
             /* Select the files */
             files = FileSelectionDialog.OpenFiles("Select Archive",
-                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.txd;*.vdd|" +
+                "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.mrz;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.tez;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.mrz;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.tez;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
                 "AFS Archive (*.afs)|*.afs|" +
                 "GNT Archive (*.gnt)|*.gnt|" +
                 "GVM Archive (*.gvm)|*.gvm|" +
                 "MDL Archive (*.mdl)|*.mdl|" +
-                "MRG Archive (*.mrg)|*.mrg|" +
+                "MRG Archive (*.mrg;*.mrz)|*.mrg;*.mrz|" +
                 "NARC Archive (*.narc;*.carc)|*.narc;*.carc|" +
                 "ONE Archive (*.one;*.onz)|*.one;*.onz|" +
                 "PVM Archive (*.pvm)|*.pvm|" +
                 "SNT Archive (*.snt)|*.snt|" +
                 "SPK Archive (*.spk)|*.spk|" +
-                "TEX Archive (*.tex)|*.tex|" +
+                "TEX Archive (*.tex;*.tez)|*.tex;*.tez|" +
                 "TXAG Archive (*.txd)|*.txd|" +
                 "VDD Archive (*.vdd)|*.vdd|" +
                 "All Files (*.*)|*.*");
