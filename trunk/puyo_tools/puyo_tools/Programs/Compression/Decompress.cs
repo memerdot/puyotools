@@ -42,7 +42,10 @@ namespace puyo_tools
                 "All Files (*.*)|*.*|" +
                 "CNX Compressed Files (*.cnx)|*.cnx|" +
                 "NARC Compressed Archives (*.carc)|*.carc|" +
-                "ONE Compressed Archives (*.onz)|*.onz");
+                "MRG Compressed Archives (*.mrz)|*.mrz|" +
+                "ONE Compressed Archives (*.onz)|*.onz|" +
+                "TEX Compressed Arcives (*.tez)|*.tez|" +
+                "Puyo Fever 2 Compressed Files (*.mrz;*.tez)|*.mrg;*.tez");
 
             /* If no files were selected, don't continue */
             if (files == null || files.Length == 0)
