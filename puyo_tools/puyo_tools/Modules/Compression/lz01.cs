@@ -43,7 +43,8 @@ namespace puyo_tools
                             /* Yes it is! */
                             byte first  = compressedData[Cpointer];
                             byte second = compressedData[Cpointer + 1];
-                            int pos     = (first + ((second >> 4) & 0xF) * 256) + 18;
+                            //int pos     = (first + ((second >> 4) & 0xF) * 256) + 18;
+                            long pos     = ((((second >> 4) & 0xF) << 8) | first) + 18; // Distance
                             int amountToCopy = (second & 0xF) + 3;
                             Cpointer += 2;
 
@@ -54,7 +55,10 @@ namespace puyo_tools
                                 if (Dpointer + j >= decompressedSize)
                                     break;
 
-                                int Cpos = (int)(pos + ((Dpointer + j) / 0x1000) * 0x1000);
+                                //int Cpos = (int)(pos + ((Dpointer + j) / 0x1000) * 0x1000);
+                                //int Cpos = (int)(pos + (((Dpointer + j) >> 12) << 12));
+                                //long Cpos = pos + ((Dpointer + j) & 0xFFFFF000);
+                                long Cpos = pos + ((Dpointer + j) & 0xFFFFF000);
 
                                 /* Make sure the pointer is set at a correct position and copy */
                                 if (Cpos >= Dpointer + j)
