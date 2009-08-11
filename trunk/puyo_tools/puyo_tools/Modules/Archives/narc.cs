@@ -119,7 +119,7 @@ namespace puyo_tools
                 header.Write(ArchiveHeader.NARC, 4); // NARC
                 header.Write(new byte[] { 0xFE, 0xFF, 0x00, 0x01 });    // Fixed Values
                 header.Write(0x10 + size_fatb + size_fntb + size_fimg); // File Size
-                header.Write(new byte[] { 0x10, 0x00, 0x30, 0x00 });    // Fixed Values
+                header.Write(new byte[] { 0x10, 0x00, 0x03, 0x00 });    // Fixed Values
 
                 /* Write our the FATB header */
                 header.Write("BTAF");       // FATB
@@ -133,8 +133,8 @@ namespace puyo_tools
                     uint length = (uint)new FileInfo(files[i]).Length;
 
                     offsetList[i] = offset;
-                    header.Write(offset); // Offset
-                    header.Write(offset + length); // Length
+                    header.Write(offset - offset_fimg - 8);          // Offset
+                    header.Write(offset + length - offset_fimg - 8); // Length
 
                     offset += length.RoundUp(blockSize);
                 }
