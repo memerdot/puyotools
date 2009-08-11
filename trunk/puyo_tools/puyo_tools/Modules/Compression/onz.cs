@@ -9,8 +9,8 @@ namespace puyo_tools
     {
         public ONZ()
         {
-            Name = "ONZ";
-            CanCompress   = false;
+            Name = "LZ11"; // Also known as ONZ and LZ77 Format 11
+            CanCompress   = true;
             CanDecompress = true;
         }
 
@@ -123,69 +123,107 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint decompressedSize = (uint)data.Length; // Decompressed Size
+                uint DecompressedSize = (uint)data.Length;
 
-                uint Dpointer = 0x0; // Decompressed Pointer
+                MemoryStream CompressedData = new MemoryStream();
+                byte[] DecompressedData     = data.ToByteArray();
 
-                List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
+                uint SourcePointer = 0x0;
+                uint DestPointer   = 0x4;
 
-                /* Add the header byte */
-                compressedData.Add(0x10);
+                // Test if the file is too large to be compressed
+                if (data.Length > (1L << 32))
+                    throw new Exception("Input file is too large to compress.");
 
-                /* Add the decompressed size */
-                for (int i = 0; i < 3; i++)
-                    compressedData.Add(BitConverter.GetBytes(decompressedSize)[i]);
+                // Set up the Lz Compression Dictionary
+                LzCompressionDictionary LzDictionary = new LzCompressionDictionary();
+                LzDictionary.SetWindowSize(0x1000);
+                LzDictionary.SetMaxMatchAmount(0xFFFF + 273);
 
-                /* Ok, now let's start creating the compressed data */
-                while (Dpointer < decompressedSize)
+                // Figure out where we are going to write the decompressed file size
+                if (data.Length < (1 << 24))
+                    CompressedData.Write((uint)('\x11' | (DecompressedSize << 8)));
+                else
                 {
-                    byte Cflag = 0;
-                    List<byte> tempList = new List<byte>();
+                    CompressedData.Write((uint)('\x11'));
+                    CompressedData.Write(DecompressedSize);
+                    DestPointer += 0x4;
+                }
 
-                    for (int i = 0; i < 8; i++)
+                // Start compression
+                while (SourcePointer < DecompressedSize)
+                {
+                    byte Flag = 0x0;
+                    uint FlagPosition = DestPointer;
+                    CompressedData.WriteByte(Flag); // It will be filled in later
+                    DestPointer++;
+
+                    for (int i = 7; i >= 0; i--)
                     {
-                        /* Let's do a search to see what we can compress */
-                        int[] searchResult = LZsearch(ref decompressedData, Dpointer, decompressedSize);
-
-                        /* Did we get any results? */
-                        if (searchResult[0] > 2)
+                        int[] LzSearchMatch = LzDictionary.Search(DecompressedData, SourcePointer, DecompressedSize);
+                        if (LzSearchMatch[1] > 0) // There is a compression match
                         {
-                            /* Add stuff to our lists */
-                            byte add = (byte)((((searchResult[0] - 3) & 0xF) << 4) + (((searchResult[1] - 1) >> 8) & 0xF));
-                            tempList.Add(add);
+                            Flag |= (byte)(1 << i);
 
-                            add = (byte)((searchResult[1] - 1) & 0xFF);
-                            tempList.Add(add);
+                            // Write the distance/length pair
+                            if (LzSearchMatch[1] <= 0xF + 1) // 2 bytes
+                            {
+                                CompressedData.WriteByte((byte)((((LzSearchMatch[1] - 1) & 0xF) << 4) | (((LzSearchMatch[0] - 1) & 0xFFF) >> 8)));
+                                CompressedData.WriteByte((byte)((LzSearchMatch[0] - 1) & 0xFF));
+                                DestPointer += 2;
+                            }
+                            else if (LzSearchMatch[1] <= 0xFF + 17) // 3 bytes
+                            {
+                                CompressedData.WriteByte((byte)(((LzSearchMatch[1] - 17) & 0xFF) >> 4));
+                                CompressedData.WriteByte((byte)((((LzSearchMatch[1] - 17) & 0xF) << 4) | (((LzSearchMatch[0] - 1) & 0xFFF) >> 8)));
+                                CompressedData.WriteByte((byte)((LzSearchMatch[0] - 1) & 0xFF));
+                                DestPointer += 3;
+                            }
+                            else // 4 bytes
+                            {
+                                CompressedData.WriteByte((byte)((1 << 4) | (((LzSearchMatch[1] - 273) & 0xFFFF) >> 12)));
+                                CompressedData.WriteByte((byte)(((LzSearchMatch[1] - 273) & 0xFFF) >> 4));
+                                CompressedData.WriteByte((byte)((((LzSearchMatch[1] - 273) & 0xF) << 4) | (((LzSearchMatch[0] - 1) & 0xFFF) >> 8)));
+                                CompressedData.WriteByte((byte)((LzSearchMatch[0] - 1) & 0xFF));
+                                DestPointer += 4;
+                            }
 
-                            Dpointer += (uint)searchResult[0];
-                            Cflag |= (byte)(1 << (7 - i));
+                            LzDictionary.AddEntryRange(DecompressedData, (int)SourcePointer, LzSearchMatch[1]);
+                            LzDictionary.SlideWindow(LzSearchMatch[1]);
+
+                            SourcePointer += (uint)LzSearchMatch[1];
                         }
-                        else if (searchResult[0] >= 0)
+                        else // There wasn't a match
                         {
-                            tempList.Add(decompressedData[Dpointer]);
-                            Dpointer++;
-                        }
-                        else
-                            break;
+                            Flag |= (byte)(0 << i);
 
-                        /* Check to see if we are out of range */
-                        if (Dpointer >= decompressedSize)
+                            CompressedData.WriteByte(DecompressedData[SourcePointer]);
+
+                            LzDictionary.AddEntry(DecompressedData, (int)SourcePointer);
+                            LzDictionary.SlideWindow(1);
+
+                            SourcePointer++;
+                            DestPointer++;
+                        }
+
+                        // Check for out of bounds
+                        if (SourcePointer >= DecompressedSize)
                             break;
                     }
 
-                    /* Ok, add our results to the compressed data */
-                    compressedData.Add(Cflag);
-                    compressedData.AddRange(tempList);
+                    // Write the flag.
+                    // Note that the original position gets reset after writing.
+                    CompressedData.Seek(FlagPosition, SeekOrigin.Begin);
+                    CompressedData.WriteByte(Flag);
+                    CompressedData.Seek(DestPointer, SeekOrigin.Begin);
                 }
 
-                return new MemoryStream(compressedData.ToArray());
+                return CompressedData;
             }
-            catch
+            catch (Exception e)
             {
-                /* Something went wrong */
-                return null;
+                System.Windows.Forms.MessageBox.Show(e.ToString());
+                return null; // An error occured while compressing
             }
         }
 
@@ -200,7 +238,10 @@ namespace puyo_tools
         }
         public override string CompressFilename(ref Stream data, string filename)
         {
-            return Path.GetFileNameWithoutExtension(filename) + (Path.GetExtension(filename).IsAllUpperCase() ? ".ONZ" : ".onz");
+            if (Path.GetExtension(filename).ToLower() == ".one")
+                return Path.GetFileNameWithoutExtension(filename) + (Path.GetExtension(filename).IsAllUpperCase() ? ".ONZ" : ".onz");
+
+            return filename;
         }
 
         // Check
