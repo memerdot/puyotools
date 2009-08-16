@@ -14,7 +14,7 @@ uint x = (((((((xValue << 1) + xValue) << 5) - xValue) << 5) + xValue) << 7) - x
 x = (x << 6) - x;
 x = (x << 4) - x;
 
-return ((x << 2) - x) + 0x3039;
+xValue = ((x << 2) - x) + 12345;
 }}}
 
 After generating the new magic key/value, you can then encrypt or decrypt the byte. This function will do that (note that the following code is written in C#):
@@ -22,5 +22,5 @@ After generating the new magic key/value, you can then encrypt or decrypt the by
 // xValue = Magic Key/Value
 // value = Current byte to encrypt/decrypt
 uint t0 = ((uint)xValue >> 16) & 0x7fff;
-return (byte)(value ^ ((uint)(((t0 << 8) - t0) >> 15)));
+value ^= (byte)((uint)(((t0 << 8) - t0) >> 15));
 }}}
