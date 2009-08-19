@@ -10,6 +10,7 @@ namespace puyo_tools
         int WindowLength = 0;
         int MinMatchAmount = 3;
         int MaxMatchAmount = 18;
+        int BlockSize = 0;
         List<int>[] OffsetList;
 
         public LzCompressionDictionary()
@@ -32,12 +33,12 @@ namespace puyo_tools
             int MatchStart;
             int MatchSize;
 
-            for (int i = 0; i < OffsetList[DecompressedData[offset]].Count; i++)
+            for (int i = OffsetList[DecompressedData[offset]].Count - 1; i >= 0; i--)
             {
                 MatchStart = OffsetList[DecompressedData[offset]][i];
                 MatchSize  = 1;
 
-                while (MatchSize < MaxMatchAmount && MatchSize < WindowLength && MatchStart + MatchSize < length && offset + MatchSize < length && DecompressedData[offset + MatchSize] == DecompressedData[MatchStart + MatchSize])
+                while (MatchSize < MaxMatchAmount && MatchSize < WindowLength && MatchStart + MatchSize < length && MatchStart + MatchSize < offset && offset + MatchSize < length && DecompressedData[offset + MatchSize] == DecompressedData[MatchStart + MatchSize])
                     MatchSize++;
 
                 if (MatchSize >= MinMatchAmount && MatchSize > Match[1]) // This is a good match
@@ -72,6 +73,12 @@ namespace puyo_tools
             }
         }
 
+        // Slide the window to the next block
+        public void SlideBlock()
+        {
+            WindowStart += BlockSize;
+        }
+
         // Remove old entries
         private void RemoveOldEntries(byte index)
         {
@@ -89,9 +96,18 @@ namespace puyo_tools
         {
             WindowSize = size;
         }
+        public void SetMinMatchAmount(int amount)
+        {
+            MinMatchAmount = amount;
+        }
         public void SetMaxMatchAmount(int amount)
         {
             MaxMatchAmount = amount;
+        }
+        public void SetBlockSize(int size)
+        {
+            BlockSize    = size;
+            WindowLength = size; // The window will work in blocks now
         }
 
         // Add entries
