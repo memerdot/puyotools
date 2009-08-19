@@ -220,9 +220,8 @@ namespace puyo_tools
 
                 return CompressedData;
             }
-            catch (Exception e)
+            catch
             {
-                System.Windows.Forms.MessageBox.Show(e.ToString());
                 return null; // An error occured while compressing
             }
         }
