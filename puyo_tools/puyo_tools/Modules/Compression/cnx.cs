@@ -126,7 +126,7 @@ namespace puyo_tools
                     throw new Exception("Input file is too large to compress.");
 
                 // Set up the Lz Compression Dictionary
-                LzCompressionDictionary LzDictionary = new LzCompressionDictionary();
+                LzWindowDictionary LzDictionary = new LzWindowDictionary();
                 LzDictionary.SetBlockSize(0x800);
                 LzDictionary.SetMinMatchAmount(4);
                 LzDictionary.SetMaxMatchAmount(0x1F + 4);

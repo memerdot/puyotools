@@ -19,65 +19,53 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = data.ReadUInt(0x0) >> 8; // Decompressed Size
+                // Compressed & Decompressed Data Information
+                uint CompressedSize   = (uint)data.Length;
+                uint DecompressedSize = data.ReadUInt(0x0) >> 8;
 
-                uint Cpointer = 0x4; // Compressed Pointer
-                uint Dpointer = 0x0; // Decompressed Pointer
+                uint SourcePointer = 0x4;
+                uint DestPointer   = 0x0;
 
-                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+                byte[] CompressedData   = data.ToByteArray();
+                byte[] DecompressedData = new byte[DecompressedSize];
 
-                /* Ok, let's decompress the data */
-                while (Cpointer < compressedSize && Dpointer < decompressedSize)
+                // Start Decompression
+                while (SourcePointer < CompressedSize && DestPointer < DecompressedSize)
                 {
-                    byte Cflag = compressedData[Cpointer];
-                    Cpointer++;
+                    byte Flag = CompressedData[SourcePointer]; // Compression Flag
+                    SourcePointer++;
 
-                    for (int i = 0; i < 8; i++)
+                    for (int i = 7; i >= 0; i--)
                     {
-                        /* Is the data compressed */
-                        //if ((Cflag & (1 << i)) > 0)
-                        if ((Cflag & 0x80) != 0)
+                        if ((Flag & (1 << i)) == 0) // Data is not compressed
                         {
-                            /* Yes it is! */
-                            byte first  = compressedData[Cpointer];
-                            byte second = compressedData[Cpointer + 1];
-                            ushort pos  = (ushort)((((first << 8) + second) & 0xFFF) + 1);
-                            byte amountToCopy = (byte)(3 + ((first >> 4) & 0xF));
-
-                            /* Ok, copy the data now */
-                            for (int j = 0; j < amountToCopy; j++)
-                                decompressedData[Dpointer + j] = decompressedData[Dpointer - pos + (j % pos)];
-
-                            Cpointer += 2;
-                            Dpointer += amountToCopy;
+                            DecompressedData[DestPointer] = CompressedData[SourcePointer];
+                            SourcePointer++;
+                            DestPointer++;
                         }
-                        else
+                        else // Data is compressed
                         {
-                            /* The data is not compressed, so just copy the byte */
-                            decompressedData[Dpointer] = compressedData[Cpointer];
+                            int Distance = (((CompressedData[SourcePointer] & 0xF) << 8) | CompressedData[SourcePointer + 1]) + 1;
+                            int Amount   = (CompressedData[SourcePointer] >> 4) + 3;
+                            SourcePointer += 2;
 
-                            Cpointer++;
-                            Dpointer++;
+                            // Copy the data
+                            for (int j = 0; j < Amount; j++)
+                                DecompressedData[DestPointer + j] = DecompressedData[DestPointer - Distance + j];
+                            DestPointer += (uint)Amount;
                         }
 
-                        /* Did we reach the end? */
-                        if (Cpointer >= compressedSize || Dpointer >= decompressedSize)
+                        // Check for out of range
+                        if (SourcePointer >= CompressedSize || DestPointer >= DecompressedSize)
                             break;
-
-                        Cflag <<= 1;
                     }
                 }
 
-                /* Alright, return the stream now */
-                return new MemoryStream(decompressedData);
+                return new MemoryStream(DecompressedData);
             }
             catch
             {
-                /* Something went wrong */
-                return null;
+                return null; // An error occured while decompressing
             }
         }
 
@@ -99,7 +87,7 @@ namespace puyo_tools
                     throw new Exception("Input file is too large to compress.");
 
                 // Set up the Lz Compression Dictionary
-                LzCompressionDictionary LzDictionary = new LzCompressionDictionary();
+                LzWindowDictionary LzDictionary = new LzWindowDictionary();
                 LzDictionary.SetWindowSize(0x1000);
                 LzDictionary.SetMaxMatchAmount(0xF + 3);
 

@@ -19,102 +19,80 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint compressedSize   = (uint)data.Length; // Compressed Size
-                uint decompressedSize = data.ReadUInt(0x0) >> 8; // Decompressed Size
+                // Compressed & Decompressed Data Information
+                uint CompressedSize   = (uint)data.Length;
+                uint DecompressedSize = data.ReadUInt(0x0) >> 8;
 
-                uint Cpointer = 0x4; // Compressed Pointer
-                uint Dpointer = 0x0; // Decompressed Pointer
+                uint SourcePointer = 0x4;
+                uint DestPointer   = 0x0;
 
-                /* Some files (Let's Tap LZ7 files) may have their decompressed size stored in a different place */
-                if (decompressedSize == 0)
+                if (DecompressedSize == 0) // Next 4 bytes are the decompressed size
                 {
-                    decompressedSize = data.ReadUInt(0x4);
-                    Cpointer = 0x8;
+                    DecompressedSize = data.ReadUInt(0x4);
+                    SourcePointer += 0x4;
                 }
 
-                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+                byte[] CompressedData   = data.ToByteArray();
+                byte[] DecompressedData = new byte[DecompressedSize];
 
-                /* Ok, let's decompress the data */
-                while (Cpointer < compressedSize && Dpointer < decompressedSize)
+                // Start Decompression
+                while (SourcePointer < CompressedSize && DestPointer < DecompressedSize)
                 {
-                    byte Cflag = compressedData[Cpointer];
-                    Cpointer++;
+                    byte Flag = CompressedData[SourcePointer]; // Compression Flag
+                    SourcePointer++;
 
-                    //for (int i = 0; i < 8; i++)
                     for (int i = 7; i >= 0; i--)
                     {
-                        /* Is the data compressed */
-                        if ((Cflag & (1 << i)) > 0)
+                        if ((Flag & (1 << i)) == 0) // Data is not compressed
                         {
-                            /* Yes it is! */
-                            byte first  = compressedData[Cpointer];
-                            byte second = compressedData[Cpointer + 1];
+                            DecompressedData[DestPointer] = CompressedData[SourcePointer];
+                            SourcePointer++;
+                            DestPointer++;
+                        }
+                        else // Data is compressed
+                        {
+                            int Distance;
+                            int Amount;
 
-                            /* How many bytes does the offset & length take up? */
-                            uint pos;
-                            uint amountToCopy;
-                            if (first < 0x20)
+                            // Let's determine how many bytes the distance & length pair take up
+                            switch (CompressedData[SourcePointer] >> 4)
                             {
-                                byte third = compressedData[Cpointer + 2];
+                                case 0: // 3 bytes
+                                    Distance = (((CompressedData[SourcePointer + 1] & 0xF) << 8) | CompressedData[SourcePointer + 2]) + 1;
+                                    Amount   = (((CompressedData[SourcePointer] & 0xF) << 4) | (CompressedData[SourcePointer + 1] >> 4)) + 17;
+                                    SourcePointer += 3;
+                                    break;
 
-                                if (first >= 0x10)
-                                {
-                                    /* 4 bytes */
-                                    byte fourth = compressedData[Cpointer + 3];
+                                case 1: // 4 bytes
+                                    Distance = (((CompressedData[SourcePointer + 2] & 0xF) << 8) | CompressedData[SourcePointer + 3]) + 1;
+                                    Amount   = (((CompressedData[SourcePointer] & 0xF) << 12) | (CompressedData[SourcePointer + 1] << 4) | (CompressedData[SourcePointer + 2] >> 4)) + 273;
+                                    SourcePointer += 4;
+                                    break;
 
-                                    pos          = (uint)(((third & 0xF) << 8) | fourth) + 1;
-                                    amountToCopy = (uint)((second << 4) | ((first & 0xF) << 12) | (third >> 4)) + 273;
-
-                                    Cpointer += 4;
-                                }
-                                else
-                                {
-                                    /* 3 bytes */
-                                    pos          = (uint)(((second & 0xF) << 8) | third) + 1;
-                                    amountToCopy = (uint)(((first & 0xF) << 4) | (second >> 4)) + 17;
-
-                                    Cpointer += 3;
-                                }
-                            }
-                            else
-                            {
-                                /* 2 bytes */
-                                pos          = (uint)(((first & 0xF) << 8) | second) + 1;
-                                amountToCopy = (uint)(first >> 4) + 1;
-
-                                Cpointer += 2;
+                                default: // 2 bytes
+                                    Distance = (((CompressedData[SourcePointer] & 0xF) << 8) | CompressedData[SourcePointer + 1]) + 1;
+                                    Amount   = (CompressedData[SourcePointer] >> 4) + 1;
+                                    SourcePointer += 2;
+                                    break;
                             }
 
-                            /* Ok, copy the data now */
-                            for (int j = 0; j < amountToCopy; j++)
-                                decompressedData[Dpointer + j] = decompressedData[Dpointer - pos + j];
-
-                            Dpointer += amountToCopy;
-                        }
-                        else
-                        {
-                            /* The data is not compressed, so just copy the byte */
-                            decompressedData[Dpointer] = compressedData[Cpointer];
-
-                            Cpointer++;
-                            Dpointer++;
+                            // Copy the data
+                            for (int j = 0; j < Amount; j++)
+                                DecompressedData[DestPointer + j] = DecompressedData[DestPointer - Distance + j];
+                            DestPointer += (uint)Amount;
                         }
 
-                        /* Did we reach the end? */
-                        if (Cpointer >= compressedSize || Dpointer >= decompressedSize)
+                        // Check for out of range
+                        if (SourcePointer >= CompressedSize || DestPointer >= DecompressedSize)
                             break;
                     }
                 }
 
-                /* Alright, return the stream now */
-                return new MemoryStream(decompressedData);
+                return new MemoryStream(DecompressedData);
             }
             catch
             {
-                /* An error occured */
-                return null;
+                return null; // An error occured while decompressing
             }
         }
 
@@ -136,7 +114,7 @@ namespace puyo_tools
                     throw new Exception("Input file is too large to compress.");
 
                 // Set up the Lz Compression Dictionary
-                LzCompressionDictionary LzDictionary = new LzCompressionDictionary();
+                LzWindowDictionary LzDictionary = new LzWindowDictionary();
                 LzDictionary.SetWindowSize(0x1000);
                 LzDictionary.SetMaxMatchAmount(0xFFFF + 273);
 

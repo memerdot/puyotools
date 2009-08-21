@@ -10,7 +10,7 @@ namespace puyo_tools
         public LZ01()
         {
             Name = "LZ01";
-            CanCompress   = false;
+            CanCompress   = true;
             CanDecompress = true;
         }
 
@@ -19,81 +19,60 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint compressedSize   = data.ReadUInt(0x4); // Compressed Size
-                uint decompressedSize = data.ReadUInt(0x8); // Decompressed Size
+                // Compressed & Decompressed Data Information
+                uint CompressedSize   = data.ReadUInt(0x4);
+                uint DecompressedSize = data.ReadUInt(0x8);
 
-                uint Cpointer = 0x10; // Compressed Pointer
-                uint Dpointer = 0x0;  // Decompressed Pointer
+                byte[] CompressedData   = data.ToByteArray();
+                byte[] DecompressedData = new byte[DecompressedSize];
+                byte[] DestBuffer       = new byte[0x1000];
 
-                byte[] compressedData   = data.ReadBytes(0x0, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
+                uint SourcePointer = 0x10;
+                uint DestPointer   = 0x0;
+                uint BufferPointer = 0xFEE;
 
-                /* Ok, let's decompress the data */
-                while (Cpointer < compressedSize && Dpointer < decompressedSize)
+                // Start Decompression
+                while (SourcePointer < CompressedSize && DestPointer < DecompressedSize)
                 {
-                    byte Cflag = compressedData[Cpointer];
-                    Cpointer++;
+                    byte Flag = CompressedData[SourcePointer]; // Compression Flag
+                    SourcePointer++;
 
                     for (int i = 0; i < 8; i++)
                     {
-                        /* Is this data compressed? */
-                        if ((Cflag & (1 << i)) == 0)
+                        if ((Flag & (1 << i)) > 0) // Data is not compressed
                         {
-                            /* Yes it is! */
-                            byte first  = compressedData[Cpointer];
-                            byte second = compressedData[Cpointer + 1];
-                            //int pos     = (first + ((second >> 4) & 0xF) * 256) + 18;
-                            long pos     = ((((second >> 4) & 0xF) << 8) | first) + 18; // Distance
-                            int amountToCopy = (second & 0xF) + 3;
-                            Cpointer += 2;
+                            DecompressedData[DestPointer] = CompressedData[SourcePointer];
+                            DestBuffer[BufferPointer]     = DecompressedData[DestPointer];
+                            SourcePointer++;
+                            DestPointer++;
+                            BufferPointer = (BufferPointer + 1) & 0xFFF;
+                        }
+                        else // Data is compressed
+                        {
+                            int Offset = ((((CompressedData[SourcePointer + 1] >> 4) & 0xF) << 8) | CompressedData[SourcePointer]);
+                            int Amount = (CompressedData[SourcePointer + 1] & 0xF) + 3;
+                            SourcePointer += 2;
 
-                            /* Ok, copy the data now */
-                            for (int j = 0; j < amountToCopy; j++)
+                            for (int j = 0; j < Amount; j++)
                             {
-                                /* Don't continue if our decompressed pointer is out of bounds */
-                                if (Dpointer + j >= decompressedSize)
-                                    break;
-
-                                //int Cpos = (int)(pos + ((Dpointer + j) / 0x1000) * 0x1000);
-                                //int Cpos = (int)(pos + (((Dpointer + j) >> 12) << 12));
-                                //long Cpos = pos + ((Dpointer + j) & 0xFFFFF000);
-                                long Cpos = pos + ((Dpointer + j) & 0xFFFFF000);
-
-                                /* Make sure the pointer is set at a correct position and copy */
-                                if (Cpos >= Dpointer + j)
-                                    Cpos -= 0x1000;
-
-                                if (Cpos < 0)
-                                    decompressedData[Dpointer + j] = 0x0;
-                                else
-                                    decompressedData[Dpointer + j] = decompressedData[Cpos];
-
-                                pos++;
+                                DecompressedData[DestPointer + j] = DestBuffer[(Offset + j) & 0xFFF];
+                                DestBuffer[BufferPointer]         = DecompressedData[DestPointer + j];
+                                BufferPointer = (BufferPointer + 1) & 0xFFF;
                             }
-                            Dpointer += (uint)amountToCopy;
-                        }
-                        else
-                        {
-                            /* The data is not compressed, just copy it */
-                            decompressedData[Dpointer] = compressedData[Cpointer];
-                            Cpointer++;
-                            Dpointer++;
+                            DestPointer += (uint)Amount;
                         }
 
-                        /* Did we reach the end? */
-                        if (Cpointer >= compressedSize || Dpointer >= decompressedSize)
+                        // Check for out of range
+                        if (SourcePointer >= CompressedSize || DestPointer >= DecompressedSize)
                             break;
                     }
                 }
 
-                /* Finished decompression, now return the data */
-                return new MemoryStream(decompressedData);
+                return new MemoryStream(DecompressedData);
             }
             catch
             {
-                /* An error occured */
-                return null;
+                return null; // An error occured while decompressing
             }
         }
 
@@ -102,79 +81,85 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint decompressedSize = (uint)data.Length; // Decompressed Size
+                uint DecompressedSize = (uint)data.Length;
 
-                uint Dpointer = 0x0; // Decompressed Pointer
+                MemoryStream CompressedData = new MemoryStream();
+                byte[] DecompressedData     = data.ToByteArray();
 
-                List<byte> compressedData = new List<byte>(); // Compressed Data
-                byte[] decompressedData   = StreamConverter.ToByteArray(data, 0x0, (int)decompressedSize); // Decompressed Data
+                uint SourcePointer = 0x0;
+                uint DestPointer   = 0x10;
 
-                /* Add the header */
-                compressedData.AddRange(StringConverter.ToByteList(CompressionHeader.LZ01, 4));
+                // Test if the file is too large to be compressed
+                if (data.Length > 0xFFFFFFFF)
+                    throw new Exception("Input file is too large to compress.");
 
-                /* Add the compressed and decompressed size. */
-                compressedData.AddRange(NumberConverter.ToByteList(0)); // Set to 0 for now.
-                compressedData.AddRange(NumberConverter.ToByteList(decompressedSize));
-                compressedData.AddRange(NumberConverter.ToByteList(0));
+                // Set up the Lz Compression Dictionary
+                LzBufferDictionary LzDictionary = new LzBufferDictionary();
+                LzDictionary.SetBufferSize(0x1000);
+                LzDictionary.SetBufferStart(0xFEE);
+                LzDictionary.SetMaxMatchAmount(0xF + 3);
 
-                /* Ok, now let's start creating the compressed data */
-                while (Dpointer < decompressedSize)
+                // Start compression
+                CompressedData.Write("LZ01");
+                CompressedData.Write((uint)0); // Will be filled in later
+                CompressedData.Write(DecompressedSize);
+                CompressedData.Seek(4, SeekOrigin.Current); // Advance 4 bytes
+
+                while (SourcePointer < DecompressedSize)
                 {
-                    byte Cflag = 0;
-                    List<byte> tempList = new List<byte>();
+                    byte Flag = 0x0;
+                    uint FlagPosition = DestPointer;
+                    CompressedData.WriteByte(Flag); // It will be filled in later
+                    DestPointer++;
 
                     for (int i = 0; i < 8; i++)
                     {
-                        /* Let's do a search to see what we can compress */
-                        int[] searchResult = LZsearch(ref decompressedData, Dpointer, decompressedSize);
-
-                        /* Did we get any results? */
-                        if (searchResult[0] > 2)
+                        int[] LzSearchMatch = LzDictionary.Search(DecompressedData, SourcePointer, DecompressedSize);
+                        if (LzSearchMatch[1] > 0) // There is a compression match
                         {
-                            /* Add stuff to our lists */
-                            //byte add = (byte)((((searchResult[0] - 3) & 0xF) << 4) + (((searchResult[1] - 1) >> 8) & 0xF));
-                            byte add = (byte)((searchResult[1] - 18) & 0xFF);
-                            tempList.Add(add);
+                            Flag |= (byte)(0 << i);
 
-                            //add = (byte)((searchResult[1] - 1) & 0xFF);
-                            //add = (byte)((((searchResult[0] - 3) & 0xF)) + (((searchResult[1] - 1) >> 8) & 0xF));
-                            add = (byte)(((((searchResult[1] - 1) >> 8) & 0xF)) + ((searchResult[0] - 3) & 0xF));
-                            tempList.Add(add);
+                            CompressedData.WriteByte((byte)(LzSearchMatch[0] & 0xFF));
+                            CompressedData.WriteByte((byte)(((LzSearchMatch[0] & 0xF00) >> 4) | ((LzSearchMatch[1] - 3) & 0xF)));
 
-                            Dpointer += (uint)searchResult[0];
-                            //Cflag |= (byte)(1 << (7 - i));
+                            LzDictionary.AddEntryRange(DecompressedData, (int)SourcePointer, LzSearchMatch[1]);
+
+                            SourcePointer += (uint)LzSearchMatch[1];
+                            DestPointer   += 2;
                         }
-                        else if (searchResult[0] >= 0)
+                        else // There wasn't a match
                         {
-                            tempList.Add(decompressedData[Dpointer]);
-                            Cflag |= (byte)(1 << i);
-                            Dpointer++;
-                        }
-                        else
-                            break;
+                            Flag |= (byte)(1 << i);
 
-                        /* Check to see if we are out of range */
-                        if (Dpointer >= decompressedSize)
+                            CompressedData.WriteByte(DecompressedData[SourcePointer]);
+
+                            LzDictionary.AddEntry(DecompressedData, (int)SourcePointer);
+
+                            SourcePointer++;
+                            DestPointer++;
+                        }
+
+                        // Check for out of bounds
+                        if (SourcePointer >= DecompressedSize)
                             break;
                     }
 
-                    /* Ok, add our results to the compressed data */
-                    compressedData.Add(Cflag);
-                    compressedData.AddRange(tempList);
+                    // Write the flag.
+                    // Note that the original position gets reset after writing.
+                    CompressedData.Seek(FlagPosition, SeekOrigin.Begin);
+                    CompressedData.WriteByte(Flag);
+                    CompressedData.Seek(DestPointer, SeekOrigin.Begin);
                 }
 
-                /* Let's go back and add the compressed filesize */
-                uint compressedSize = (uint)compressedData.Count;
-                compressedData.RemoveRange(0x4, 4);
-                compressedData.InsertRange(0x4, NumberConverter.ToByteList(compressedSize));
+                CompressedData.Seek(0x4, SeekOrigin.Begin);
+                CompressedData.Write((uint)CompressedData.Length);
+                CompressedData.Seek(0, SeekOrigin.End);
 
-                return new MemoryStream(compressedData.ToArray());
+                return CompressedData;
             }
             catch
             {
-                /* Something went wrong */
-                return null;
+                return null; // An error occured while compressing
             }
         }
 
