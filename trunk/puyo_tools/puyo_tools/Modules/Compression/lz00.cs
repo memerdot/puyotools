@@ -25,14 +25,14 @@ namespace puyo_tools
             {
                 // Compressed & Decompressed Data Information
                 uint CompressedSize   = data.ReadUInt(0x4);
-                uint DecompressedSize = data.ReadUInt(0x8);
+                uint DecompressedSize = data.ReadUInt(0x30);
                 uint MagicValue       = data.ReadUInt(0x34);
 
                 byte[] CompressedData   = data.ToByteArray();
                 byte[] DecompressedData = new byte[DecompressedSize];
                 byte[] DestBuffer       = new byte[0x1000];
 
-                uint SourcePointer = 0x10;
+                uint SourcePointer = 0x40;
                 uint DestPointer   = 0x0;
                 uint BufferPointer = 0xFEE;
 
