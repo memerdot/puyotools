@@ -14,7 +14,7 @@ namespace puyo_tools
         public LZ00()
         {
             Name          = "LZ00";
-            CanCompress   = false;
+            CanCompress   = true;
             CanDecompress = true;
         }
 
@@ -23,168 +23,68 @@ namespace puyo_tools
         {
             try
             {
-                /* Set variables */
-                uint compressedSize   = data.ReadUInt(0x4) - 0x40; // Compressed Size (0x40 = size of header)
-                uint decompressedSize = data.ReadUInt(0x30); // Decompressed Size
+                // Compressed & Decompressed Data Information
+                uint CompressedSize   = data.ReadUInt(0x4);
+                uint DecompressedSize = data.ReadUInt(0x8);
+                uint MagicValue       = data.ReadUInt(0x34);
 
-                uint xValue = data.ReadUInt(0x34); //Magic Value
+                byte[] CompressedData   = data.ToByteArray();
+                byte[] DecompressedData = new byte[DecompressedSize];
+                byte[] DestBuffer       = new byte[0x1000];
 
-                uint Cpointer = 0x0; // Compressed Pointer
-                uint Dpointer = 0x0;  // Decompressed Pointer
+                uint SourcePointer = 0x10;
+                uint DestPointer   = 0x0;
+                uint BufferPointer = 0xFEE;
 
-                byte[] compressedData = data.ReadBytes(0x40, compressedSize); // Compressed Data
-                byte[] decompressedData = new byte[decompressedSize]; // Decompressed Data
-
-                long a2, a3;
-                long v1;
-                long t0, t3, t4, t5;
-
-                byte[] WorkMem = new byte[0x1000];
-
-                //t4 = 0x0fee;
-                t4 = 0;
-                t3 = 0;
-
-                for (; ; )
+                // Start Decompression
+                while (SourcePointer < CompressedSize && DestPointer < DecompressedSize)
                 {
-                    t3 >>= 1;
+                    MagicValue = GetNewMagicValue(MagicValue);
+                    byte Flag = DecryptByte(CompressedData[SourcePointer], MagicValue); // Compression Flag
+                    SourcePointer++;
 
-                    if ((t3 & 0x100) == 0)
+                    for (int i = 0; i < 8; i++)
                     {
-                        if (Cpointer < compressedSize)
+                        if ((Flag & (1 << i)) > 0) // Data is not compressed
                         {
-                            /*a2 = (((((((xValue << 1) + xValue) << 5) - xValue) << 5) + xValue) << 7) - xValue;
-                            a2 = (a2 << 6) - a2;
-                            a2 = (a2 << 4) - a2;
-                            xValue = ((a2 << 2) - a2) + 0x3039;*/
-                            xValue = GetNewMagicValue(xValue);
-
-                            v1 = compressedData[Cpointer];
-                            Cpointer++;
-
-                            /*t0 = ((uint)xValue >> 16) & 0x7fff;
-                            v1 = v1 ^ ((uint)(((t0 << 8) - t0) >> 15));*/
-                            v1 = DecryptByte((byte)v1, xValue);
+                            MagicValue = GetNewMagicValue(MagicValue);
+                            DecompressedData[DestPointer] = DecryptByte(CompressedData[SourcePointer], MagicValue);
+                            DestBuffer[BufferPointer]     = DecompressedData[DestPointer];
+                            SourcePointer++;
+                            DestPointer++;
+                            BufferPointer = (BufferPointer + 1) & 0xFFF;
                         }
-                        else
+                        else // Data is compressed
                         {
-                            v1 = -1;
-                        }
+                            MagicValue      = GetNewMagicValue(MagicValue);
+                            byte PairFirst  = DecryptByte(CompressedData[SourcePointer], MagicValue);
+                            MagicValue      = GetNewMagicValue(MagicValue);
+                            byte PairSecond = DecryptByte(CompressedData[SourcePointer + 1], MagicValue);
 
-                        if (v1 == -1) break;
+                            int Offset = ((((PairSecond >> 4) & 0xF) << 8) | PairFirst);
+                            int Amount = (PairSecond & 0xF) + 3;
+                            SourcePointer += 2;
 
-                        t3 = v1 | 0xff00;
-                    }
-
-                    if ((t3 & 1) == 0)
-                    {
-                        if (Cpointer < compressedSize)
-                        {
-                            /*a2 = (((((((xValue << 1) + xValue) << 5) - xValue) << 5) + xValue) << 7) - xValue;
-                            a2 = (a2 << 6) - a2;
-                            a2 = (a2 << 4) - a2;
-                            xValue = ((a2 << 2) - a2) + 0x3039;*/
-                            xValue = GetNewMagicValue(xValue);
-
-                            v1 = compressedData[Cpointer];
-                            Cpointer++;
-
-                            /*t0 = ((uint)xValue >> 16) & 0x7fff;
-                            v1 = v1 ^ ((uint)((t0 << 8) - t0) >> 15);*/
-                            v1 = DecryptByte((byte)v1, xValue);
-                        }
-                        else
-                        {
-                            v1 = -1;
-                        }
-
-                        if (v1 == -1) break;
-
-                        if (Cpointer < compressedSize)
-                        {
-                            /*a2 = (((((((xValue << 1) + xValue) << 5) - xValue) << 5) + xValue) << 7) - xValue;
-                            a2 = (a2 << 6) - a2;
-                            a2 = (a2 << 4) - a2;
-                            xValue = ((a2 << 2) - a2) + 0x3039;*/
-                            xValue = GetNewMagicValue(xValue);
-
-                            t5 = compressedData[Cpointer];
-                            Cpointer++;
-
-                            /*t0 = ((uint)xValue >> 16) & 0x7fff;
-                            t0 = t5 ^ ((uint)((t0 << 8) - t0) >> 15);*/
-                            t0 = DecryptByte((byte)t5, xValue);
-                        }
-                        else
-                        {
-                            t0 = -1;
-                        }
-
-                        if (t0 == -1) break;
-
-                        t5 = 0;
-                        a3 = (t0 & 0xf) + 2;
-
-                        t0 = v1 | ((t0 & 0xf0) << 4);
-
-                        do
-                        {
-                            a2 = WorkMem[(t0 + t5) & 0xfff];
-
-                            if (Dpointer < decompressedSize)
+                            for (int j = 0; j < Amount; j++)
                             {
-                                decompressedData[Dpointer] = (byte)a2;
-                                Dpointer++;
+                                DecompressedData[DestPointer + j] = DestBuffer[(Offset + j) & 0xFFF];
+                                DestBuffer[BufferPointer]         = DecompressedData[DestPointer + j];
+                                BufferPointer = (BufferPointer + 1) & 0xFFF;
                             }
-
-                            WorkMem[(t4 + 0x0fee) & 0xFFF] = (byte)a2;
-
-                            t5++;
-                            t4 = (t4 + 1) & 0xfff;
-                        } while (t5 <= a3);
-                    }
-                    else
-                    {
-                        if (Cpointer < compressedSize)
-                        {
-                            /*a2 = (((((((xValue << 1) + xValue) << 5) - xValue) << 5) + xValue) << 7) - xValue;
-                            a2 = (a2 << 6) - a2;
-                            a2 = (a2 << 4) - a2;
-                            xValue = ((a2 << 2) - a2) + 0x3039;*/
-                            xValue = GetNewMagicValue(xValue);
-
-                            v1 = compressedData[Cpointer];
-                            Cpointer++;
-
-                            /*t0 = ((uint)xValue >> 16) & 0x7fff;
-                            a2 = v1 ^ ((uint)((t0 << 8) - t0) >> 15);*/
-                            a2 = DecryptByte((byte)v1, xValue);
-                        }
-                        else
-                        {
-                            a2 = -1;
+                            DestPointer += (uint)Amount;
                         }
 
-                        if (a2 == -1) break;
-
-                        if (Dpointer < decompressedSize)
-                        {
-                            decompressedData[Dpointer] = (byte)a2;
-                            Dpointer++;
-                        }
-
-                        WorkMem[(t4 + 0x0fee) & 0xFFF] = (byte)a2;
-
-                        t4 = (t4 + 1) & 0xfff;
+                        // Check for out of range
+                        if (SourcePointer >= CompressedSize || DestPointer >= DecompressedSize)
+                            break;
                     }
                 }
 
-                return new MemoryStream(decompressedData);
+                return new MemoryStream(DecompressedData);
             }
             catch
             {
-                /* An error occured */
-                return null;
+                return null; // An error occured while decompressing
             }
         }
 
@@ -208,9 +108,10 @@ namespace puyo_tools
                     throw new Exception("Input file is too large to compress.");
 
                 // Set up the Lz Compression Dictionary
-                LzCompressionDictionary LzDictionary = new LzCompressionDictionary();
-                LzDictionary.SetWindowSize(0x1000);
-                LzDictionary.SetMaxMatchAmount(0xF + 2);
+                LzBufferDictionary LzDictionary = new LzBufferDictionary();
+                LzDictionary.SetBufferSize(0x1000);
+                LzDictionary.SetBufferStart(0xFEE);
+                LzDictionary.SetMaxMatchAmount(0xF + 3);
 
                 // Start compression
                 CompressedData.Write("LZ00");
@@ -240,12 +141,11 @@ namespace puyo_tools
                             Flag |= (byte)(0 << i);
 
                             MagicValue = GetNewMagicValue(MagicValue);
-                            CompressedData.WriteByte(EncryptByte((byte)((LzSearchMatch[0] - 1) & 0xFF), MagicValue));
+                            CompressedData.WriteByte(EncryptByte((byte)(LzSearchMatch[0] & 0xFF), MagicValue));
                             MagicValue = GetNewMagicValue(MagicValue);
-                            CompressedData.WriteByte(EncryptByte((byte)((((LzSearchMatch[0] - 1) & 0xF00) >> 4) | ((LzSearchMatch[1] - 2) & 0xF)), MagicValue));
+                            CompressedData.WriteByte(EncryptByte((byte)(((LzSearchMatch[0] & 0xF00) >> 4) | ((LzSearchMatch[1] - 3) & 0xF)), MagicValue));
 
                             LzDictionary.AddEntryRange(DecompressedData, (int)SourcePointer, LzSearchMatch[1]);
-                            LzDictionary.SlideWindow(LzSearchMatch[1]);
 
                             SourcePointer += (uint)LzSearchMatch[1];
                             DestPointer   += 2;
@@ -258,7 +158,6 @@ namespace puyo_tools
                             CompressedData.WriteByte(EncryptByte(DecompressedData[SourcePointer], MagicValue));
 
                             LzDictionary.AddEntry(DecompressedData, (int)SourcePointer);
-                            LzDictionary.SlideWindow(1);
 
                             SourcePointer++;
                             DestPointer++;
@@ -297,7 +196,7 @@ namespace puyo_tools
             x = (x << 6) - x;
             x = (x << 4) - x;
 
-            return ((x << 2) - x) + 0x3039;
+            return ((x << 2) - x) + 12345;
         }
 
         // Decrypt & Encrypt bytes (they are the same function really)
