@@ -20,10 +20,10 @@ namespace VrSharp
             {
                 Palette[i] = new byte[4];
 
-                Palette[i][0] = Buf[Pointer + 1];
-                Palette[i][1] = Buf[Pointer];
-                Palette[i][2] = Buf[Pointer];
-                Palette[i][3] = Buf[Pointer];
+                Palette[i][0] = Buf[Pointer];
+                Palette[i][1] = Buf[Pointer + 1];
+                Palette[i][2] = Buf[Pointer + 1];
+                Palette[i][3] = Buf[Pointer + 1];
                 Pointer += 2;
             }
 
