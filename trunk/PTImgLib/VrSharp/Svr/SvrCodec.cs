@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace VrSharp
 {
     // SVR Palette Formats
-    public enum SvrPaletteFormat : byte
+    public enum SvrPixelFormat : byte
     {
         Format08 = 0x08,
         Format09 = 0x09,
@@ -17,6 +17,7 @@ namespace VrSharp
         Format62 = 0x62,
         Format64 = 0x64,
         Format66 = 0x66,
+        Format67 = 0x67,
         Format68 = 0x68,
         Format69 = 0x69,
         Format6A = 0x6A,
@@ -37,7 +38,7 @@ namespace VrSharp
 
     public abstract class SvrPaletteCodec : VrPaletteCodec
     {
-        public SvrPaletteFormat Format;
+        public SvrPixelFormat Format;
     }
 
     public abstract class SvrDataCodec : VrDataCodec
@@ -52,7 +53,7 @@ namespace VrSharp
         {
             Decode = new SvrPaletteDecoder_08();
             Encode = null;
-            Format = SvrPaletteFormat.Format08;
+            Format = SvrPixelFormat.Format08;
         }
     }
     public class SvrPaletteCodec_09 : SvrPaletteCodec
@@ -61,7 +62,7 @@ namespace VrSharp
         {
             Decode = new SvrPaletteDecoder_09();
             Encode = null;
-            Format = SvrPaletteFormat.Format09;
+            Format = SvrPixelFormat.Format09;
         }
     }
 

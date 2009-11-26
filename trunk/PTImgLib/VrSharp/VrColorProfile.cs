@@ -16,100 +16,104 @@ namespace VrSharp
 {
     public class VrColorQuantize
     {
-        public static void QuantizeImage(ref byte[] Data, int Colors, int Bpp)
+        // Quantize the Image (reduce the amount of colors)
+        public byte[] QuantizeImage(ref byte[] Data, int Width, int Height, int Colors, int Bpp)
         {
-            // Data must be compressed data!
-            //OctreeQuantizer Quantizer  = new OctreeQuantizer(Colors, Bpp);
-            //using (Image QuantizedImage = Quantizer.Quantize(ImageConverter))
-            //{
-            //    ImageStream = new MemoryStream();
-            //    QuantizedImage.Save(ImageStream, QuantizedImage.RawFormat);
-            //}
-            //ImageStream.Write(Data, 0, (int)ImageStream.Length);
+            // Initalize the Image Quantizer
+            OctreeQuantizer Quantizer = new OctreeQuantizer(Colors, Bpp);
+            return BitmapToRawImage(Quantizer.Quantize(RawImageToBitmap(Data, Width, Height)));
         }
 
-        /*public static void BuildPalette(ref byte[] Data, int Width, int Height, int Colors, int Bpp, ref byte[][] Palette)
+        // Generate a new palette for the image
+        public byte[][] BuildPalette(ref byte[] Data, int Width, int Height, int Colors, out int[] PaletteMap)
         {
             List<byte[]> PaletteList = new List<byte[]>(Colors);
+            PaletteMap = new int[Width * Height];
 
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    uint Color = BitConverter.ToUInt32(Data, (y * Width) + (x * 4));
+                    byte PixelColorA = Data[(((y * Width) + x) * 4) + 0];
+                    byte PixelColorR = Data[(((y * Width) + x) * 4) + 1];
+                    byte PixelColorG = Data[(((y * Width) + x) * 4) + 2];
+                    byte PixelColorB = Data[(((y * Width) + x) * 4) + 3];
 
-                    if (PaletteList.IndexOf(Color) != -1 && PaletteList.Count < PaletteList.Capacity)
+                    // Add the entry to the list and the map
+                    byte[] PaletteEntry = new byte[] {PixelColorA, PixelColorR, PixelColorG, PixelColorB};
+                    int PaletteEntryIndex = PaletteList.IndexOf(PaletteEntry);
+                    if (PaletteEntryIndex == -1)
                     {
-                        PaletteList.Add(Color);
+                        PaletteMap[(y * Width) + x] = PaletteList.Count;
+                        PaletteList.Add(PaletteEntry);
+                    }
+                    else
+                        PaletteMap[(y * Width) + x] = PaletteEntryIndex;
+
+                    if (PaletteList.Count == Colors) // Did we reach the max amount of colors?
+                    {
+                        x = Width;
+                        y = Height;
+                        break;
                     }
                 }
             }
-        }*/
 
-        public byte[] QuantizedImage;
-        public List<int> NewPalette = new List<int>(256);
-        public VrColorQuantize(ref byte[] Data, int Width, int Height)
+            return PaletteList.ToArray();
+        }
+
+        // Build a Bitmap from ARGB8888 Uncompressed Image Data
+        private Bitmap RawImageToBitmap(byte[] RawImage, int Width, int Height)
         {
-            //Bitmap TmpBmp = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Bitmap Bitmap = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+            BitmapData BitmapData = Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
-            for (int y = 0; y < Height; y++)
+            unsafe // Uh oh, we are doing naughty pointer things ;)
             {
-                for (int x = 0; x < Width; x++)
+                byte* BitmapPointer = (byte*)BitmapData.Scan0;
+                int RowJunkSize = BitmapData.Stride - (BitmapData.Width * 4);
+
+                for (int y = 0; y < Height; y++)
                 {
-                    if ((y * Width + x) * 4 + 4 > Data.Length) break;
-                    int a = Data[(y * Width + x) * 4 + 0];
-                    int r = Data[(y * Width + x) * 4 + 1];
-                    int g = Data[(y * Width + x) * 4 + 2];
-                    int b = Data[(y * Width + x) * 4 + 3];
-                    int argb = a << 24 | r << 16 | g << 8 | b;
-                    for (int i = 0; i < 256; i++)
+                    for (int x = 0; x < Width; x++)
                     {
-                        if (i >= NewPalette.Count)
-                        {
-                            NewPalette.Add(argb);
-                            string ustr = ((uint)argb).ToString("X").PadLeft(8, '0');
-                            //Console.WriteLine("Palette [" + i + "] = " + ustr);
-                        }
-                        if (argb == NewPalette[i])
-                        {
-                            i = 256;
-                        }
+                        BitmapPointer[0] = RawImage[(((y * Width) + x) * 4) + 3];
+                        BitmapPointer[1] = RawImage[(((y * Width) + x) * 4) + 2];
+                        BitmapPointer[2] = RawImage[(((y * Width) + x) * 4) + 1];
+                        BitmapPointer[3] = RawImage[(((y * Width) + x) * 4) + 0];
+                        BitmapPointer += 4;
                     }
-                    //TmpBmp.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+
+                    BitmapPointer += RowJunkSize;
                 }
             }
 
-            /*Quantizer ImgQuant = new OctreeQuantizer(255, 8);
-            Bitmap QuantBmp = ImgQuant.Quantize(TmpBmp);
-            ColorPalette Pal = QuantBmp.Palette;
+            Bitmap.UnlockBits(BitmapData);
+            return Bitmap;
+        }
 
-            QuantizedImage = new byte[QuantBmp.Width * QuantBmp.Height];
+        // Build a RGBA8888 Image from a Bitmap
+        private byte[] BitmapToRawImage(Bitmap Bitmap)
+        {
+            byte[] RawImage = new byte[Bitmap.Width * Bitmap.Height * 4];
 
-
-            for (int i = 0; i < QuantBmp.Palette.Entries.Length; i++)
+            for (int y = 0; y < Bitmap.Height; y++)
             {
-                NewPalette.Add(QuantBmp.Palette.Entries[i].ToArgb());
-            }
-
-            for (int y = 0; y < QuantBmp.Height; y++)
-            {
-                for (int x = 0; x < QuantBmp.Width; x++)
+                for (int x = 0; x < Bitmap.Width; x++)
                 {
-                    int pxc = TmpBmp.GetPixel(x, y).ToArgb();
-                    QuantizedImage[y * QuantBmp.Width + x] = (byte)NewPalette.BinarySearch(pxc);
-                }
-            }*/
-            /*
-            for (int y = 0; y < QuantBmp.Height; y++)
-            {
-                for (int x = 0; x < QuantBmp.Width; x++)
-                {
-                    if (y * Width + x > QuantizedImage.Length) break;
-                    int pxc = QuantBmp.GetPixel(x, y).ToArgb();
-                    QuantizedImage[y * Width + x] = (byte)NewPalette.BinarySearch(pxc);
+                    Color PixelColor = Bitmap.GetPixel(x, y);
+                    RawImage[(((y * Bitmap.Width) + x) * 4) + 0] = PixelColor.A;
+                    RawImage[(((y * Bitmap.Width) + x) * 4) + 1] = PixelColor.R;
+                    RawImage[(((y * Bitmap.Width) + x) * 4) + 2] = PixelColor.G;
+                    RawImage[(((y * Bitmap.Width) + x) * 4) + 3] = PixelColor.B;
                 }
             }
-            */
+
+            return RawImage;
+        }
+
+        public VrColorQuantize()
+        {
         }
     }
 }

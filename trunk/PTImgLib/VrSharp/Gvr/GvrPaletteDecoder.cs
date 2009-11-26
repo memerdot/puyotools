@@ -6,12 +6,12 @@ namespace VrSharp
     {
     }
 
-    // Format 02 (8-bit Lum with Alpha)
-    public class GvrPaletteDecoder_02 : GvrPaletteDecoder
+    // Format 00 (8-bit Lum with Alpha)
+    public class GvrPaletteDecoder_00 : GvrPaletteDecoder
     {
         public override int GetBpp()
         {
-            return 8;
+            return 16;
         }
 
         public override bool DecodePalette(ref byte[] Buf, int Pointer, int Colors, ref byte[][] Palette)
@@ -20,19 +20,19 @@ namespace VrSharp
             {
                 Palette[i] = new byte[4];
 
-                Palette[i][0] = (byte)((Buf[Pointer] >> 4)  * 0xFF / 0xF);
-                Palette[i][1] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
-                Palette[i][2] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
-                Palette[i][3] = (byte)((Buf[Pointer] & 0xF) * 0xFF / 0xF);
-                Pointer++;
+                Palette[i][0] = Buf[Pointer + 1];
+                Palette[i][1] = Buf[Pointer];
+                Palette[i][2] = Buf[Pointer];
+                Palette[i][3] = Buf[Pointer];
+                Pointer += 2;
             }
 
             return true;
         }
     }
 
-    // Format 18 (RGB565)
-    public class GvrPaletteDecoder_18 : GvrPaletteDecoder
+    // Format 01 (RGB565)
+    public class GvrPaletteDecoder_01 : GvrPaletteDecoder
     {
         public override int GetBpp()
         {
@@ -60,8 +60,8 @@ namespace VrSharp
         }
     }
 
-    // Format 28 (RGB5A3)
-    public class GvrPaletteDecoder_28 : GvrPaletteDecoder
+    // Format 02 (RGB5A3)
+    public class GvrPaletteDecoder_02 : GvrPaletteDecoder
     {
         public override int GetBpp()
         {

@@ -110,7 +110,7 @@ namespace puyo_tools
                 uint DestPointer   = 0x4;
 
                 // Test if the file is too large to be compressed
-                if (data.Length > (1L << 32))
+                if (data.Length > 0xFFFFFFFF)
                     throw new Exception("Input file is too large to compress.");
 
                 // Set up the Lz Compression Dictionary
@@ -119,7 +119,7 @@ namespace puyo_tools
                 LzDictionary.SetMaxMatchAmount(0xFFFF + 273);
 
                 // Figure out where we are going to write the decompressed file size
-                if (data.Length < (1 << 24))
+                if (data.Length <= 0xFFFFFF)
                     CompressedData.Write((uint)('\x11' | (DecompressedSize << 8)));
                 else
                 {

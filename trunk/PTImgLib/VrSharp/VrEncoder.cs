@@ -54,7 +54,7 @@ namespace VrSharp
         abstract public bool EncodeChunk(ref byte[] Output, ref int OutPtr, ref byte[] Input, int x1, int y1);
     }
 
-    public class VrEncoder_00001809 : VrEncoder
+    /*public class VrEncoder_00001809 : VrEncoder
     {
         private byte[][] PaletteARGB = new byte[256][];
         private bool Initialized = false;
@@ -68,7 +68,7 @@ namespace VrSharp
             for (int i = 0; i < 256; i++)
             {
                 PaletteARGB[i] = new byte[4];
-                if (i >= ImgQuantize.NewPalette.Count) { /*Console.WriteLine("No palette entry for " + i);*/ continue; }
+                if (i >= ImgQuantize.NewPalette.Count) { Console.WriteLine("No palette entry for " + i); continue; }
                 PaletteARGB[i][0] = (byte)(ImgQuantize.NewPalette[i] >> 24 & 0xFF);
                 PaletteARGB[i][1] = (byte)(ImgQuantize.NewPalette[i] >> 16 & 0xFF);
                 PaletteARGB[i][2] = (byte)(ImgQuantize.NewPalette[i] >> 8 & 0xFF);
@@ -121,11 +121,11 @@ namespace VrSharp
                 for (int i = 0; i < 256; i++)
                 {
                     ColorConversions.GetRgb565(ref Data, Pointer, ref PaletteARGB[i], 0);
-                    /*swap16((ushort)(AuxData[Pointer] + AuxData[Pointer + 1] * 256));
-                    PaletteARGB[i][0] = 0xFF;
-                    PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
-                    PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
-                    PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));*/
+                    //swap16((ushort)(AuxData[Pointer] + AuxData[Pointer + 1] * 256));
+                    //PaletteARGB[i][0] = 0xFF;
+                    //PaletteARGB[i][1] = (byte)((((entry) >> 8) & 0xf8) | ((entry) >> 13));
+                    //PaletteARGB[i][2] = (byte)((((entry) >> 3) & 0xfc) | (((entry) >> 9) & 0x03));
+                    //PaletteARGB[i][3] = (byte)((((entry) << 3) & 0xf8) | (((entry) >> 2) & 0x07));
                     Pointer += 2;
                 }
             }
@@ -163,5 +163,5 @@ namespace VrSharp
             }
             return true;
         }
-    }
+    }*/
 }
