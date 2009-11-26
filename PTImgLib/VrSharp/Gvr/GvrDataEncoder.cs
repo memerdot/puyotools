@@ -40,7 +40,7 @@ namespace VrSharp
                 throw new Exception("Width and Height must be a power of 2.");
 
             // Quantitize this image
-            VrColorQuantize.QuantizeImage(ref Input, Palette.Length, GetChunkBpp());
+            //VrColorQuantize.QuantizeImage(ref Input, Palette.Length, GetChunkBpp());
 
             init = true;
             return true;

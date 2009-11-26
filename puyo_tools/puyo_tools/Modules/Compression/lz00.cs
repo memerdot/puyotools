@@ -115,7 +115,7 @@ namespace puyo_tools
 
                 // Start compression
                 CompressedData.Write("LZ00");
-                CompressedData.Write((uint)0); // Will be filled in later
+                CompressedData.Write(0u); // Will be filled in later
                 CompressedData.Seek(8, SeekOrigin.Current); // Advance 8 bytes
 
                 CompressedData.Write(filename, 31, 32);

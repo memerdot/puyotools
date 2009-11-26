@@ -201,7 +201,8 @@ namespace VrSharp
                     VrFileOffset = 0x10;
 
 
-                VrPixelFormatCode = Compressed[0xA + VrFileOffset];
+                //VrPixelFormatCode = Compressed[0xA + VrFileOffset];
+                VrPixelFormatCode = (byte)(Compressed[0xA + VrFileOffset] >> 4); // Only the left 4 bits matter
                 VrDataFormatCode  = Compressed[0xB + VrFileOffset];
 
                 VrPixelCodec = GvrCodecs.GetPaletteCodec(VrPixelFormatCode);
@@ -502,6 +503,81 @@ namespace VrSharp
                 if (FileContents[i + Position] != Magic[i]) return false;
 
             return true;
+        }
+
+        // public bool NeedExternalPaletteFile()
+        // Return Value: True if the file needs an external palette file
+        //               False if not.
+        // Description: This function allows you to check if the Vr file needs an external palette file
+        public bool NeedExternalPaletteFile(byte[] Compressed)
+        {
+            if (Compressed == null)
+            {
+                throw new ArgumentException("SetCompressedData: Argument 1, 'Compressed', Can not be null.");
+            }
+            else
+            {
+                CompressedData = Compressed;
+            }
+            if (!IsGvr() && !IsPvr() && !IsSvr()) throw new NotVrException("The file sent to SetCompressedData() is not a Vr file.");
+
+            // Get the pixel & data format based on which Vr format we are using
+            if (IsGvr())
+            {
+                if (IsMagic(Compressed, GvrtMagic, 0x0))
+                    VrFileOffset = 0x0;
+                else
+                    VrFileOffset = 0x10;
+
+                VrPixelFormatCode = Compressed[0xA + VrFileOffset];
+                VrDataFormatCode  = Compressed[0xB + VrFileOffset];
+
+                VrPixelCodec = GvrCodecs.GetPaletteCodec(VrPixelFormatCode);
+                VrDataCodec  = GvrCodecs.GetDataCodec(VrDataFormatCode);
+
+                if (VrPixelCodec == null || VrDataCodec == null)
+                    return false;
+
+                return (VrDataCodec.Decode.NeedExternalPalette());
+            }
+            else if (IsPvr())
+            {
+                if (IsMagic(Compressed, PvrtMagic, 0x0))
+                    VrFileOffset = 0x0;
+                else
+                    VrFileOffset = 0x10;
+
+                VrPixelFormatCode = Compressed[0x8 + VrFileOffset];
+                VrDataFormatCode  = Compressed[0x9 + VrFileOffset];
+
+                VrPixelCodec = PvrCodecs.GetPixelCodec(VrPixelFormatCode);
+                VrDataCodec  = PvrCodecs.GetDataCodec(VrDataFormatCode);
+
+                if (VrPixelCodec == null || VrDataCodec == null)
+                    return false;
+
+                return (VrDataCodec.Decode.NeedExternalPalette());
+            }
+            else if (IsSvr())
+            {
+                if (IsMagic(Compressed, PvrtMagic, 0x0))
+                    VrFileOffset = 0x0;
+                else
+                    VrFileOffset = 0x10;
+
+                VrPixelFormatCode = Compressed[0x8 + VrFileOffset];
+                VrDataFormatCode  = Compressed[0x9 + VrFileOffset];
+
+                VrPixelCodec = SvrCodecs.GetPaletteCodec(VrPixelFormatCode);
+                VrDataCodec  = SvrCodecs.GetDataCodec(VrDataFormatCode);
+
+                if (VrPixelCodec == null || VrDataCodec == null)
+                    return false;
+
+                return (VrDataCodec.Decode.NeedExternalPalette());
+            }
+
+            return false;
         }
 
         public VrFormat GetFormatCode()

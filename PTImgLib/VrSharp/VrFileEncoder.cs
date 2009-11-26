@@ -146,20 +146,20 @@ namespace VrSharp
 
     public class SvrFileEncoder : VrFileEncoder
     {
-        private SvrPaletteFormat SvrPaletteFormat;
+        private SvrPixelFormat SvrPixelFormat;
         private SvrDataFormat SvrDataFormat;
         private VrPaletteEncoder SvrPaletteEncoder;
         private VrDataEncoder SvrDataEncoder;
 
         // Converts a bitmap to a PVR with the specified palette and data format and other options
-        public SvrFileEncoder(byte[] BitmapFile, int Width, int Height, SvrPaletteFormat PaletteFormat, SvrDataFormat DataFormat, bool GbixHeader, uint GlobalIndex)
+        public SvrFileEncoder(byte[] BitmapFile, int Width, int Height, SvrPixelFormat PaletteFormat, SvrDataFormat DataFormat, bool GbixHeader, uint GlobalIndex)
         {
             if (BitmapFile == null)
             {
                 throw new ArgumentException("SvrFileEncoder(byte[]): Argument 1, 'BitmapFile', Can not be null.");
             }
 
-            SvrPaletteFormat    = PaletteFormat;
+            SvrPixelFormat    = PaletteFormat;
             SvrDataFormat       = DataFormat;
             VrPaletteFormatCode = (byte)PaletteFormat;
             VrDataFormatCode    = (byte)DataFormat;

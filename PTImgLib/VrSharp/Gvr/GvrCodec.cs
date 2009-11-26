@@ -9,8 +9,8 @@ namespace VrSharp
         Format00 = 0x00,
         Format01 = 0x01,
         Format02 = 0x02,
-        Format18 = 0x18,
-        Format28 = 0x28,
+        //Format18 = 0x18,
+        //Format28 = 0x28,
     }
 
     // GVR Data Formats
@@ -42,7 +42,7 @@ namespace VrSharp
     {
         public GvrPaletteCodec_00()
         {
-            Decode = null;
+            Decode = new GvrPaletteDecoder_00();
             Encode = null;
             Format = GvrPaletteFormat.Format00;
         }
@@ -51,7 +51,7 @@ namespace VrSharp
     {
         public GvrPaletteCodec_01()
         {
-            Decode = null;
+            Decode = new GvrPaletteDecoder_01();
             Encode = null;
             Format = GvrPaletteFormat.Format01;
         }
@@ -60,12 +60,12 @@ namespace VrSharp
     {
         public GvrPaletteCodec_02()
         {
-            Decode = null;
+            Decode = new GvrPaletteDecoder_02();
             Encode = null;
             Format = GvrPaletteFormat.Format02;
         }
     }
-   public class GvrPaletteCodec_18 : GvrPaletteCodec
+    /*public class GvrPaletteCodec_18 : GvrPaletteCodec
     {
         public GvrPaletteCodec_18()
         {
@@ -82,7 +82,7 @@ namespace VrSharp
             Encode = null;
             Format = GvrPaletteFormat.Format28;
         }
-    }
+    }*/
 
     // GVR Data Format Classes
     public class GvrDataCodec_00 : GvrDataCodec
@@ -183,11 +183,11 @@ namespace VrSharp
             GvrPaletteCodecs.Add(0x00, new GvrPaletteCodec_00());
             GvrPaletteCodecs.Add(0x01, new GvrPaletteCodec_01());
             GvrPaletteCodecs.Add(0x02, new GvrPaletteCodec_02());
-            GvrPaletteCodecs.Add(0x08, new GvrPaletteCodec_01());
-            GvrPaletteCodecs.Add(0x09, new GvrPaletteCodec_01());
-            GvrPaletteCodecs.Add(0x18, new GvrPaletteCodec_18());
-            GvrPaletteCodecs.Add(0x19, new GvrPaletteCodec_18());
-            GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
+            //GvrPaletteCodecs.Add(0x08, new GvrPaletteCodec_01());
+            //GvrPaletteCodecs.Add(0x09, new GvrPaletteCodec_01());
+            //GvrPaletteCodecs.Add(0x18, new GvrPaletteCodec_18());
+            //GvrPaletteCodecs.Add(0x19, new GvrPaletteCodec_18());
+            //GvrPaletteCodecs.Add(0x28, new GvrPaletteCodec_28());
 
             // Add the Data Formats
             GvrDataCodecs.Add(0x00, new GvrDataCodec_00());

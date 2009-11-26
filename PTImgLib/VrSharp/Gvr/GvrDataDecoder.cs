@@ -262,7 +262,7 @@ namespace VrSharp
         {
             width  = Width;
             height = Height;
-            paletteDecoder = GvrCodecs.GetPaletteCodec(0x18).Decode; // Force RGB565
+            paletteDecoder = GvrCodecs.GetPaletteCodec(0x01).Decode; // Force RGB565
             init = true;
 
             return true;
@@ -336,7 +336,7 @@ namespace VrSharp
         {
             width  = Width;
             height = Height;
-            paletteDecoder = GvrCodecs.GetPaletteCodec(0x28).Decode; // Force RGB5A3
+            paletteDecoder = GvrCodecs.GetPaletteCodec(0x02).Decode; // Force RGB5A3
             init = true;
 
             return true;
@@ -639,7 +639,7 @@ namespace VrSharp
         {
             width  = Width;
             height = Height;
-            paletteDecoder = GvrCodecs.GetPaletteCodec(0x18).Decode; // Force RGB565
+            paletteDecoder = GvrCodecs.GetPaletteCodec(0x01).Decode; // Force RGB565
             init = true;
 
             return true;

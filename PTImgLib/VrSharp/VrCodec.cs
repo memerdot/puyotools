@@ -85,7 +85,8 @@ namespace VrSharp
     {
         public VrCodec_00001809()
         {
-            Encode = new VrEncoder_00001809();
+            Encode = null;
+            //Encode = new VrEncoder_00001809();
             Format = VrFormat.Fmt00001809;
         }
     }
