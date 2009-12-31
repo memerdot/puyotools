@@ -41,9 +41,59 @@ namespace VrSharp.PvrTexture
 
             public override byte[] Compress(byte[] input, int DataOffset, VrPixelCodec PixelCodec, VrDataCodec DataCodec)
             {
-                byte[] output = new byte[0];
+                // We can't compress 4-bit textures
+                if (DataCodec.GetBpp(PixelCodec) < 8)
+                    return input;
 
-                return output;
+                MemoryStream output = new MemoryStream();
+                int SourcePointer   = DataOffset;
+                int DestPointer     = DataOffset + 4;
+                int PixelSize = (DataCodec.GetBpp(PixelCodec) / 8);
+
+                using (BinaryWriter Writer = new BinaryWriter(output))
+                {
+                    Writer.Write(input.Length); // Decompressed filesize
+                    Writer.Write(input, 0x00, DataOffset); // Header
+
+                    while (SourcePointer < input.Length)
+                    {
+                        byte[] pixel = new byte[PixelSize];
+                        Array.Copy(input, SourcePointer, pixel, 0x00, PixelSize);
+                        Writer.Write(pixel);
+                        SourcePointer += PixelSize;
+                        DestPointer   += PixelSize;
+
+                        int repeat = 0;
+                        while (SourcePointer + PixelSize < input.Length && repeat < 255)
+                        {
+                            bool match =true;
+
+                            for (int i = 0; i < PixelSize && match; i++)
+                            {
+                                if (input[SourcePointer + i] != pixel[i])
+                                {
+                                    match = false;
+                                    break;
+                                }
+                            }
+
+                            if (match)
+                            {
+                                repeat++;
+                                SourcePointer += PixelSize;
+                            }
+                            else
+                                break;
+                        }
+
+                        Writer.Write((byte)repeat);
+                        DestPointer++;
+                    }
+
+                    Writer.Flush();
+                }
+
+                return output.ToArray();
             }
         }
         #endregion

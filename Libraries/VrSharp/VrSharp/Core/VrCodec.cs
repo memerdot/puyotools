@@ -25,8 +25,16 @@ namespace VrSharp
 
         // Gets the clut for this pixel format and returns it as Argb8888
         public abstract byte[,] GetClut(byte[] input, int offset, int entries);
+        // Create the clut for this pixel format
+        public virtual byte[] CreateClut(byte[,] input) { return null; }
         // Converts the entry for the pixel format to Argb8888
         public virtual byte[] GetPixelPalette(byte[] input, int offset)
+        {
+            return null;
+        }
+
+        // Converts the entry from Argb8888 to the pixel format entry
+        public virtual byte[] CreatePixelPalette(byte[] input, int offset)
         {
             return null;
         }

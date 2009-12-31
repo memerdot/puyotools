@@ -20,8 +20,8 @@ namespace VrSharp.GvrTexture
         Rgb565      = 0x04,
         Rgb5a3      = 0x05,
         Argb8888    = 0x06,
-        Index4      = 0x07,
-        Index8      = 0x08,
+        Index4      = 0x08,
+        Index8      = 0x09,
         Dxt1        = 0x0E,
     }
 

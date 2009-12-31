@@ -8,8 +8,8 @@ namespace VrSharp.GvrTexture
         // Intensity 8-bit with Alpha
         public class IntensityA8 : GvrPixelCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp()     { return 16; }
 
             public override byte[,] GetClut(byte[] input, int offset, int entries)
@@ -28,6 +28,22 @@ namespace VrSharp.GvrTexture
 
                 return clut;
             }
+
+            public override byte[] CreateClut(byte[,] input)
+            {
+                int offset = 0;
+                byte[] clut = new byte[input.GetLength(0) * (GetBpp() / 8)];
+
+                for (int i = 0; i < input.GetLength(0); i++)
+                {
+                    clut[offset + 0] = input[i, 3];
+                    clut[offset + 1] = (byte)((0.30 * input[i, 2]) + (0.59 * input[i, 1]) + (0.11 * input[i, 0]));
+
+                    offset += (GetBpp() / 8);
+                }
+
+                return clut;
+            }
         }
         #endregion
 
@@ -35,8 +51,8 @@ namespace VrSharp.GvrTexture
         // Rgb565
         public class Rgb565 : GvrPixelCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp() { return 16; }
 
             public override byte[,] GetClut(byte[] input, int offset, int entries)
@@ -57,6 +73,25 @@ namespace VrSharp.GvrTexture
 
                 return clut;
             }
+
+            public override byte[] CreateClut(byte[,] input)
+            {
+                int offset = 0;
+                byte[] clut = new byte[input.GetLength(0) * (GetBpp() / 8)];
+
+                for (int i = 0; i < input.GetLength(0); i++)
+                {
+                    ushort pixel = 0x0000;
+                    pixel |= (ushort)(((input[i, 2] * 0x1F / 0xFF) & 0x1F) << 11);
+                    pixel |= (ushort)(((input[i, 1] * 0x3F / 0xFF) & 0x3F) << 5);
+                    pixel |= (ushort)(((input[i, 0] * 0x1F / 0xFF) & 0x1F) << 0);
+
+                    BitConverter.GetBytes(SwapUShort(pixel)).CopyTo(clut, offset);
+                    offset += (GetBpp() / 8);
+                }
+
+                return clut;
+            }
         }
         #endregion
 
@@ -64,8 +99,8 @@ namespace VrSharp.GvrTexture
         // Rgb5a3
         public class Rgb5a3 : GvrPixelCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp() { return 16; }
 
             public override byte[,] GetClut(byte[] input, int offset, int entries)
@@ -92,6 +127,37 @@ namespace VrSharp.GvrTexture
                     }
 
                     offset += 2;
+                }
+
+                return clut;
+            }
+
+            public override byte[] CreateClut(byte[,] input)
+            {
+                int offset = 0;
+                byte[] clut = new byte[input.GetLength(0) * (GetBpp() / 8)];
+
+                for (int i = 0; i < input.GetLength(0); i++)
+                {
+                    ushort pixel = 0x0000;
+
+                    if (input[i, 3] <= 0xDA) // Argb3444
+                    {
+                        pixel |= (ushort)(((input[i, 3] * 0x07 / 0xFF) & 0x07) << 12);
+                        pixel |= (ushort)(((input[i, 2] * 0x0F / 0xFF) & 0x0F) << 8);
+                        pixel |= (ushort)(((input[i, 1] * 0x0F / 0xFF) & 0x0F) << 4);
+                        pixel |= (ushort)(((input[i, 0] * 0x0F / 0xFF) & 0x0F) << 0);
+                    }
+                    else // Rgb555
+                    {
+                        pixel |= 0x8000;
+                        pixel |= (ushort)(((input[i, 2] * 0x1F / 0xFF) & 0x1F) << 10);
+                        pixel |= (ushort)(((input[i, 1] * 0x1F / 0xFF) & 0x1F) << 5);
+                        pixel |= (ushort)(((input[i, 0] * 0x1F / 0xFF) & 0x1F) << 0);
+                    }
+
+                    BitConverter.GetBytes(SwapUShort(pixel)).CopyTo(clut, offset);
+                    offset += (GetBpp() / 8);
                 }
 
                 return clut;

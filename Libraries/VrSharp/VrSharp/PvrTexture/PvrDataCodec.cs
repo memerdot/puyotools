@@ -8,8 +8,8 @@ namespace VrSharp.PvrTexture
         // Square Twiddled
         public class SquareTwiddled : PvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return PixelCodec.GetBpp(); }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -36,9 +36,21 @@ namespace VrSharp.PvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                byte[] output = new byte[width * height * (GetBpp(PixelCodec) / 8)];
+                TwiddledMap TwiddledMap = new TwiddledMap(width, GetBpp(PixelCodec));
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        byte[] palette = PixelCodec.CreatePixelPalette(input, (((y * width) + x) * 4));
+                        palette.CopyTo(output, TwiddledMap.GetTwiddledOffset(x, y));
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -213,6 +225,7 @@ namespace VrSharp.PvrTexture
             public override bool CanDecode() { return true;  }
             public override bool CanEncode() { return false; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 4; }
+            public override int GetNumClutEntries()  { return 16; }
             public override bool NeedsExternalClut() { return true; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -264,6 +277,7 @@ namespace VrSharp.PvrTexture
             public override bool CanDecode() { return true;  }
             public override bool CanEncode() { return false; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
+            public override int GetNumClutEntries()  { return 256; }
             public override bool NeedsExternalClut() { return true; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -310,8 +324,8 @@ namespace VrSharp.PvrTexture
         // Rectangle
         public class Rectangle : PvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return PixelCodec.GetBpp(); }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -336,9 +350,23 @@ namespace VrSharp.PvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset    = 0;
+                byte[] output = new byte[width * height * (GetBpp(PixelCodec) / 8)];
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        byte[] palette = PixelCodec.CreatePixelPalette(input, (((y * width) + x) * 4));
+                        palette.CopyTo(output, offset);
+
+                        offset += (GetBpp(PixelCodec) / 8);
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -347,8 +375,8 @@ namespace VrSharp.PvrTexture
         // Rectangle Twiddled
         public class RectangleTwiddled : PvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return PixelCodec.GetBpp(); }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -384,9 +412,34 @@ namespace VrSharp.PvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset    = 0;
+                byte[] output = new byte[width * height * (GetBpp(PixelCodec) / 8)];
+                int ChunkSize = Math.Min(width, height);
+
+                TwiddledMap TwiddledMap = new TwiddledMap(width, GetBpp(PixelCodec));
+
+                for (int y = 0; y < height; y += ChunkSize)
+                {
+                    for (int x = 0; x < width; x += ChunkSize)
+                    {
+                        int StartOffset = offset;
+
+                        for (int y2 = 0; y2 < ChunkSize; y2++)
+                        {
+                            for (int x2 = 0; x2 < ChunkSize; x2++)
+                            {
+                                byte[] palette = PixelCodec.CreatePixelPalette(input, ((((y + y2) * width) + (x + x2)) * 4));
+                                palette.CopyTo(output, StartOffset + TwiddledMap.GetTwiddledOffset(x2, y2));
+
+                                offset += (GetBpp(PixelCodec) / 8);
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
