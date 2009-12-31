@@ -8,8 +8,8 @@ namespace VrSharp.GvrTexture
         // Intensity 4-bit
         public class Intensity4 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 4; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -24,14 +24,14 @@ namespace VrSharp.GvrTexture
                         {
                             for (int x2 = 0; x2 < 8; x2++)
                             {
-                                byte entry = (byte)((input[offset] >> ((x & 0x01) * 4)) & 0x0F);
+                                byte entry = (byte)((input[offset] >> ((~x2 & 0x01) * 4)) & 0x0F);
 
-                                output[((((y + y2) * width) + (x + x2)) * 4) + 3] = (byte)(entry * 0xFF / 0x0F);
+                                output[((((y + y2) * width) + (x + x2)) * 4) + 3] = 0xFF;
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 2] = (byte)(entry * 0xFF / 0x0F);
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 1] = (byte)(entry * 0xFF / 0x0F);
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 0] = (byte)(entry * 0xFF / 0x0F);
 
-                                if ((x & 0x01) != 0)
+                                if ((x2 & 0x01) != 0)
                                     offset++;
                             }
                         }
@@ -43,7 +43,31 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[(width * height) / 2];
+
+                for (int y = 0; y < height; y += 8)
+                {
+                    for (int x = 0; x < width; x += 8)
+                    {
+                        for (int y2 = 0; y2 < 8; y2++)
+                        {
+                            for (int x2 = 0; x2 < 8; x2++)
+                            {
+                                int loc    = ((y + y2) * width) + (x + x2);
+                                byte entry = (byte)(((0.30 * input[loc + 2]) + (0.59 * input[loc + 1]) + (0.11 * input[loc + 0])) * 0x0F / 0xFF);
+                                entry      = (byte)((output[offset] & (0x0F << (x2 & 0x01) * 4)) | (entry << ((~x2 & 0x01) * 4)));
+
+                                output[offset] = entry;
+
+                                if ((x2 & 0x01) != 0)
+                                    offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -52,8 +76,8 @@ namespace VrSharp.GvrTexture
         // Intensity 8-bit
         public class Intensity8 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -68,7 +92,7 @@ namespace VrSharp.GvrTexture
                         {
                             for (int x2 = 0; x2 < 8; x2++)
                             {
-                                output[((((y + y2) * width) + (x + x2)) * 4) + 3] = input[offset];
+                                output[((((y + y2) * width) + (x + x2)) * 4) + 3] = 0xFF;
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 2] = input[offset];
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 1] = input[offset];
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 0] = input[offset];
@@ -84,7 +108,28 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[width * height];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 8)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 8; x2++)
+                            {
+                                int loc    = ((y + y2) * width) + (x + x2);
+                                byte entry = (byte)((0.30 * input[loc + 2]) + (0.59 * input[loc + 1]) + (0.11 * input[loc + 0]));
+
+                                output[offset] = entry;
+                                offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -93,8 +138,8 @@ namespace VrSharp.GvrTexture
         // Intensity 4-bit with Alpha
         public class IntensityA4 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -125,7 +170,29 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[width * height];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 8)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 8; x2++)
+                            {
+                                int loc    = ((y + y2) * width) + (x + x2);
+                                byte entry = (byte)(((0.30 * input[loc + 2]) + (0.59 * input[loc + 1]) + (0.11 * input[loc + 0])) * 0x0F / 0xFF);
+                                entry      = (byte)(((((input[loc + 3]) * 0x0F / 0xFF) & 0x0F) << 4) | (entry & 0x0F));
+
+                                output[offset] = entry;
+                                offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -134,8 +201,8 @@ namespace VrSharp.GvrTexture
         // Intensity 8-bit with Alpha
         public class IntensityA8 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 16; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -166,7 +233,29 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[width * height * 2];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 4)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 4; x2++)
+                            {
+                                int loc    = ((y + y2) * width) + (x + x2);
+                                byte entry = (byte)((0.30 * input[loc + 2]) + (0.59 * input[loc + 1]) + (0.11 * input[loc + 0]));
+
+                                output[offset + 0] = input[loc + 3];
+                                output[offset + 1] = entry;
+                                offset += 2;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -175,8 +264,8 @@ namespace VrSharp.GvrTexture
         // Rgb565
         public class Rgb565 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 16; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -209,7 +298,30 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset    = 0;
+                byte[] output = new byte[width * height * 2];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 4)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 4; x2++)
+                            {
+                                ushort pixel = 0x0000;
+                                pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 2] * 0x1F / 0xFF) & 0x1F) << 11);
+                                pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 1] * 0x3F / 0xFF) & 0x3F) << 5);
+                                pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 0] * 0x1F / 0xFF) & 0x1F) << 0);
+
+                                BitConverter.GetBytes(SwapUShort(pixel)).CopyTo(output, offset);
+                                offset += 2;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -218,8 +330,8 @@ namespace VrSharp.GvrTexture
         // Rgb5a3
         public class Rgb5a3 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 16; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -262,7 +374,42 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset    = 0;
+                byte[] output = new byte[width * height * 4];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 4)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 4; x2++)
+                            {
+                                ushort pixel = 0x0000;
+
+                                if (input[((((y + y2) * width) + (x + x2)) * 4) + 3] <= 0xDA) // Argb3444
+                                {
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 3] * 0x07 / 0xFF) & 0x07) << 12);
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 2] * 0x0F / 0xFF) & 0x0F) << 8);
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 1] * 0x0F / 0xFF) & 0x0F) << 4);
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 0] * 0x0F / 0xFF) & 0x0F) << 0);
+                                }
+                                else // Rgb555
+                                {
+                                    pixel |= 0x8000;
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 2] * 0x1F / 0xFF) & 0x1F) << 10);
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 1] * 0x1F / 0xFF) & 0x1F) << 5);
+                                    pixel |= (ushort)(((input[((((y + y2) * width) + (x + x2)) * 4) + 0] * 0x1F / 0xFF) & 0x1F) << 0);
+                                }
+
+                                BitConverter.GetBytes(SwapUShort(pixel)).CopyTo(output, offset);
+                                offset += 2;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -271,8 +418,8 @@ namespace VrSharp.GvrTexture
         // Argb8888
         public class Argb8888 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 32; }
 
             public override byte[] Decode(byte[] input, int offset, int width, int height, VrPixelCodec PixelCodec)
@@ -305,7 +452,7 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                int offset = 0;
+                int offset    = 0;
                 byte[] output = new byte[width * height * 4];
 
                 for (int y = 0; y < height; y += 4)
@@ -338,8 +485,8 @@ namespace VrSharp.GvrTexture
         // 4-bit Texture with Clut
         public class Index4 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 4; }
             public override int GetNumClutEntries() { return 16; }
 
@@ -356,14 +503,14 @@ namespace VrSharp.GvrTexture
                         {
                             for (int x2 = 0; x2 < 8; x2++)
                             {
-                                byte entry = (byte)((input[offset] >> ((x & 0x01) * 4)) & 0x0F);
+                                byte entry = (byte)((input[offset] >> ((~x2 & 0x01) * 4)) & 0x0F);
 
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 3] = clut[entry, 3];
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 2] = clut[entry, 2];
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 1] = clut[entry, 1];
                                 output[((((y + y2) * width) + (x + x2)) * 4) + 0] = clut[entry, 0];
 
-                                if ((x & 0x01) != 0)
+                                if ((x2 & 0x01) != 0)
                                     offset++;
                             }
                         }
@@ -375,7 +522,30 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[(width * height) / 2];
+
+                for (int y = 0; y < height; y += 8)
+                {
+                    for (int x = 0; x < width; x += 8)
+                    {
+                        for (int y2 = 0; y2 < 8; y2++)
+                        {
+                            for (int x2 = 0; x2 < 8; x2++)
+                            {
+                                byte entry = (byte)(input[((y + y2) * width) + (x + x2)] & 0x0F);
+                                entry = (byte)((output[offset] & (0x0F << (x2 & 0x01) * 4)) | (entry << ((~x2 & 0x01) * 4)));
+
+                                output[offset] = entry;
+
+                                if ((x2 & 0x01) != 0)
+                                    offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -384,8 +554,8 @@ namespace VrSharp.GvrTexture
         // 8-bit Texture with Clut
         public class Index8 : GvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
             public override int GetNumClutEntries() { return 256; }
 
@@ -418,7 +588,25 @@ namespace VrSharp.GvrTexture
 
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[width * height];
+
+                for (int y = 0; y < height; y += 4)
+                {
+                    for (int x = 0; x < width; x += 8)
+                    {
+                        for (int y2 = 0; y2 < 4; y2++)
+                        {
+                            for (int x2 = 0; x2 < 8; x2++)
+                            {
+                                output[offset] = input[((y + y2) * width) + (x + x2)];
+                                offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion

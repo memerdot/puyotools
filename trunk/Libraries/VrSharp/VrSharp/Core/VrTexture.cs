@@ -155,7 +155,8 @@ namespace VrSharp
             if (!InitSuccess) return null;
 
             int size;
-            return ConvertRawToArray(DecodeTextureMipmap(mipmap, out size), size, size);
+            byte[] TextureMipmap = DecodeTextureMipmap(mipmap, out size);
+            return ConvertRawToArray(TextureMipmap, size, size);
         }
 
         /// <summary>
@@ -168,7 +169,8 @@ namespace VrSharp
             if (!InitSuccess) return null;
 
             int size;
-            return ConvertRawToStream(DecodeTextureMipmap(mipmap, out size), size, size);
+            byte[] TextureMipmap = DecodeTextureMipmap(mipmap, out size);
+            return ConvertRawToStream(TextureMipmap, size, size);
         }
 
         /// <summary>
@@ -181,7 +183,8 @@ namespace VrSharp
             if (!InitSuccess) return null;
 
             int size;
-            return ConvertRawToBitmap(DecodeTextureMipmap(mipmap, out size), size, size);
+            byte[] TextureMipmap = DecodeTextureMipmap(mipmap, out size);
+            return ConvertRawToBitmap(TextureMipmap, size, size);
         }
 
         /// <summary>

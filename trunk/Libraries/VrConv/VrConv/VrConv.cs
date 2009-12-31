@@ -15,9 +15,9 @@ namespace VrConv
             {
                 Console.WriteLine("Vr Conv Usage:");
                 Console.WriteLine("Decode: vrconv -d <input> [-o <output>] [-c <clut>] [-ac]");
-                //Console.WriteLine("Encode: vrconv -e <input> <vrformat> <pixelfmt> <datafmt> [options]");
+                Console.WriteLine("Encode: vrconv -e <input> <vrformat> <pixelfmt> <datafmt> [options]");
                 Console.WriteLine("Help:   Decoding: vrconv -d /?");
-                //Console.WriteLine("        Encoding: vrconv -e /? <vrformat (gvr/pvr/svr)>");
+                Console.WriteLine("        Encoding: vrconv -e /? <vrformat (gvr/pvr/svr)>");
 
                 Console.WriteLine();
                 Console.WriteLine("------------------------");
@@ -33,13 +33,13 @@ namespace VrConv
                     else
                         DecodeVrTexture(args);
                 }
-                /*else if (args[0] == "-e")
+                else if (args[0] == "-e")
                 {
-                    if (args.Length >= 3 && args[1] == "/?")
+                    if (args.Length >= 2 && args[1] == "/?")
                         EncodingHelp(args[2]);
                     else
                         EncodeVrTexture(args);
-                }*/
+                }
                 else
                     Console.WriteLine("I don't know what you want to do!");
             }
@@ -110,8 +110,16 @@ namespace VrConv
             // Was the data decoded successfully?
             if (DecodeSuccess && BitmapData != null)
             {
-                using (BufferedStream stream = new BufferedStream(new FileStream(OutputPath + OutputFile, FileMode.Create, FileAccess.Write)))
-                    BitmapData.WriteTo(stream);
+                try
+                {
+                    using (BufferedStream stream = new BufferedStream(new FileStream(OutputPath + OutputFile, FileMode.Create, FileAccess.Write)))
+                        BitmapData.WriteTo(stream);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("ERROR: Unable to output texture.");
+                    Console.WriteLine(e.ToString());
+                }
 
                 timer.Stop();
                 Console.WriteLine("Texture decoded in {0} ms.", timer.ElapsedMilliseconds);
@@ -124,6 +132,107 @@ namespace VrConv
 
         static void EncodeVrTexture(string[] args)
         {
+            // Fixed!
+            // Get the command line arguments
+            int OutFileArgIndex     = Array.IndexOf(args, "-o");
+            int ClutArgIndex        = Array.IndexOf(args, "-c");
+            int GlobalIndexArgIndex = Array.IndexOf(args, "-gi");
+
+            // Get the strings in the command line arguments
+            string InputFile  = args[1];
+            string OutputFile = String.Empty;
+            string ClutFile   = String.Empty;
+
+            string InputPath  = (Path.GetDirectoryName(InputFile) != String.Empty ? Path.GetDirectoryName(InputFile) + Path.DirectorySeparatorChar : String.Empty);
+            string OutputPath = InputPath;
+
+            // Get the global index and convert it to a string
+            uint GlobalIndex = 0;
+            if (GlobalIndexArgIndex != -1 && args.Length > GlobalIndexArgIndex + 1)
+            {
+                if (!uint.TryParse(args[GlobalIndexArgIndex + 1], out GlobalIndex))
+                    GlobalIndex = 0;
+            }
+
+            // Get the format
+            string VrFormat    = (args.Length > 2 ? args[2].ToLower() : null);
+            string PixelFormat = (args.Length > 3 ? args[3].ToLower() : null);
+            string DataFormat  = (args.Length > 4 ? args[4].ToLower() : null);
+
+            // Make sure the vr format is correct
+            if (VrFormat != "gvr" && VrFormat != "pvr" && VrFormat != "svr")
+            {
+                Console.WriteLine("ERROR: Unknown vr format: {0}", (VrFormat == null ? "null" : VrFormat));
+                return;
+            }
+
+            // Load the data (as a byte array)
+            if (!File.Exists(args[1]))
+            {
+                Console.WriteLine("ERROR: {0} does not exist.", Path.GetFileNameWithoutExtension(args[1]));
+                return;
+            }
+            byte[] BitmapData = new byte[0];
+            using (BufferedStream stream = new BufferedStream(new FileStream(args[1], FileMode.Open, FileAccess.Read)))
+            {
+                BitmapData = new byte[stream.Length];
+                stream.Read(BitmapData, 0x00, BitmapData.Length);
+            }
+
+            Console.WriteLine("Vr Conv");
+            Console.WriteLine("------------------------");
+            Console.WriteLine("Encoding: {0}", Path.GetFileName(InputFile));
+
+            // Start the watch to see how long it takes to encode and set our variables
+            bool EncodeSuccess       = false;
+            MemoryStream TextureData = null;
+            MemoryStream ClutData    = null;
+            Stopwatch timer = Stopwatch.StartNew();
+
+            if (VrFormat == "gvr")
+            {
+                // Convert to a pvr
+                OutputFile = (OutFileArgIndex != -1 && OutFileArgIndex < args.Length ? args[OutFileArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".gvr");
+                ClutFile   = (ClutArgIndex != -1 && ClutArgIndex < args.Length ? args[ClutArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".gvp");
+
+                EncodeSuccess = new VrEncoder.Gvr().EncodeTexture(BitmapData, PixelFormat, DataFormat, true, GlobalIndex, out TextureData, out ClutData);
+            }
+            if (VrFormat == "pvr")
+            {
+                // Convert to a pvr
+                OutputFile = (OutFileArgIndex != -1 && OutFileArgIndex < args.Length ? args[OutFileArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".pvr");
+                ClutFile   = (ClutArgIndex != -1 && ClutArgIndex < args.Length ? args[ClutArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".pvp");
+
+                EncodeSuccess = new VrEncoder.Pvr().EncodeTexture(BitmapData, PixelFormat, DataFormat, true, GlobalIndex, out TextureData, out ClutData);
+            }
+            else if (VrFormat == "svr")
+            {
+                // Convert to a svr
+                OutputFile = (OutFileArgIndex != -1 && OutFileArgIndex < args.Length ? args[OutFileArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".svr");
+                ClutFile   = (ClutArgIndex != -1 && ClutArgIndex < args.Length ? args[ClutArgIndex + 1] : Path.GetFileNameWithoutExtension(InputFile) + ".svp");
+
+                EncodeSuccess = new VrEncoder.Svr().EncodeTexture(BitmapData, PixelFormat, DataFormat, true, GlobalIndex, out TextureData, out ClutData);
+            }
+
+            // Was the data encoded successfully?
+            if (EncodeSuccess && TextureData != null)
+            {
+                try
+                {
+                    using (BufferedStream stream = new BufferedStream(new FileStream(OutputPath + OutputFile, FileMode.Create, FileAccess.Write)))
+                        TextureData.WriteTo(stream);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("ERROR: Unable to output texture.");
+                    Console.WriteLine(e.ToString());
+                }
+
+                timer.Stop();
+                Console.WriteLine("Texture encoded in {0} ms.", timer.ElapsedMilliseconds);
+            }
+            else if (EncodeSuccess && TextureData == null)
+                Console.WriteLine("ERROR: Unable to encode texture.");
         }
 
         static void DecodingHelp()
@@ -137,7 +246,7 @@ namespace VrConv
 
         static void EncodingHelp(string format)
         {
-            /*if (format.ToLower() == "gvr")
+            if (format.ToLower() == "gvr")
             {
                 Console.WriteLine();
                 Console.WriteLine(
@@ -157,16 +266,47 @@ namespace VrConv
                     "\trgb5a3   : Rgb5a3\n" +
                     "\targb8888 : Argb8888\n" +
                     "\tindex4   : 4-bit Clut (set pixel format)\n" +
-                    "\tindex8   : 8-bit Clut (set pixel format)\n" +
-                    "\tcmp      : S3tc/Dxtn1 Compression");
+                    "\tindex8   : 8-bit Clut (set pixel format)\n");
+                    //"\tcmp      : S3tc/Dxtn1 Compression");
                 Console.WriteLine();
                 Console.WriteLine(
                     "[options] Options:\n" +
                     "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
-                    "\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
-                    "\t-gi <gindex> : Sets the Global Index (default is 0)\n" +
-                    "\t-gbix <type> : Sets the Gbix type\n" +
-                    "\t               (gbix (gc), gcix (wii, default), none)");
+                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
+                    "\t-gi <gindex> : Sets the Global Index (default is 0)\n");
+                    //"\t-gbix <type> : Sets the Gbix type\n" +
+                    //"\t               (gbix (gc), gcix (wii, default), none)");
+            }
+
+            else if (format.ToLower() == "pvr")
+            {
+                Console.WriteLine();
+                Console.WriteLine(
+                    "<pixelfmt> Pixel Formats:\n" +
+                    "\targb1555 : Argb1555\n" +
+                    "\trgb565   : Rgb565\n" +
+                    "\targb4444 : Argb4444");
+                Console.WriteLine();
+                Console.WriteLine(
+                    "<datafmt> Data Formats:\n" +
+                    "\tsqr         : Square Twiddled\n" +
+                    "\tsqrmips     : Square Twiddled w/ Mipmaps\n" +
+                    //"\tvq          : Vq\n" +
+                    //"\tvqmips      : Vq w/ Mipmaps\n" +
+                    //"\tindex4      : Index 4-bit w/ External Clut\n" +
+                    //"\tindex8      : Index 8-bit w/ External Clut\n" +
+                    "\trect        : Rectangle\n" +
+                    "\trecttwid    : Rectangle Twiddled\n");
+                    //"\tsmallvq     : Small Vq\n" +
+                    //"\tsmallvqmips : Small Vq w/ Mipmaps\n");
+                Console.WriteLine();
+                Console.WriteLine(
+                    "[options] Options:\n" +
+                    "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
+                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
+                    "\t-gi <gindex> : Sets the Global Index (default is 0)\n");
+                    //"\t-gbix <type> : Sets the Gbix type\n" +
+                    //"\t               (gbix, none)");
             }
 
             else if (format.ToLower() == "svr")
@@ -180,21 +320,21 @@ namespace VrConv
                 Console.WriteLine(
                     "<datafmt> Data Formats:\n" +
                     "\trect : Rectangle\n" +
-                    "\ti4ec : Index 4-bit w/ External Clut\n" +
-                    "\ti8ec : Index 8-bit w/ External Clut\n" +
-                    "\ti4   : Index 4-bit (will set proper format based on\n" +
-                    "\t       pixel format and texture dimensions.\n" +
-                    "\ti8   : Index 8-bit (will set proper format based on\n" +
-                    "\t       pixel format and texture dimensions.");
+                    //"\tindex4ec : Index 4-bit w/ External Clut\n" +
+                    //"\ti8ndexec : Index 8-bit w/ External Clut\n" +
+                    "\tindex4   : Index 4-bit (will set proper format based on\n" +
+                    "\t           pixel format and texture dimensions.\n" +
+                    "\tindex8   : Index 8-bit (will set proper format based on\n" +
+                    "\t           pixel format and texture dimensions.");
                 Console.WriteLine();
                 Console.WriteLine(
                     "[options] Options:\n" +
                     "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
-                    "\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
-                    "\t-gi <gindex> : Sets the Global Index (default is 0)\n" +
-                    "\t-gbix <type> : Sets the Gbix type\n" +
-                    "\t               (gbix (gc), gcix (wii, default), none)");
-            }*/
+                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
+                    "\t-gi <gindex> : Sets the Global Index (default is 0)\n");
+                    //"\t-gbix <type> : Sets the Gbix type\n" +
+                    //"\t               (gbix, none)");
+            }
         }
 
         static Version GetVrConvVersion()

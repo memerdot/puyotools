@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 using VrSharp;
 using VrSharp.GvrTexture;
 using VrSharp.PvrTexture;
@@ -50,6 +51,8 @@ namespace VrConv
                 if (TextureInfo.PixelFormat != 0xFF)
                     Console.WriteLine("Pixel Format : {0} ({1})", TextureInfo.PixelFormat.ToString("X2"), GetPixelFormatAsText(TextureInfo.PixelFormat));
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"), GetDataFormatAsText(TextureInfo.DataFormat));
+                if (TextureInfo.DataFlags != 0x00)
+                    Console.WriteLine("Data Flags   : {0} ({1})", TextureInfo.DataFlags.ToString("X2"), GetDataFlagsAsText(TextureInfo.DataFlags));
                 Console.WriteLine();
 
                 // Decode the texture
@@ -104,6 +107,22 @@ namespace VrConv
                 }
 
                 return String.Empty;
+            }
+            private string GetDataFlagsAsText(byte DataFlags)
+            {
+                List<string> Flags = new List<string>();
+
+                if ((DataFlags & 0x01) != 0) // Contains Mipmaps
+                    Flags.Add("Mipmaps");
+                if ((DataFlags & 0x02) != 0) // External Clut
+                    Flags.Add("External Clut");
+                if ((DataFlags & 0x08) != 0) // Internal Clut
+                    Flags.Add("Internal Clut");
+
+                if (Flags.Count == 0)
+                    return String.Empty;
+
+                return String.Join(", ", Flags.ToArray());
             }
         }
         #endregion

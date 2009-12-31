@@ -48,7 +48,7 @@ namespace VrSharp.SvrTexture
             if (!(clut is SvpClut)) // Make sure this is a SvpClut object
             {
                 throw new ArgumentException(String.Format(
-                    "VpClut type is {0} when it needs to be PvpClut.",
+                    "VpClut type is {0} when it needs to be SvpClut.",
                     clut.GetType()));
             }
 

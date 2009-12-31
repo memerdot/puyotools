@@ -52,7 +52,7 @@ namespace VrSharp.GvrTexture
             if (!(clut is GvpClut)) // Make sure this is a GvpClut object
             {
                 throw new ArgumentException(String.Format(
-                    "VpClut type is {0} when it needs to be PvpClut.",
+                    "VpClut type is {0} when it needs to be GvpClut.",
                     clut.GetType()));
             }
 
@@ -63,7 +63,7 @@ namespace VrSharp.GvrTexture
         /// Returns if the texture needs an external clut file.
         /// </summary>
         /// <returns></returns>
-        public override  bool NeedsExternalClut()
+        public override bool NeedsExternalClut()
         {
             if (!InitSuccess) return false;
 
@@ -85,6 +85,7 @@ namespace VrSharp.GvrTexture
             TextureInfo.TextureHeight  = TextureHeight;
             TextureInfo.PixelFormat    = ((DataFlags & 0x0A) != 0 ? TextureInfo.DataFormat : (byte)0xFF);
             TextureInfo.DataFormat     = DataFormat;
+            TextureInfo.DataFlags      = DataFlags;
 
             return TextureInfo;
         }
@@ -137,10 +138,6 @@ namespace VrSharp.GvrTexture
                 ClutOffset = PvrtOffset + 0x10;
                 DataOffset = ClutOffset + (DataCodec.GetNumClutEntries() * (PixelCodec.GetBpp() / 8));
             }
-
-            // Read the Clut
-            if (ClutOffset != -1)
-                DataCodec.SetClut(TextureData, ClutOffset, PixelCodec);
 
             RawImageData = new byte[TextureWidth * TextureHeight * 4];
             return true;
