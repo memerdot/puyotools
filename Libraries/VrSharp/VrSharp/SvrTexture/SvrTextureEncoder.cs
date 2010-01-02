@@ -69,6 +69,32 @@ namespace VrSharp.SvrTexture
         }
         #endregion
 
+        #region Misc
+        /// <summary>
+        /// Returns information about the texture.  (Use an explicit cast to get SvrTextureInfo.)
+        /// </summary>
+        /// <returns></returns>
+        public override VrTextureInfo GetTextureInfo()
+        {
+            if (!InitSuccess) return new SvrTextureInfo();
+
+            SvrTextureInfo TextureInfo = new SvrTextureInfo();
+            TextureInfo.TextureWidth   = TextureWidth;
+            TextureInfo.TextureHeight  = TextureHeight;
+            TextureInfo.PixelFormat    = PixelFormat;
+            TextureInfo.DataFormat     = DataFormat;
+
+            return TextureInfo;
+        }
+        #endregion
+
+        #region Clut
+        protected override void CreateVpClut(byte[] ClutData, ushort NumClutEntries)
+        {
+            ClutEncoder = new SvpClutEncoder(ClutData, NumClutEntries);
+        }
+        #endregion
+
         // Initalize the bitmap
         private bool Initalize()
         {
@@ -86,6 +112,10 @@ namespace VrSharp.SvrTexture
 
             GbixOffset = 0x00;
             PvrtOffset = 0x10;
+
+            // See if we need to palettize the bitmap and raw image data
+            if (DataCodec.GetNumClutEntries() != 0)
+                PalettizeBitmap();
 
             return true;
         }

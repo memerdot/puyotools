@@ -74,6 +74,41 @@ namespace VrSharp.PvrTexture
         }
         #endregion
 
+        #region Misc
+        /// <summary>
+        /// Returns information about the texture.  (Use an explicit cast to get PvrTextureInfo.)
+        /// </summary>
+        /// <returns></returns>
+        public override VrTextureInfo GetTextureInfo()
+        {
+            if (!InitSuccess) return new PvrTextureInfo();
+
+            PvrTextureInfo TextureInfo    = new PvrTextureInfo();
+            TextureInfo.TextureWidth      = TextureWidth;
+            TextureInfo.TextureHeight     = TextureHeight;
+            TextureInfo.PixelFormat       = PixelFormat;
+            TextureInfo.DataFormat        = DataFormat;
+            TextureInfo.CompressionFormat = CompressionFormat;
+
+            return TextureInfo;
+        }
+
+        protected override byte[] DoPostEncodeEvents(byte[] TextureData)
+        {
+            if (CompressionFormat != PvrCompressionFormat.None)
+                return CompressionCodec.Compress(TextureData, DataOffset, PixelCodec, DataCodec);
+
+            return TextureData;
+        }
+        #endregion
+
+        #region Clut
+        protected override void CreateVpClut(byte[] ClutData, ushort NumClutEntries)
+        {
+            ClutEncoder = new PvpClutEncoder(ClutData, NumClutEntries);
+        }
+        #endregion
+
         /// <summary>
         /// Set the compression format.
         /// </summary>
@@ -87,7 +122,7 @@ namespace VrSharp.PvrTexture
                 // We want to use Rle compression and our texture has a bpp of at least 8.
                 CompressionCodec = PvrCodecList.GetCompressionCodec(CompressionFormat);
                 if (CompressionCodec != null)
-                    CompressionFormat = PvrCompressionFormat.Rle;
+                    this.CompressionFormat = PvrCompressionFormat.Rle;
                 else
                     return; // Can't compress!
             }
@@ -104,12 +139,19 @@ namespace VrSharp.PvrTexture
             PixelCodec = PvrCodecList.GetPixelCodec((PvrPixelFormat)PixelFormat);
             DataCodec  = PvrCodecList.GetDataCodec((PvrDataFormat)DataFormat);
 
+            CompressionFormat = PvrCompressionFormat.None;
+            CompressionCodec  = null;
+
             if (PixelCodec == null || DataCodec == null)           return false;
             if (!PixelCodec.CanEncode() || !DataCodec.CanEncode()) return false;
             if (!CanEncode((PvrPixelFormat)PixelFormat, (PvrDataFormat)DataFormat, TextureWidth, TextureHeight)) return false;
 
             GbixOffset = 0x00;
             PvrtOffset = 0x10;
+
+            // See if we need to palettize the bitmap and raw image data
+            if (DataCodec.GetNumClutEntries() != 0)
+                PalettizeBitmap();
 
             return true;
         }

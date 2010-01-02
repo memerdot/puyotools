@@ -35,13 +35,14 @@ namespace VrConv
                 GvrTextureEncoder GvrTextureEncoder = new GvrTextureEncoder(BitmapData, (GvrPixelFormat)PixelFormat, (GvrDataFormat)DataFormat);
                 if (!GvrTextureEncoder.LoadSuccess())
                 {
-                    Console.WriteLine("ERROR: Unable to load image, or file is not a supported image.");
+                    Console.WriteLine("ERROR: Unable to load image, file is not a supported image,");
+                    Console.WriteLine("       or image cannot be converted to the specified pixel/data formats.");
                     return false;
                 }
                 GvrTextureEncoder.WriteGbix(GlobalIndex);
 
                 // Output information to the console
-                /*GvrTextureInfo TextureInfo = (GvrTextureInfo)GvrTexture.GetTextureInfo();
+                GvrTextureInfo TextureInfo = (GvrTextureInfo)GvrTextureEncoder.GetTextureInfo();
                 Console.WriteLine();
                 Console.WriteLine("Texture Type : Gvr");
                 Console.WriteLine("Dimensions   : {0}x{1}", TextureInfo.TextureWidth, TextureInfo.TextureHeight);
@@ -50,7 +51,7 @@ namespace VrConv
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"), GetDataFormatAsText(TextureInfo.DataFormat));
                 if (TextureInfo.DataFlags != 0x00)
                     Console.WriteLine("Data Flags   : {0} ({1})", TextureInfo.DataFlags.ToString("X2"), GetDataFlagsAsText(TextureInfo.DataFlags));
-                Console.WriteLine();*/
+                Console.WriteLine();
 
                 // Encode the texture
                 try { TextureData = GvrTextureEncoder.GetTextureAsStream(); }
@@ -60,10 +61,21 @@ namespace VrConv
                     return false;
                 }
 
+                // Encode the clut (if it has one)
+                if (GvrTextureEncoder.NeedsExternalClut())
+                {
+                    try { ClutData = GvrTextureEncoder.GetClutAsStream(); }
+                    catch
+                    {
+                        Console.WriteLine("ERROR: Unable to encode clut.");
+                        return false;
+                    }
+                }
+
                 return true;
             }
 
-            /*private string GetPixelFormatAsText(byte PixelFormat)
+            private string GetPixelFormatAsText(byte PixelFormat)
             {
                 switch ((GvrPixelFormat)PixelFormat)
                 {
@@ -120,7 +132,7 @@ namespace VrConv
                     return String.Empty;
 
                 return String.Join(", ", Flags.ToArray());
-            }*/
+            }
 
             private GvrPixelFormat? GetPixelFormat(string format)
             {
@@ -170,14 +182,15 @@ namespace VrConv
         // Pvr Texture Encoder
         public class Pvr : VrEncoder
         {
-            public bool EncodeTexture(byte[] BitmapData, string PixelFormatText, string DataFormatText, bool IncludeGI, uint GlobalIndex, out MemoryStream TextureData, out MemoryStream ClutData)
+            public bool EncodeTexture(byte[] BitmapData, string PixelFormatText, string DataFormatText, string CompressionFormatText, bool IncludeGI, uint GlobalIndex, out MemoryStream TextureData, out MemoryStream ClutData)
             {
                 TextureData = null; // Set texture data to null
                 ClutData    = null; // Set external clut data to null
 
-                // Get the Pixel and Data Formats
+                // Get the Pixel, Data, and Compression Formats
                 PvrPixelFormat? PixelFormat = GetPixelFormat(PixelFormatText);
                 PvrDataFormat? DataFormat   = GetDataFormat(DataFormatText);
+                PvrCompressionFormat CompressionFormat = GetCompressionFormat(CompressionFormatText);
                 if (PixelFormat == null || DataFormat == null)
                 {
                     Console.WriteLine("ERROR: Unknown pixel or data format.");
@@ -188,13 +201,16 @@ namespace VrConv
                 PvrTextureEncoder PvrTextureEncoder = new PvrTextureEncoder(BitmapData, (PvrPixelFormat)PixelFormat, (PvrDataFormat)DataFormat);
                 if (!PvrTextureEncoder.LoadSuccess())
                 {
-                    Console.WriteLine("ERROR: Unable to load image, or file is not a supported image.");
+                    Console.WriteLine("ERROR: Unable to load image, file is not a supported image,");
+                    Console.WriteLine("       or image cannot be converted to the specified pixel/data formats.");
                     return false;
                 }
                 PvrTextureEncoder.WriteGbix(GlobalIndex);
+                if (CompressionFormat != PvrCompressionFormat.None)
+                    PvrTextureEncoder.SetCompressionFormat(CompressionFormat);
 
                 // Output information to the console
-                /*PvrTextureInfo TextureInfo = (PvrTextureInfo)PvrTexture.GetTextureInfo();
+                PvrTextureInfo TextureInfo = (PvrTextureInfo)PvrTextureEncoder.GetTextureInfo();
                 Console.WriteLine();
                 Console.WriteLine("Texture Type : Pvr");
                 if (TextureInfo.CompressionFormat != PvrCompressionFormat.None)
@@ -202,7 +218,7 @@ namespace VrConv
                 Console.WriteLine("Dimensions   : {0}x{1}",   TextureInfo.TextureWidth, TextureInfo.TextureHeight);
                 Console.WriteLine("Pixel Format : {0} ({1})", TextureInfo.PixelFormat.ToString("X2"), GetPixelFormatAsText(TextureInfo.PixelFormat));
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"),  GetDataFormatAsText(TextureInfo.DataFormat));
-                Console.WriteLine();*/
+                Console.WriteLine();
 
                 // Encode the texture
                 try { TextureData = PvrTextureEncoder.GetTextureAsStream(); }
@@ -212,10 +228,21 @@ namespace VrConv
                     return false;
                 }
 
+                // Encode the clut (if it has one)
+                if (PvrTextureEncoder.NeedsExternalClut())
+                {
+                    try { ClutData = PvrTextureEncoder.GetClutAsStream(); }
+                    catch
+                    {
+                        Console.WriteLine("ERROR: Unable to encode clut.");
+                        return false;
+                    }
+                }
+
                 return true;
             }
 
-            /*private string GetPixelFormatAsText(byte PixelFormat)
+            private string GetPixelFormatAsText(byte PixelFormat)
             {
                 switch ((PvrPixelFormat)PixelFormat)
                 {
@@ -257,7 +284,7 @@ namespace VrConv
                 }
 
                 return String.Empty;
-            }*/
+            }
 
             private PvrPixelFormat? GetPixelFormat(string format)
             {
@@ -280,15 +307,30 @@ namespace VrConv
                 {
                     case "sqr": case "01":
                         return PvrDataFormat.SquareTwiddled;
+                    case "index4": case "05":
+                        return PvrDataFormat.Index4;
+                    case "index8": case "07":
+                        return PvrDataFormat.Index8;
                     case "rect": case "09":
                         return PvrDataFormat.Rectangle;
-                    case "recttwiddled": case "0D":
+                    case "recttwiddled": case "0d":
                         return PvrDataFormat.RectangleTwiddled;
-                    case "12":
-                        return PvrDataFormat.SquareTwiddledMipmapsDup;
                 }
 
                 return null; // Unknown format
+            }
+
+            private PvrCompressionFormat GetCompressionFormat(string format)
+            {
+                switch (format.ToLower())
+                {
+                    case "rle":
+                        return PvrCompressionFormat.Rle;
+                    case "none":
+                        return PvrCompressionFormat.None;
+                }
+
+                return PvrCompressionFormat.None; // No Compression
             }
         }
         #endregion
@@ -324,19 +366,20 @@ namespace VrConv
                 SvrTextureEncoder SvrTextureEncoder = new SvrTextureEncoder(BitmapBmp, (SvrPixelFormat)PixelFormat, (SvrDataFormat)DataFormat);
                 if (!SvrTextureEncoder.LoadSuccess())
                 {
-                    Console.WriteLine("ERROR: Unable to load image, or file is not a supported image.");
+                    Console.WriteLine("ERROR: Unable to load image, file is not a supported image,");
+                    Console.WriteLine("       or image cannot be converted to the specified pixel/data formats.");
                     return false;
                 }
                 SvrTextureEncoder.WriteGbix(GlobalIndex);
 
                 // Output information to the console
-                /*SvrTextureInfo TextureInfo = (SvrTextureInfo)SvrTexture.GetTextureInfo();
+                SvrTextureInfo TextureInfo = (SvrTextureInfo)SvrTextureEncoder.GetTextureInfo();
                 Console.WriteLine();
                 Console.WriteLine("Texture Type : Svr");
                 Console.WriteLine("Dimensions   : {0}x{1}",   TextureInfo.TextureWidth, TextureInfo.TextureHeight);
                 Console.WriteLine("Pixel Format : {0} ({1})", TextureInfo.PixelFormat.ToString("X2"), GetPixelFormatAsText(TextureInfo.PixelFormat));
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"),  GetDataFormatAsText(TextureInfo.DataFormat));
-                Console.WriteLine();*/
+                Console.WriteLine();
 
                 // Encode the texture
                 try { TextureData = SvrTextureEncoder.GetTextureAsStream(); }
@@ -346,10 +389,21 @@ namespace VrConv
                     return false;
                 }
 
+                // Encode the clut (if it has one)
+                if (SvrTextureEncoder.NeedsExternalClut())
+                {
+                    try { ClutData = SvrTextureEncoder.GetClutAsStream(); }
+                    catch
+                    {
+                        Console.WriteLine("ERROR: Unable to encode clut.");
+                        return false;
+                    }
+                }
+
                 return true;
             }
 
-            /*private string GetPixelFormatAsText(byte PixelFormat)
+            private string GetPixelFormatAsText(byte PixelFormat)
             {
                 switch ((SvrPixelFormat)PixelFormat)
                 {
@@ -390,7 +444,7 @@ namespace VrConv
                 }
 
                 return String.Empty;
-            }*/
+            }
 
             private SvrPixelFormat? GetPixelFormat(string format)
             {
@@ -411,6 +465,10 @@ namespace VrConv
                 {
                     case "rect": case "60":
                         return SvrDataFormat.Rectangle;
+                    case "index4ec": case "62":
+                        return SvrDataFormat.Index4ExtClut;
+                    case "index8ec": case "64":
+                        return SvrDataFormat.Index8ExtClut;
                     case "index4":
                         if (PixelFormat == SvrPixelFormat.Rgb5a3)
                         {
