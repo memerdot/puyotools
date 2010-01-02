@@ -222,8 +222,8 @@ namespace VrSharp.PvrTexture
         // 4-bit Texture with External Clut
         public class Index4 : PvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 4; }
             public override int GetNumClutEntries()  { return 16; }
             public override bool NeedsExternalClut() { return true; }
@@ -233,13 +233,13 @@ namespace VrSharp.PvrTexture
                 byte[] output = new byte[width * height * 4];
                 byte[,] clut  = ClutData;
                 int ChunkSize = Math.Min(width, height);
+                TwiddledMap TwiddledMap = new TwiddledMap(ChunkSize, GetBpp(PixelCodec));
 
                 for (int y = 0; y < height; y += ChunkSize)
                 {
                     for (int x = 0; x < width; x += ChunkSize)
                     {
                         int StartOffset = offset;
-                        TwiddledMap TwiddledMap = new TwiddledMap(ChunkSize, GetBpp(PixelCodec));
 
                         for (int y2 = 0; y2 < ChunkSize; y2++)
                         {
@@ -263,7 +263,7 @@ namespace VrSharp.PvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
                 return null;
             }
@@ -274,8 +274,8 @@ namespace VrSharp.PvrTexture
         // 8-bit Texture with External Clut
         public class Index8 : PvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
             public override int GetNumClutEntries()  { return 256; }
             public override bool NeedsExternalClut() { return true; }
@@ -285,13 +285,13 @@ namespace VrSharp.PvrTexture
                 byte[] output = new byte[width * height * 4];
                 byte[,] clut  = ClutData;
                 int ChunkSize = Math.Min(width, height);
+                TwiddledMap TwiddledMap = new TwiddledMap(ChunkSize, GetBpp(PixelCodec));
 
                 for (int y = 0; y < height; y += ChunkSize)
                 {
                     for (int x = 0; x < width; x += ChunkSize)
                     {
                         int StartOffset = offset;
-                        TwiddledMap TwiddledMap = new TwiddledMap(ChunkSize, GetBpp(PixelCodec));
 
                         for (int y2 = 0; y2 < ChunkSize; y2++)
                         {
@@ -313,9 +313,31 @@ namespace VrSharp.PvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                int offset = 0;
+                byte[] output = new byte[width * height];
+                int ChunkSize = Math.Min(width, height);
+                TwiddledMap TwiddledMap = new TwiddledMap(ChunkSize, GetBpp(PixelCodec));
+
+                for (int y = 0; y < height; y += ChunkSize)
+                {
+                    for (int x = 0; x < width; x += ChunkSize)
+                    {
+                        int StartOffset = offset;
+
+                        for (int y2 = 0; y2 < ChunkSize; y2++)
+                        {
+                            for (int x2 = 0; x2 < ChunkSize; x2++)
+                            {
+                                output[StartOffset + TwiddledMap.GetTwiddledOffset(x2, y2)] = input[(((y + y2) * width) + (x + x2))];
+                                offset++;
+                            }
+                        }
+                    }
+                }
+
+                return output;
             }
         }
         #endregion

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using ImageManipulation;
 
 namespace VrSharp
@@ -11,7 +12,6 @@ namespace VrSharp
         #region Fields
         protected bool InitSuccess = false; // Initalization
 
-        //protected byte[] TextureData;   // Vr Texture Data
         protected byte[] RawImageData;    // Raw Image Data
         protected Bitmap BitmapImageData; // Bitmap Image (to use for mipmaps)
 
@@ -29,6 +29,9 @@ namespace VrSharp
         protected int PvrtOffset; // Pvrt (Gvrt) Offset
         protected int ClutOffset; // Clut Offset
         protected int DataOffset; // Data Offset
+
+        protected byte[,] TextureClut;       // Texture Clut
+        protected VpClutEncoder ClutEncoder; // Clut Encoder
         #endregion
 
         #region Constructors
@@ -101,6 +104,13 @@ namespace VrSharp
         /// <param name="bitmap">A System.Drawing.Bitmap instance.</param>
         public VrTextureEncoder(Bitmap bitmap)
         {
+            if (bitmap == null)
+            {
+                RawImageData = new byte[0];
+                InitSuccess  = false;
+                return;
+            }
+
             TextureWidth    = (ushort)bitmap.Width;
             TextureHeight   = (ushort)bitmap.Height;
             BitmapImageData = bitmap;
@@ -139,6 +149,61 @@ namespace VrSharp
 
             return new MemoryStream(EncodeTexture());
         }
+        #endregion
+
+        #region Clut
+        /// <summary>
+        /// Returns the clut as an array (clone of GetClutAsArray).
+        /// </summary>
+        /// <returns></returns>
+        public byte[] GetClut()
+        {
+            if (!InitSuccess || ClutEncoder == null) return null;
+
+            return ClutEncoder.GetClut();
+        }
+
+        /// <summary>
+        /// Returns the clut as an array.
+        /// </summary>
+        /// <returns></returns>
+        public byte[] GetClutAsArray()
+        {
+            if (!InitSuccess || ClutEncoder == null) return null;
+
+            return ClutEncoder.GetClutAsArray();
+        }
+
+        /// <summary>
+        /// Returns the clut an a memory stream.
+        /// </summary>
+        /// <returns></returns>
+        public MemoryStream GetClutAsStream()
+        {
+            if (!InitSuccess || ClutEncoder == null) return null;
+
+            return ClutEncoder.GetClutAsStream();
+        }
+
+        /// <summary>
+        /// Returns if the texture needs an external clut file.
+        /// </summary>
+        /// <returns></returns>
+        public bool NeedsExternalClut()
+        {
+            if (!InitSuccess) return false;
+
+            return TexNeedsExternalClut();
+        }
+
+        // Returns if the texture needa an external clut file (internal method)
+        protected virtual bool TexNeedsExternalClut()
+        {
+            return DataCodec.NeedsExternalClut();
+        }
+
+        // Create a vp clut encoder for an external clut.
+        protected abstract void CreateVpClut(byte[] ClutData, ushort NumClutEntries);
         #endregion
 
         #region Header
@@ -184,6 +249,12 @@ namespace VrSharp
             return InitSuccess;
         }
 
+        /// <summary>
+        /// Returns information about the texture.
+        /// </summary>
+        /// <returns></returns>
+        public abstract VrTextureInfo GetTextureInfo();
+
         // Swap endian of a 16-bit unsigned integer (a ushort)
         protected ushort SwapUShort(ushort x)
         {
@@ -198,6 +269,10 @@ namespace VrSharp
                 ((x >> 8) & 0x0000FF00) |
                 (x << 24);
         }
+
+        // Does post build events on the encoded texture
+        // Mainly used for compression
+        protected virtual byte[] DoPostEncodeEvents(byte[] TextureData) { return TextureData; }
         #endregion
 
         #region Private Methods
@@ -205,7 +280,7 @@ namespace VrSharp
         private byte[] EncodeTexture()
         {
             // Get the offsets (GbixOffset and PvrtOffset are already set)
-            if (DataCodec.GetNumClutEntries() != 0 && !DataCodec.NeedsExternalClut())
+            if (DataCodec.GetNumClutEntries() != 0 && !TexNeedsExternalClut())
             {
                 ClutOffset = PvrtOffset + 0x10;
                 DataOffset = ClutOffset + (DataCodec.GetNumClutEntries() * (PixelCodec.GetBpp() / 8));
@@ -215,41 +290,11 @@ namespace VrSharp
                 ClutOffset = -1;
                 DataOffset = PvrtOffset + 0x10;
             }
-            
-            // We may need to quantize the image if it is a palette based one
-            byte[] VrTextureData = new byte[0];
-            byte[,] TextureClut  = new byte[0, 0];
-            if (DataCodec.GetNumClutEntries() != 0)
-            {
-                OctreeQuantizer Quantizer = new OctreeQuantizer(DataCodec.GetNumClutEntries() - 1, DataCodec.GetBpp(PixelCodec));
-                Bitmap QuantizedImage = Quantizer.Quantize(BitmapImageData);
-
-                // We have a clut that we need to create
-                if (!DataCodec.NeedsExternalClut())
-                {
-                    ClutOffset = PvrtOffset + 0x10;
-                    DataOffset = ClutOffset + (DataCodec.GetNumClutEntries() * (PixelCodec.GetBpp() / 8));
-                }
-
-                // Build the clut list
-                TextureClut = new byte[DataCodec.GetNumClutEntries(), 4];
-                for (int i = 0; i < DataCodec.GetNumClutEntries(); i++)
-                {
-                    TextureClut[i, 3] = QuantizedImage.Palette.Entries[i].A;
-                    TextureClut[i, 2] = QuantizedImage.Palette.Entries[i].R;
-                    TextureClut[i, 1] = QuantizedImage.Palette.Entries[i].G;
-                    TextureClut[i, 0] = QuantizedImage.Palette.Entries[i].B;
-                }
-
-                // Get the texture data and clut
-                VrTextureData = DataCodec.Encode(ConvertBitmapToIndex(QuantizedImage), TextureWidth, TextureHeight, PixelCodec);
-            }
-            else
-                VrTextureData = DataCodec.Encode(RawImageData, TextureWidth, TextureHeight, PixelCodec);
 
             // Get the data
-            byte[] VrPvrtHeader  = WritePvrtHeader(VrTextureData.Length);
-            byte[] VrGbixHeader  = new byte[0];
+            byte[] VrTextureData = DataCodec.Encode(RawImageData, TextureWidth, TextureHeight, PixelCodec);
+            byte[] VrPvrtHeader = WritePvrtHeader(VrTextureData.Length);
+            byte[] VrGbixHeader = new byte[0];
             if (GbixOffset != -1)
                 VrGbixHeader = WriteGbixHeader();
             byte[] VrClutData = new byte[0];
@@ -265,11 +310,49 @@ namespace VrSharp
                 VrClutData.CopyTo(TextureData, ClutOffset);
             VrTextureData.CopyTo(TextureData, DataOffset);
 
+            TextureData = DoPostEncodeEvents(TextureData);
+
             return TextureData;
         }
 
+        // Palettize the bitmap used for the raw texture data
+        // Make sure you test to see if DataCodec.GetNumClutEntries != 0
+        protected void PalettizeBitmap()
+        {
+            OctreeQuantizer Quantizer = new OctreeQuantizer(DataCodec.GetNumClutEntries() - 1, DataCodec.GetBpp(PixelCodec));
+            BitmapImageData = Quantizer.Quantize(BitmapImageData);
+            RawImageData    = ConvertBitmapToIndex(BitmapImageData); // We need to convert it to indexes instead of colors
+
+            // We have a clut that we need to create
+            if (!TexNeedsExternalClut())
+            {
+                ClutOffset = PvrtOffset + 0x10;
+                DataOffset = ClutOffset + (DataCodec.GetNumClutEntries() * (PixelCodec.GetBpp() / 8));
+            }
+
+            // Build the clut list
+            TextureClut = new byte[DataCodec.GetNumClutEntries(), 4];
+            for (int i = 0; i < DataCodec.GetNumClutEntries(); i++)
+            {
+                TextureClut[i, 3] = BitmapImageData.Palette.Entries[i].A;
+                TextureClut[i, 2] = BitmapImageData.Palette.Entries[i].R;
+                TextureClut[i, 1] = BitmapImageData.Palette.Entries[i].G;
+                TextureClut[i, 0] = BitmapImageData.Palette.Entries[i].B;
+            }
+
+            if (!TexNeedsExternalClut())
+            {
+                ClutOffset = PvrtOffset + 0x10;
+                DataOffset = ClutOffset + (DataCodec.GetNumClutEntries() * (PixelCodec.GetBpp() / 8));
+            }
+
+            // If the texture contains an external clut, create a vp clut encoder to write it
+            if (TexNeedsExternalClut())
+                CreateVpClut(PixelCodec.CreateClut(TextureClut), (ushort)DataCodec.GetNumClutEntries());
+        }
+
         // Returns if the texture contains mipmaps
-        private bool ContainsMipmaps()
+        protected virtual bool ContainsMipmaps()
         {
             return DataCodec.ContainsMipmaps();
         }
@@ -279,17 +362,16 @@ namespace VrSharp
         {
             byte[] output = new byte[bitmap.Width * bitmap.Height * 4];
 
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    Color pixel = bitmap.GetPixel(x, y);
-                    output[(((y * bitmap.Width) + x) * 4) + 3] = pixel.A;
-                    output[(((y * bitmap.Width) + x) * 4) + 2] = pixel.R;
-                    output[(((y * bitmap.Width) + x) * 4) + 1] = pixel.G;
-                    output[(((y * bitmap.Width) + x) * 4) + 0] = pixel.B;
-                }
-            }
+            // What we are going to do here is draw the old bitmap on a 32bit bitmap
+            // and then do a Marshal.Copy to get the data. It's much faster then using
+            // the GetPixel function even though this method is more complicated.
+            // Note: we have to use System.Drawing.Imaging.PixelFormat as PixelFormat is already defined.
+            Bitmap newBitmap = new Bitmap(bitmap.Width, bitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(newBitmap))
+                g.DrawImage(bitmap, new Point(0, 0));
+
+            BitmapData BitmapData = newBitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, newBitmap.PixelFormat);
+            Marshal.Copy(BitmapData.Scan0, output, 0, output.Length);
 
             return output;
         }
@@ -301,17 +383,11 @@ namespace VrSharp
             byte[] output = new byte[bitmap.Width * bitmap.Height];
             BitmapData BitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
             byte* ImagePointer = (byte*)BitmapData.Scan0;
-            int junk = BitmapData.Stride - BitmapData.Width;
 
             for (int y = 0; y < BitmapData.Height; y++)
             {
                 for (int x = 0; x < BitmapData.Width; x++)
-                {
-                    output[(y * bitmap.Width) + x] = ImagePointer[0];
-                    ImagePointer++;
-                }
-
-                ImagePointer += junk;
+                    output[(y * bitmap.Width) + x] = ImagePointer[(y * BitmapData.Stride) + x];
             }
 
             bitmap.UnlockBits(BitmapData);

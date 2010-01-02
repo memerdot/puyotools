@@ -81,6 +81,33 @@ namespace VrSharp.GvrTexture
         }
         #endregion
 
+        #region Misc
+        /// <summary>
+        /// Returns information about the texture. (Use an explicit cast to get GvrTextureInfo.)
+        /// </summary>
+        /// <returns></returns>
+        public override VrTextureInfo GetTextureInfo()
+        {
+            if (!InitSuccess) return new GvrTextureInfo();
+
+            GvrTextureInfo TextureInfo = new GvrTextureInfo();
+            TextureInfo.TextureWidth   = TextureWidth;
+            TextureInfo.TextureHeight  = TextureHeight;
+            TextureInfo.PixelFormat    = ((DataFlags & 0x0A) != 0 ? TextureInfo.DataFormat : (byte)0xFF);
+            TextureInfo.DataFormat     = DataFormat;
+            TextureInfo.DataFlags      = DataFlags;
+
+            return TextureInfo;
+        }
+        #endregion
+
+        #region Clut
+        protected override void CreateVpClut(byte[] ClutData, ushort NumClutEntries)
+        {
+            ClutEncoder = new GvpClutEncoder(ClutData, NumClutEntries);
+        }
+        #endregion
+
         /// <summary>
         /// Set data flags.
         /// </summary>
@@ -114,6 +141,10 @@ namespace VrSharp.GvrTexture
 
             GbixOffset = 0x00;
             PvrtOffset = 0x10;
+
+            // See if we need to palettize the bitmap and raw image data
+            if (DataCodec.GetNumClutEntries() != 0)
+                PalettizeBitmap();
 
             return true;
         }

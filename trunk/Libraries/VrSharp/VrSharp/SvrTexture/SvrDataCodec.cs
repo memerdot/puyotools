@@ -57,8 +57,8 @@ namespace VrSharp.SvrTexture
         // 4-bit Texture with External Clut
         public class Index4ExtClut : SvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 4; }
             public override int GetNumClutEntries()  { return 16; }
             public override bool NeedsExternalClut() { return true; }
@@ -92,9 +92,23 @@ namespace VrSharp.SvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                byte[] output = new byte[(width * height) / 2];
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int offset = GetSwizzledOffset4(x, y, width, height);
+                        byte entry = (byte)(input[(y * width) + x] & 0x0F);
+                        entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
+
+                        output[GetSwizzledOffset4(x, y, width, height)] = entry;
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
@@ -103,8 +117,8 @@ namespace VrSharp.SvrTexture
         // 8-bit Texture with External Clut
         public class Index8ExtClut : SvrDataCodec
         {
-            public override bool CanDecode() { return true;  }
-            public override bool CanEncode() { return false; }
+            public override bool CanDecode() { return true; }
+            public override bool CanEncode() { return true; }
             public override int GetBpp(VrPixelCodec PixelCodec) { return 8; }
             public override int GetNumClutEntries()  { return 256; }
             public override bool NeedsExternalClut() { return true; }
@@ -134,9 +148,22 @@ namespace VrSharp.SvrTexture
                 return output;
             }
 
-            public override byte[] Encode(byte[] data, int width, int height, VrPixelCodec PixelCodec)
+            public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
-                return null;
+                byte[] output = new byte[width * height];
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        byte entry = input[(y * width) + x];
+                        entry      = (byte)((entry & 0xE7) | ((entry & 0x10) >> 1) | ((entry & 0x08) << 1));
+
+                        output[GetSwizzledOffset8(x, y, width, height)] = entry;
+                    }
+                }
+
+                return output;
             }
         }
         #endregion
