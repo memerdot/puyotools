@@ -20,6 +20,7 @@ namespace VrSharp
         /// <param name="NumClutEntries">Number of entries in the clut.</param>
         public VpClutEncoder(MemoryStream stream, ushort NumClutEntries)
         {
+            stream.Seek(0, SeekOrigin.Begin); // Seek to the beginning
             try { ClutData = stream.ToArray(); }
             catch
             {

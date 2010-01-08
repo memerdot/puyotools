@@ -62,6 +62,7 @@ namespace VrSharp
         /// <param name="stream">Stream that contains the bitmap data.</param>
         public VrTextureEncoder(Stream stream)
         {
+            stream.Seek(0, SeekOrigin.Begin); // Seek to the beginning
             Bitmap bitmap;
             try { bitmap = new Bitmap(stream); }
             catch

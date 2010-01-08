@@ -322,6 +322,9 @@ namespace VrConv
 
             private PvrCompressionFormat GetCompressionFormat(string format)
             {
+                if (format == null)
+                    return PvrCompressionFormat.None;
+
                 switch (format.ToLower())
                 {
                     case "rle":

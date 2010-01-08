@@ -55,6 +55,7 @@ namespace VrSharp
         /// <param name="stream">Stream that contains the texture data.</param>
         public VrTexture(Stream stream)
         {
+            stream.Seek(0, SeekOrigin.Begin); // Seek to the beginning
             if (stream is MemoryStream) // We can use ToArray() for memory streams
             {
                 try   { TextureData = (stream as MemoryStream).ToArray(); }

@@ -40,6 +40,7 @@ namespace VrSharp
         /// <param name="stream">Stream that contains the clut data.</param>
         public VpClut(Stream stream)
         {
+            stream.Seek(0, SeekOrigin.Begin); // Seek to the beginning
             if (stream is MemoryStream) // We can use ToArray() for memory streams
             {
                 try   { ClutData = (stream as MemoryStream).ToArray(); }
