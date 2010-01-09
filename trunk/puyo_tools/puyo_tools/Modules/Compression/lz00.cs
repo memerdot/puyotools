@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using Extensions;
 
@@ -118,7 +119,7 @@ namespace puyo_tools
                 CompressedData.Write(0u); // Will be filled in later
                 CompressedData.Seek(8, SeekOrigin.Current); // Advance 8 bytes
 
-                CompressedData.Write(filename, 31, 32);
+                CompressedData.Write(filename, 31, 32, Encoding.GetEncoding("Shift_JIS"));
                 CompressedData.Write(DecompressedSize);
                 CompressedData.Write(MagicValue);
                 CompressedData.Seek(8, SeekOrigin.Current); // Advance 8 bytes
@@ -215,7 +216,7 @@ namespace puyo_tools
         // Get the filename
         public override string DecompressFilename(ref Stream data, string filename)
         {
-            string EmbeddedFilename = data.ReadString(0x10, 32);
+            string EmbeddedFilename = data.ReadString(0x10, 32, Encoding.GetEncoding("Shift_JIS"));
             return (EmbeddedFilename == String.Empty ? filename : EmbeddedFilename);
         }
         public override string CompressFilename(ref Stream data, string filename)

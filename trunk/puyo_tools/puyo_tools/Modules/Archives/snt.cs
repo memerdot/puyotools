@@ -52,7 +52,7 @@ namespace puyo_tools
                         filename = data.ReadString(0x40 + (files * 0x1C) + (i * 0x40), 64);
 
                     /* GIM files can also contain their original filename in the footer */
-                    if (filename == string.Empty && length > 40 && data.ReadString(offset, 8) == GraphicHeader.MIG)
+                    if (filename == string.Empty && length > 40 && data.ReadString(offset, 12, false) == GraphicHeader.MIG)
                     {
                         uint filenameOffset = data.ReadUInt(offset + 0x24) + 0x30;
                         if (filenameOffset < length)

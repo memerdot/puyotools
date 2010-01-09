@@ -11,7 +11,9 @@ namespace puyo_tools
 {
     public class Archive_Create : Form
     {
-        /* Set up our form variables */
+        // Set up form variables
+        private Panel PanelContent;
+
         private ComboBox[]
             blockSizes; // Block Sizes
 
@@ -58,6 +60,13 @@ namespace puyo_tools
         {
             /* Set up the form */
             FormContent.Create(this, "Archive - Create", new Size(680, 400));
+            PanelContent = new Panel()
+            {
+                Location = new Point(0, 0),
+                Width = this.ClientSize.Width,
+                Height = this.ClientSize.Height,
+            };
+            this.Controls.Add(PanelContent);
 
             /* Fill the archive & compression formats */
             InitalizeArchiveFormats();
@@ -95,7 +104,7 @@ namespace puyo_tools
                 new ToolStripSeparator(),
                 renameAllFiles,
             });
-            this.Controls.Add(toolStrip);
+            PanelContent.Controls.Add(toolStrip);
 
             /* Create the right click menu */
             ContextMenuStrip contextMenu = new ContextMenuStrip();
@@ -109,7 +118,7 @@ namespace puyo_tools
             archiveFileList.ContextMenuStrip = contextMenu;
 
             /* Archive Contents */
-            FormContent.Add(this, archiveFileList,
+            FormContent.Add(PanelContent, archiveFileList,
                 new string[] { "#", "Source Filename", "Filename in the Archive" },
                 new int[] { 48, 170, 170 },
                 new Point(8, 32),
@@ -190,13 +199,13 @@ namespace puyo_tools
                 }
             }
 
-            this.Controls.Add(settingsBox);
+            PanelContent.Controls.Add(settingsBox);
             settingsBox.TabPages.Add(settingsPages[0]);
 
             /* Create Archive */
-            FormContent.Add(this, startWorkButton,
+            FormContent.Add(PanelContent, startWorkButton,
                 "Create Archive",
-                new Point((this.Width / 2) - 60, 368),
+                new Point((PanelContent.Width / 2) - 60, 368),
                 new Size(120, 24),
                 startWork);
 
@@ -206,19 +215,20 @@ namespace puyo_tools
         /* Start Work */
         private void startWork(object sender, EventArgs e)
         {
-            /* Make sure we have files */
+            // Make sure we have files
             if (fileList.Count == 0)
                 return;
 
-            /* Set up our background worker */
+            // Set up our background worker
             BackgroundWorker bw = new BackgroundWorker();
             bw.DoWork += run;
 
-            /* Now, show our status */
+            // Now, show our status
             status = new StatusMessage("Archive - Create", fileList.ToArray());
+            status.Show();
+            status.Visible = false;
 
             bw.RunWorkerAsync();
-            status.ShowDialog();
         }
 
         /* Create the archive */
@@ -227,18 +237,17 @@ namespace puyo_tools
             try
             {
                 // Get archive and compression format
-                int ArchiveFormatIndex     = archiveFormatList.SelectedIndex;
+                int ArchiveFormatIndex = archiveFormatList.SelectedIndex;
                 int CompressionFormatIndex = compressionFormatList.SelectedIndex;
 
                 // Get output filename
                 string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
-
                 if (output_filename == null || output_filename == String.Empty)
                     return;
 
-                /* First, disable the buttons */
-                startWorkButton.Enabled = false;
-                renameAllFiles.Enabled  = false;
+                // Disable the window and show the status box
+                PanelContent.Enabled = false;
+                status.Visible = true;
 
                 /* Start creating the archive */
                 Archive archive = new Archive(ArchiveFormats[archiveFormatList.SelectedIndex], Path.GetFileName(output_filename));
@@ -296,7 +305,7 @@ namespace puyo_tools
                     /* Compress the data if we want to */
                     if (compressionFormatList.SelectedIndex != 0)
                     {
-                        Compression compression     = new Compression(outputStream, output_filename, CompressionFormats[CompressionFormatIndex - 1]);
+                        Compression compression = new Compression(outputStream, output_filename, CompressionFormats[CompressionFormatIndex - 1]);
                         MemoryStream compressedData = compression.Compress();
                         if (compressedData != null)
                         {
@@ -307,14 +316,16 @@ namespace puyo_tools
                         }
                     }
                 }
+
+                this.Close();
             }
             catch
             {
+                this.Close();
             }
             finally
             {
                 status.Close();
-                this.Close();
             }
         }
 

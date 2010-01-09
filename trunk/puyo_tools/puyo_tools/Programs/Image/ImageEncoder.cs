@@ -7,12 +7,15 @@ using System.ComponentModel;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 using Extensions;
+using VrSharp.PvrTexture;
 
 namespace puyo_tools
 {
     public class Image_Encoder : Form
     {
-        /* Set up our form variables */
+        // Set up form variables
+        private Panel PanelContent;
+
         private GroupBox
             imageConversionSettings = new GroupBox(), // Image Conversion Settings
             compressionSettings     = new GroupBox(); // Decompression Settings
@@ -62,21 +65,19 @@ namespace puyo_tools
 
         public Image_Encoder(bool selectDirectory)
         {
-            /* Select the directories */
+            // Select the directory
             string directory = FileSelectionDialog.SaveDirectory("Select a directory");
-
-            /* If no directory was selected, don't continue */
             if (directory == null || directory == String.Empty)
                 return;
 
-            /* Ask the user if they want to search sub directories */
-            DialogResult result = MessageBox.Show(this, "Do you want to add the files from sub directories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            // Include files from subdirectories
+            DialogResult result = MessageBox.Show(this, "Include files from subdirectories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
-                files = Files.FindFilesInDirectory(directory, true);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
             else
-                files = Files.FindFilesInDirectory(directory, false);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.TopDirectoryOnly);
 
-            /* Show Options */
+            // Show Options
             showOptions();
         }
 
@@ -84,25 +85,31 @@ namespace puyo_tools
         {
             /* Set up the form */
             FormContent.Create(this, "Image - Encoder", new Size(400, 316));
+            PanelContent = new Panel() {
+                Location = new Point(0, 0),
+                Width    = this.ClientSize.Width,
+                Height   = this.ClientSize.Height,
+            };
+            this.Controls.Add(PanelContent);
 
             // Fill the compression formats
             InitalizeCompressionFormats();
 
             /* Files Selected */
-            FormContent.Add(this, new Label(),
+            FormContent.Add(PanelContent, new Label(),
                 String.Format("{0} {1} Selected",
                     files.Length.ToString(),
                     (files.Length > 1 ? "Files" : "File")),
                 new Point(0, 8),
-                new Size(this.Width, 16),
+                new Size(PanelContent.Width, 16),
                 ContentAlignment.TopCenter,
                 new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold));
 
             /* Image Conversion Settings */
-            FormContent.Add(this, imageConversionSettings,
+            FormContent.Add(PanelContent, imageConversionSettings,
                 "Image Conversion Settings",
                 new Point(8, 32),
-                new Size(this.Size.Width - 24, 172));
+                new Size(PanelContent.Size.Width - 24, 172));
 
             /* PVR temporarily */
             /* Palette Format */
@@ -177,10 +184,10 @@ namespace puyo_tools
                 new Size(imageConversionSettings.Size.Width - 16, 16));
 
             // Compression Settings
-            FormContent.Add(this, compressionSettings,
+            FormContent.Add(PanelContent, compressionSettings,
                 "Compression Settings",
                 new Point(8, 212),
-                new Size(this.Size.Width - 24, 64));
+                new Size(PanelContent.Size.Width - 24, 64));
 
             /* Compress file */
             FormContent.Add(compressionSettings, compressFile, false,
@@ -200,9 +207,9 @@ namespace puyo_tools
             compressionFormat.Enabled = false;
 
             /* Convert */
-            FormContent.Add(this, startWorkButton,
+            FormContent.Add(PanelContent, startWorkButton,
                 "Convert",
-                new Point((this.Width / 2) - 60, 284),
+                new Point((PanelContent.Width / 2) - 60, 284),
                 new Size(120, 24),
                 startWork);
 
@@ -212,17 +219,18 @@ namespace puyo_tools
         /* Start Work */
         private void startWork(object sender, EventArgs e)
         {
-            /* First, disable the button */
-            startWorkButton.Enabled = false;
+            // Disable the window
+            PanelContent.Enabled = false;
 
             /* Set up our background worker */
             BackgroundWorker bw = new BackgroundWorker();
             bw.DoWork += run;
 
-            /* Add the Status Message */
+            /* Now, show our status */
             status = new StatusMessage("Image - Convert", files);
+            status.Show();
+
             bw.RunWorkerAsync();
-            status.ShowDialog();
         }
 
         /* Convert the images */
@@ -252,15 +260,15 @@ namespace puyo_tools
 
                         switch (paletteFormat.SelectedIndex)
                         {
-                            case 0: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Argb1555; break;
-                            case 1: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Rgb565;   break;
-                            case 2: encoder.PaletteFormat = VrSharp.PvrPixelFormat.Argb4444; break;
+                            case 0: encoder.PixelFormat = PvrPixelFormat.Argb1555; break;
+                            case 1: encoder.PixelFormat = PvrPixelFormat.Rgb565; break;
+                            case 2: encoder.PixelFormat = PvrPixelFormat.Argb4444; break;
                         }
                         switch (dataFormat.SelectedIndex)
                         {
-                            case 0: encoder.DataFormat = VrSharp.PvrDataFormat.SquareTwiddled; break;
-                            case 1: encoder.DataFormat = VrSharp.PvrDataFormat.Rectangle; break;
-                            case 2: encoder.DataFormat = VrSharp.PvrDataFormat.RectangleTwiddled; break;
+                            case 0: encoder.DataFormat = PvrDataFormat.SquareTwiddled; break;
+                            case 1: encoder.DataFormat = PvrDataFormat.Rectangle; break;
+                            case 2: encoder.DataFormat = PvrDataFormat.RectangleTwiddled; break;
                         }
 
                         // Set the global index and gbix header

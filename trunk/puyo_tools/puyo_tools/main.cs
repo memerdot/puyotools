@@ -140,8 +140,20 @@ namespace puyo_tools
             else if (sender == programItem[7]) program = new Archive_Explorer();
             else if (sender == programItem[8]) program = new Image_Convert();
             else if (sender == programItem[9]) program = new Image_Convert(true);
-            else if (sender == programItem[10]) program = new Image_Encoder();
-            else if (sender == programItem[11]) program = new Image_Encoder(true);
+            //else if (sender == programItem[10]) program = new Image_Encoder();
+            //else if (sender == programItem[11]) program = new Image_Encoder(true);
+            else if (sender == programItem[10] || sender == programItem[11])
+            {
+                MessageBox.Show(this,
+                    "The Image Encoder has been disabled for the time being as it is awating a rewrite.\n" +
+                    "This is due to Puyo Tools using a new version of Vr Sharp which is incompatable\n" +
+                    "with the current methods being used to encode vr based textures.\n\n" +
+                    "For the time being you can use the command-line based Vr Conv\n" +
+                    "which you can get from the Puyo Tools project page at:\n" +
+                    "http://puyotools.googlecode.com/",
+                    "Image Encoder Temporarily Disabled",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
             else if (sender == programItem[12]) program = new Image_Viewer();
         }
 

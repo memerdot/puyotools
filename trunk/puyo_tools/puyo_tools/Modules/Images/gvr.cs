@@ -3,12 +3,11 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Extensions;
-using VrSharp;
-using ImgSharp;
+using VrSharp.GvrTexture;
 
 namespace puyo_tools
 {
-    /* GVR Images */
+    // Gvr Texture
     class GVR : ImageModule
     {
         public GVR()
@@ -19,25 +18,28 @@ namespace puyo_tools
             CanDecode = true;
         }
 
-        /* Convert the GVR to an image */
+        // Convert the texture to a bitmap
         public override Bitmap Unpack(ref Stream data)
         {
-            /* Convert the GVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(data.ToByteArray(), (PaletteData == null ? null : PaletteData.ToByteArray()));
-                ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
+                GvrTexture TextureInput = new GvrTexture(data.Copy());
+                if (TextureInput.NeedsExternalClut())
+                {
+                    if (PaletteData != null)
+                        TextureInput.SetClut(new GvpClut(PaletteData.Copy())); // Texture has an external clut; set it
+                    else
+                        throw new GraphicFormatNeedsPalette(); // Texture needs an external clut; throw an exception
+                }
 
-                return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
+                return TextureInput.GetTextureAsBitmap();
             }
-            catch (VrCodecHeaderException)
+            catch (GraphicFormatNeedsPalette)
             {
-                throw new GraphicFormatNeedsPalette();
+                throw new GraphicFormatNeedsPalette(); // Throw it again
             }
-            catch
-            {
-                return null;
-            }
+            catch { return null; }
+            finally { PaletteData = null; }
         }
 
         public override Stream Pack(ref Stream data)
@@ -45,25 +47,17 @@ namespace puyo_tools
             return null;
         }
 
-        // External Palette Filename
+        // External Clut Filename
         public override string PaletteFilename(string filename)
         {
             return Path.GetFileNameWithoutExtension(filename) + ".gvp";
         }
 
-        /* Check to see if this is a GVR */
+        // See if the texture is a Gvr
         public override bool Check(ref Stream input, string filename)
         {
-            try
-            {
-                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
-                    (input.ReadString(0x0, 4) == GraphicHeader.GCIX && input.ReadString(0x10, 4) == GraphicHeader.GVRT) ||
-                    (input.ReadString(0x0, 4) == GraphicHeader.GVRT));
-            }
-            catch
-            {
-                return false;
-            }
+            try   { return GvrTexture.IsGvrTexture(input.ToByteArray()); }
+            catch { return false; }
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
-using Extensions;
+using System.Text;
 using System.Collections.Generic;
+using Extensions;
 
 namespace puyo_tools
 {
@@ -40,7 +41,7 @@ namespace puyo_tools
                 for (uint i = 0; i < files; i++)
                 {
                     /* Get filename and extension */
-                    string filename = data.ReadString(0x20 + (i * 0x30), 32); // Name
+                    string filename = data.ReadString(0x20 + (i * 0x30), 32, Encoding.GetEncoding("Shift_JIS")); // Name
                     string fileext  = data.ReadString(0x10 + (i * 0x30), 4);  // Extension
 
                     fileList.Entries[i] = new ArchiveFileList.Entry(
@@ -101,7 +102,7 @@ namespace puyo_tools
                         header.Write(PaddingByte);
 
                     /* Write the filename */
-                    header.Write(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 31, 32);
+                    header.Write(Path.GetFileNameWithoutExtension(archiveFilenames[i]), 31, 32, Encoding.GetEncoding("Shift_JIS"));
 
                     /* Now increment the offset */
                     offset += length.RoundUp(blockSize);

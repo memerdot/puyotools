@@ -76,8 +76,11 @@ namespace VrSharp.SvrTexture
                         // We use width = height for swizzling. This is for rectangle textures
                         // as they require that. Square textures already are width = height.
                         // Most significant bits first
-                        byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, width)];
-                        entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
+                        byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, height)];
+                        if (width < 128 || height < 128)
+                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
+                        else
+                            entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
 
                         output[(((y * width) + x) * 4) + 3] = clut[entry, 3];
                         output[(((y * width) + x) * 4) + 2] = clut[entry, 2];
@@ -102,7 +105,10 @@ namespace VrSharp.SvrTexture
                     {
                         int offset = GetSwizzledOffset4(x, y, width, height);
                         byte entry = (byte)(input[(y * width) + x] & 0x0F);
-                        entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
+                        if (width < 128 || height < 128)
+                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
+                        else
+                            entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
 
                         output[GetSwizzledOffset4(x, y, width, height)] = entry;
                     }
@@ -190,8 +196,11 @@ namespace VrSharp.SvrTexture
                         // We use width = height for swizzling. This is for rectangle textures
                         // as they require that. Square textures already are width = height.
                         // Most significant bits first
-                        byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, width)];
-                        entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
+                        byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, height)];
+                        if (width < 128 || height < 128)
+                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
+                        else
+                            entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
 
                         output[(((y * width) + x) * 4) + 3] = clut[entry, 3];
                         output[(((y * width) + x) * 4) + 2] = clut[entry, 2];
@@ -216,7 +225,10 @@ namespace VrSharp.SvrTexture
                     {
                         int offset = GetSwizzledOffset4(x, y, width, height);
                         byte entry = (byte)(input[(y * width) + x] & 0x0F);
-                        entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
+                        if (width < 128 || height < 128)
+                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
+                        else
+                            entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
 
                         output[GetSwizzledOffset4(x, y, width, height)] = entry;
                     }
@@ -286,9 +298,9 @@ namespace VrSharp.SvrTexture
         {
             switch (bpp)
             {
-                case 4:  return GetSwizzledOffset4(x, y, width, width);
+                case 4:  return GetSwizzledOffset4(x, y, width, height);
                 case 8:  return GetSwizzledOffset8(x, y, width, height);
-                case 16: return GetSwizzledOffset16(x, y, width, width); // If it is like 4-bit it needs width for height
+                case 16: return GetSwizzledOffset16(x, y, width, height); // If it is like 4-bit it needs width for height
                 case 32: return (((y * width) + x) * 4); // 32-bit textures aren't swizzled
             }
 
@@ -299,6 +311,8 @@ namespace VrSharp.SvrTexture
         {
             if (width < 128 || height < 128) // Texture is to small for it to be swizzled
                 return ((y * width) + x) >> 1;
+
+            height = width; // Set height = width
 
             int PageX   = x & (~0x7f);
             int PageY   = y & (~0x7f);
@@ -342,6 +356,8 @@ namespace VrSharp.SvrTexture
         {
             if (width < 64 || height < 64) // Texture is to small for it to be swizzled
                 return ((y * width) + x) << 1;
+
+            height = width; // Set height = width
 
             int PageX   = x & (~0x3f);
             int PageY   = y & (~0x3f);

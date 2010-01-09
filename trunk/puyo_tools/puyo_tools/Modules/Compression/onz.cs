@@ -229,7 +229,7 @@ namespace puyo_tools
                 // Because this can conflict with other compression formats we are going to add a check them too
                 return (data.ReadString(0x0, 1) == "\x11" &&
                     !Compression.Dictionary[CompressionFormat.PRS].Check(ref data, filename) &&
-                    !Compression.Dictionary[CompressionFormat.PVZ].Check(ref data, filename));
+                    !Images.Dictionary[GraphicFormat.PVR].Check(ref data, filename));
             }
             catch
             {

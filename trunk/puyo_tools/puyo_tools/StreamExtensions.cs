@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Extensions
 {
@@ -86,6 +87,26 @@ namespace Extensions
             return stream.ReadString(offset, maxLength, true);
         }
 
+        // Read a string with a specific encoding
+        public static string ReadString(this Stream stream, long offset, int maxLength, Encoding encoding, bool nullTerminator)
+        {
+            stream.Position = offset;
+
+            byte[] array = new byte[maxLength];
+            stream.Read(array, 0x00, maxLength);
+
+            string str = encoding.GetString(array);
+            if (nullTerminator)
+                str = str.TrimEnd('\0');
+
+            return str;
+        }
+
+        public static string ReadString(this Stream stream, long offset, int maxLength, Encoding encoding)
+        {
+            return stream.ReadString(offset, maxLength, encoding, true);
+        }
+
         // Copy to a byte array
         public static byte[] ToByteArray(this Stream stream)
         {
@@ -156,6 +177,27 @@ namespace Extensions
                     stream.WriteByte((byte)value[i]);
                 else
                     stream.WriteByte(0x0);
+            }
+        }
+
+        // Write a string with a specific encoding
+        public static void Write(this Stream stream, string value, int strLength, int length, Encoding encoding)
+        {
+            byte[] strArray = encoding.GetBytes(value);
+
+            int trimAmount = 0;
+            while (strArray.Length > strLength)
+            {
+                trimAmount++;
+                strArray = encoding.GetBytes(value.Substring(0, value.Length - trimAmount));
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                if (i < strArray.Length && i < strLength)
+                    stream.WriteByte(strArray[i]);
+                else
+                    stream.WriteByte(0x00);
             }
         }
 
