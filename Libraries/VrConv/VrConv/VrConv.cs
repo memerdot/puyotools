@@ -288,14 +288,13 @@ namespace VrConv
                     "\trgb565   : Rgb565\n" +
                     "\trgb5a3   : Rgb5a3\n" +
                     "\targb8888 : Argb8888\n" +
-                    "\tindex4   : 4-bit Clut (set pixel format)\n" +
-                    "\tindex8   : 8-bit Clut (set pixel format)\n");
+                    "\tindex4   : 4-bit Palettized (set pixel format)\n" +
+                    "\tindex8   : 8-bit Palettized (set pixel format)\n");
                     //"\tcmp      : S3tc/Dxtn1 Compression");
                 Console.WriteLine();
                 Console.WriteLine(
                     "[options] Options:\n" +
                     "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
-                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
                     //"\t-gbix        : Include Gbix Header (Gamecube)\n" +
                     //"\t-gcix        : Include Gcix Header (Wii)\n" +
                     //"\t-nogbix      : Don't include Gbix/Gcix Header\n" +
@@ -314,11 +313,11 @@ namespace VrConv
                 Console.WriteLine(
                     "<datafmt> Data Formats:\n" +
                     "\tsqr         : Square Twiddled\n" +
-                    "\tsqrmips     : Square Twiddled with Mipmaps\n" +
+                    //"\tsqrmips     : Square Twiddled with Mipmaps\n" +
                     //"\tvq          : Vq\n" +
                     //"\tvqmips      : Vq w/ Mipmaps\n" +
-                    "\tindex4      : Index 4-bit with External Clut\n" +
-                    "\tindex8      : Index 8-bit with External Clut\n" +
+                    "\tindex4      : 4-bit Palettized with External Clut\n" +
+                    "\tindex8      : 8-bit Palettized with External Clut\n" +
                     "\trect        : Rectangle\n" +
                     "\trecttwidled : Rectangle Twiddled\n");
                     //"\tsmallvq     : Small Vq\n" +
@@ -326,13 +325,12 @@ namespace VrConv
                 Console.WriteLine();
                 Console.WriteLine(
                     "[options] Options:\n" +
-                    "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
-                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
+                    "\t-o <output>  : Set output filename (default is <input>.pvr)\n" +
                     //"\t-gbix        : Include Gbix Header\n" +
                     //"\t-nogbix      : Don't include Gbix Header\n" +
                     "\t-gi <gindex> : Sets the Global Index (default is 0)\n" +
                     "\t-cmp <fmt>   : Sets the compression format\n" +
-                    "\t               none, rle");
+                    "\t               none (default), rle");
             }
 
             else if (format.ToLower() == "svr")
@@ -345,18 +343,17 @@ namespace VrConv
                 Console.WriteLine();
                 Console.WriteLine(
                     "<datafmt> Data Formats:\n" +
-                    "\trect : Rectangle\n" +
-                    "\tindex4ec : Index 4-bit with External Clut\n" +
-                    "\tindex8ec : Index 8-bit with External Clut\n" +
-                    "\tindex4   : Index 4-bit (will set proper format based on\n" +
-                    "\t           pixel format and texture dimensions.\n" +
-                    "\tindex8   : Index 8-bit (will set proper format based on\n" +
-                    "\t           pixel format and texture dimensions.");
+                    "\trect     : Rectangle\n" +
+                    "\tindex4ec : 4-bit Palettized with External Clut\n" +
+                    "\tindex8ec : 8-bit Palettized with External Clut\n" +
+                    "\tindex4   : 4-bit Palettized (will set proper format based on\n" +
+                    "\t           pixel format and texture dimensions.)\n" +
+                    "\tindex8   : 8-bit Palettized (will set proper format based on\n" +
+                    "\t           pixel format and texture dimensions.)");
                 Console.WriteLine();
                 Console.WriteLine(
                     "[options] Options:\n" +
-                    "\t-o <output>  : Set output filename (default is <input>.gvr)\n" +
-                    //"\t-c <clut>    : Set filename of clut (default is <input>.gvp)\n" +
+                    "\t-o <output>  : Set output filename (default is <input>.svr)\n" +
                     //"\t-gbix        : Include Gbix Header\n" +
                     //"\t-nogbix      : Don't include Gbix Header\n" +
                     "\t-gi <gindex> : Sets the Global Index (default is 0)\n");
