@@ -38,7 +38,7 @@ namespace puyo_tools
         }
 
         /* Checkboxes */
-        public static void Add(Form parent, CheckBox content, string text, Point position, Size size)
+        public static void Add(Control parent, CheckBox content, string text, Point position, Size size)
         {
             content.Text     = text;
             content.Location = position;
@@ -47,26 +47,7 @@ namespace puyo_tools
             parent.Controls.Add(content);
         }
 
-        public static void Add(Form parent, CheckBox content, bool selected, string text, Point position, Size size)
-        {
-            content.Text     = text;
-            content.Location = position;
-            content.Size     = size;
-            content.Checked  = selected;
-
-            parent.Controls.Add(content);
-        }
-
-        public static void Add(GroupBox parent, CheckBox content, string text, Point position, Size size)
-        {
-            content.Text     = text;
-            content.Location = position;
-            content.Size     = size;
-
-            parent.Controls.Add(content);
-        }
-
-        public static void Add(GroupBox parent, CheckBox content, bool selected, string text, Point position, Size size)
+        public static void Add(Control parent, CheckBox content, bool selected, string text, Point position, Size size)
         {
             content.Text     = text;
             content.Location = position;
@@ -77,7 +58,7 @@ namespace puyo_tools
         }
 
         /* Label */
-        public static void Add(Form parent, Label content, string text, Point position, Size size)
+        public static void Add(Control parent, Label content, string text, Point position, Size size)
         {
             content.Text     = text;
             content.Location = position;
@@ -86,16 +67,7 @@ namespace puyo_tools
             parent.Controls.Add(content);
         }
 
-        public static void Add(GroupBox parent, Label content, string text, Point position, Size size)
-        {
-            content.Text = text;
-            content.Location = position;
-            content.Size = size;
-
-            parent.Controls.Add(content);
-        }
-
-        public static void Add(Form parent, Label content, string text, Point position, Size size, ContentAlignment alignment)
+        public static void Add(Control parent, Label content, string text, Point position, Size size, ContentAlignment alignment)
         {
             content.Text      = text;
             content.Location  = position;
@@ -105,7 +77,7 @@ namespace puyo_tools
             parent.Controls.Add(content);
         }
 
-        public static void Add(Form parent, Label content, string text, Point position, Size size, ContentAlignment alignment, Font font)
+        public static void Add(Control parent, Label content, string text, Point position, Size size, ContentAlignment alignment, Font font)
         {
             content.Text      = text;
             content.Location  = position;
@@ -117,7 +89,7 @@ namespace puyo_tools
         }
 
         /* Progrss Bar */
-        public static void Add(Form parent, ProgressBar content, Point position, Size size, int total)
+        public static void Add(Control parent, ProgressBar content, Point position, Size size, int total)
         {
             content.Location = position;
             content.Size     = size;
@@ -129,7 +101,7 @@ namespace puyo_tools
         }
 
         /* Combo Box */
-        public static void Add(Form parent, ComboBox content, string[] choices, Point position, Size size)
+        public static void Add(Control parent, ComboBox content, string[] choices, Point position, Size size)
         {
             content.Items.AddRange(choices);
             content.Location         = position;
@@ -141,19 +113,7 @@ namespace puyo_tools
             parent.Controls.Add(content);
         }
 
-        public static void Add(GroupBox parent, ComboBox content, string[] choices, Point position, Size size)
-        {
-            content.Items.AddRange(choices);
-            content.Location = position;
-            content.Size = size;
-            content.DropDownStyle = ComboBoxStyle.DropDownList;
-            content.MaxDropDownItems = choices.Length;
-            content.SelectedIndex = 0;
-
-            parent.Controls.Add(content);
-        }
-
-        public static void Add(Form parent, ComboBox content, string[] choices, Point position, Size size, EventHandler onChange)
+        public static void Add(Control parent, ComboBox content, string[] choices, Point position, Size size, EventHandler onChange)
         {
             content.Items.AddRange(choices);
             content.Location              = position;
@@ -167,7 +127,7 @@ namespace puyo_tools
         }
 
         /* List View */
-        public static void Add(Form parent, ListView content, string[] columnHeader, int[] columnWidth, Point position, Size size)
+        public static void Add(Control parent, ListView content, string[] columnHeader, int[] columnWidth, Point position, Size size)
         {
             content.Location      = position;
             content.Size          = size;
@@ -198,7 +158,7 @@ namespace puyo_tools
         }
 
         /* Group Box */
-        public static void Add(Form parent, GroupBox content, string title, Point position, Size size)
+        public static void Add(Control parent, GroupBox content, string title, Point position, Size size)
         {
             content.Location = position;
             content.Size     = size;

@@ -3,12 +3,11 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Extensions;
-using VrSharp;
-using ImgSharp;
+using VrSharp.SvrTexture;
 
 namespace puyo_tools
 {
-    /* SVR Images */
+    // Svr Texture
     class SVR : ImageModule
     {
         public SVR()
@@ -19,30 +18,28 @@ namespace puyo_tools
             CanDecode = true;
         }
 
-        /* Convert the SVR to an image */
+        // Convert the texture to a bitmap
         public override Bitmap Unpack(ref Stream data)
         {
-            /* Convert the SVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(data.ToByteArray(), (PaletteData == null ? null : PaletteData.ToByteArray()));
-                ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
+                SvrTexture TextureInput = new SvrTexture(data.Copy());
+                if (TextureInput.NeedsExternalClut())
+                {
+                    if (PaletteData != null)
+                        TextureInput.SetClut(new SvpClut(PaletteData.Copy())); // Texture has an external clut; set it
+                    else
+                        throw new GraphicFormatNeedsPalette(); // Texture needs an external clut; throw an exception
+                }
 
-                return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
+                return TextureInput.GetTextureAsBitmap();
             }
-            catch (VrCodecNeedsPaletteException)
+            catch (GraphicFormatNeedsPalette)
             {
-                throw new GraphicFormatNeedsPalette();
+                throw new GraphicFormatNeedsPalette(); // Throw it again
             }
-            catch
-            {
-                return null;
-            }
-            finally
-            {
-                // Reset palette data
-                PaletteData = null;
-            }
+            catch   { return null; }
+            finally { PaletteData = null; }
         }
 
         public override Stream Pack(ref Stream data)
@@ -50,24 +47,17 @@ namespace puyo_tools
             return null;
         }
 
-        // External Palette Filename
+        // External Clut Filename
         public override string PaletteFilename(string filename)
         {
             return Path.GetFileNameWithoutExtension(filename) + ".svp";
         }
 
-        /* Check to see if this is a SVR */
+        // See if the texture is a Svr
         public override bool Check(ref Stream input, string filename)
         {
-            try
-            {
-                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.PVRT && input.ReadByte(0x19) >= 0x60 && input.ReadByte(0x19) < 0x70) ||
-                    (input.ReadString(0x0, 4) == GraphicHeader.PVRT && input.ReadByte(0x9) >= 0x60 && input.ReadByte(0x9) < 0x70));
-            }
-            catch
-            {
-                return false;
-            }
+            try   { return SvrTexture.IsSvrTexture(input.ToByteArray()); }
+            catch { return false; }
         }
     }
 }

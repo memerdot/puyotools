@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Exceptions.cs" />
     <Compile Include="FileSelectionDialog.cs" />
+    <Compile Include="FileTypeInfo.cs" />
     <Compile Include="FormContent.cs" />
     <Compile Include="icons.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -148,6 +149,10 @@
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\VrSharp\VrSharp\VrSharp.csproj">
+      <Project>{A8E274F4-0D8E-4EAB-A5B2-7B40BC922534}</Project>
+      <Name>VrSharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\PTImgLib\GimSharp\GimSharp.csproj">
       <Project>{18707752-78B4-4735-AE5A-4261AD5C06EE}</Project>
       <Name>GimSharp</Name>
@@ -155,10 +160,6 @@
     <ProjectReference Include="..\..\PTImgLib\ImgSharp\ImgSharp.csproj">
       <Project>{889DCE80-78CB-4865-A16F-12FD2B85766B}</Project>
       <Name>ImgSharp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\PTImgLib\VrSharp\VrSharp.csproj">
-      <Project>{0BE70222-C1CC-4035-B2ED-13E976A53C32}</Project>
-      <Name>VrSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

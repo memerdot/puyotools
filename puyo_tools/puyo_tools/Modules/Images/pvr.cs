@@ -3,16 +3,16 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Extensions;
-using VrSharp;
-using ImgSharp;
+using VrSharp.PvrTexture;
 
 namespace puyo_tools
 {
-    /* PVR Images */
+    // Pvr Texture
     class PVR : ImageModule
     {
-        public PvrPixelFormat PaletteFormat = PvrPixelFormat.Argb1555;
+        public PvrPixelFormat PixelFormat = PvrPixelFormat.Argb1555;
         public PvrDataFormat DataFormat = PvrDataFormat.SquareTwiddled;
+        public PvrCompressionFormat CompressionFormat = PvrCompressionFormat.None;
         public bool GbixHeader = true;
         public uint GlobalIndex = 0;
 
@@ -24,69 +24,58 @@ namespace puyo_tools
             CanDecode = true;
         }
 
-        /* Convert the PVR to an image */
+        // Convert the texture to a bitmap
         public override Bitmap Unpack(ref Stream data)
         {
-            /* Convert the PVR to an image */
             try
             {
-                VrFile imageInput   = new VrFile(data.ToByteArray(), (PaletteData == null ? null : PaletteData.ToByteArray()));
-                ImgFile imageOutput = new ImgFile(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), ImageFormat.Png);
+                PvrTexture TextureInput = new PvrTexture(data.Copy());
+                if (TextureInput.NeedsExternalClut())
+                {
+                    if (PaletteData != null)
+                        TextureInput.SetClut(new PvpClut(PaletteData.Copy())); // Texture has an external clut; set it
+                    else
+                        throw new GraphicFormatNeedsPalette(); // Texture needs an external clut; throw an exception
+                }
 
-                return new Bitmap(new MemoryStream(imageOutput.GetCompressedData()));
+                return TextureInput.GetTextureAsBitmap();
             }
-            catch (VrCodecNeedsPaletteException)
+            catch (GraphicFormatNeedsPalette)
             {
-                throw new GraphicFormatNeedsPalette();
+                throw new GraphicFormatNeedsPalette(); // Throw it again
             }
-            catch (Exception f)
-            {
-                System.Windows.Forms.MessageBox.Show(f.ToString());
-                return null;
-            }
-            finally
-            {
-                // Reset palette data
-                PaletteData = null;
-            }
+            //catch   { return null; }
+            finally { PaletteData = null; }
         }
 
         public override Stream Pack(ref Stream data)
         {
-            /* Convert the image to a PVR */
-            /* Right now Argb1555 Square Twiddled */
+            // Convert the bitmap to a pvr
             try
             {
-                ImgFile imageInput         = new ImgFile(data.ReadBytes(0, (int)data.Length));
-                PvrFileEncoder imageOutput = new PvrFileEncoder(imageInput.GetDecompressedData(), imageInput.GetWidth(), imageInput.GetHeight(), PaletteFormat, DataFormat, GbixHeader, GlobalIndex);
+                PvrTextureEncoder TextureEncoder = new PvrTextureEncoder(data, PixelFormat, DataFormat);
+                TextureEncoder.EnableGbix(GbixHeader);
+                if (GbixHeader)
+                    TextureEncoder.WriteGbix(GlobalIndex);
+                if (CompressionFormat != PvrCompressionFormat.None)
+                    TextureEncoder.SetCompressionFormat(CompressionFormat);
 
-                return new MemoryStream(imageOutput.GetCompressedData());
+                return TextureEncoder.GetTextureAsStream();
             }
-            catch (Exception f)
-            {
-                System.Windows.Forms.MessageBox.Show(f.ToString());
-                return null;
-            }
+            catch { return null; }
         }
 
-        // External Palette Filename
+        // External Clut Filename
         public override string PaletteFilename(string filename)
         {
             return Path.GetFileNameWithoutExtension(filename) + ".pvp";
         }
 
-        /* Check to see if this is a PVR */
+        // See if the texture is a Pvr
         public override bool Check(ref Stream input, string filename)
         {
-            try
-            {
-                return ((input.ReadString(0x0, 4) == GraphicHeader.GBIX && input.ReadString(0x10, 4) == GraphicHeader.PVRT && input.ReadByte(0x19) < 0x60) ||
-                    (input.ReadString(0x0, 4) == GraphicHeader.PVRT && input.ReadByte(0x9) < 0x60));
-            }
-            catch
-            {
-                return false;
-            }
+            try   { return PvrTexture.IsPvrTexture(input.ToByteArray()); }
+            catch { return false; }
         }
     }
 }

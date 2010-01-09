@@ -12,7 +12,9 @@ namespace puyo_tools
 {
     public class Archive_Extract : Form
     {
-        /* Set up our form variables */
+        // Set up form variables
+        private Panel PanelContent;
+
         private GroupBox
             extractionSettings      = new GroupBox(), // Extraction Settings
             decompressionSettings   = new GroupBox(), // Decompression Settings
@@ -43,7 +45,7 @@ namespace puyo_tools
 
         public Archive_Extract()
         {
-            /* Select the files */
+            // File Selection
             files = FileSelectionDialog.OpenFiles("Select Archive",
                 "Supported Archives (*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.mrz;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.tez;*.txd;*.vdd)|*.acx;*.afs;*.carc;*.gnt;*.gvm;*.mdl;*.mrg;*.mrz;*.narc;*.one;*.onz;*.pvm;*.snt;*.spk;*.tex;*.tez;*.txd;*.vdd|" +
                 "ACX Archive (*.acx)|*.acx|" +
@@ -61,32 +63,28 @@ namespace puyo_tools
                 "TXAG Archive (*.txd)|*.txd|" +
                 "VDD Archive (*.vdd)|*.vdd|" +
                 "All Files (*.*)|*.*");
-
-            /* If no files were selected, don't continue */
             if (files == null || files.Length == 0)
                 return;
 
-            /* Show Options */
+            // Show the options
             showOptions();
         }
 
         public Archive_Extract(bool selectDirectory)
         {
-            /* Select the directories */
+            // Select the directory
             string directory = FileSelectionDialog.SaveDirectory("Select a directory");
-
-            /* If no directory was selected, don't continue */
             if (directory == null || directory == String.Empty)
                 return;
 
-            /* Ask the user if they want to search sub directories */
-            DialogResult result = MessageBox.Show(this, "Do you want to add the files from sub directories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            // Include files from subdirectories
+            DialogResult result = MessageBox.Show(this, "Include files from subdirectories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
-                files = Files.FindFilesInDirectory(directory, true);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
             else
-                files = Files.FindFilesInDirectory(directory, false);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.TopDirectoryOnly);
 
-            /* Show Options */
+            // Show Options
             showOptions();
         }
 
@@ -94,22 +92,28 @@ namespace puyo_tools
         {
             /* Set up the form */
             FormContent.Create(this, "Archive - Extract", new Size(428, 420));
+            PanelContent = new Panel() {
+                Location = new Point(0, 0),
+                Width    = this.ClientSize.Width,
+                Height   = this.ClientSize.Height,
+            };
+            this.Controls.Add(PanelContent);
 
             /* Files Selected */
-            FormContent.Add(this, new Label(),
+            FormContent.Add(PanelContent, new Label(),
                 String.Format("{0} {1} Selected",
                     files.Length.ToString(),
                     (files.Length > 1 ? "Files" : "File")),
                 new Point(0, 8),
-                new Size(this.Width, 16),
+                new Size(PanelContent.Width, 16),
                 ContentAlignment.TopCenter,
                 new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold));
 
             /* Extraction Settings */
-            FormContent.Add(this, extractionSettings,
+            FormContent.Add(PanelContent, extractionSettings,
                 "Extraction Settings",
                 new Point(8, 32),
-                new Size(this.Size.Width - 24, 144));
+                new Size(PanelContent.Size.Width - 24, 144));
 
             /* Extract filenames */
             FormContent.Add(extractionSettings, extractFilenames, true,
@@ -142,10 +146,10 @@ namespace puyo_tools
                 new Size(extractionSettings.Size.Width - 16, 16));
 
             /* Decompression Settings */
-            FormContent.Add(this, decompressionSettings,
+            FormContent.Add(PanelContent, decompressionSettings,
                 "Decompression Settings",
                 new Point(8, 184),
-                new Size(this.Size.Width - 24, 104));
+                new Size(PanelContent.Size.Width - 24, 104));
 
             /* Decompress file */
             FormContent.Add(decompressionSettings, decompressSourceFile, true,
@@ -172,10 +176,10 @@ namespace puyo_tools
                 new Size(decompressionSettings.Size.Width - 16, 16));
 
             /* Image Conversion Settings */
-            FormContent.Add(this, imageConversionSettings,
+            FormContent.Add(PanelContent, imageConversionSettings,
                 "Image Conversion Settings",
                 new Point(8, 296),
-                new Size(this.Size.Width - 24, 84));
+                new Size(PanelContent.Size.Width - 24, 84));
 
             /* Unpack image */
             FormContent.Add(imageConversionSettings, unpackImage,
@@ -196,9 +200,9 @@ namespace puyo_tools
                 new Size(imageConversionSettings.Size.Width - 16, 16));
 
             /* Extract */
-            FormContent.Add(this, startWorkButton,
+            FormContent.Add(PanelContent, startWorkButton,
                 "Extract",
-                new Point((this.Width / 2) - 60, 388),
+                new Point((PanelContent.Width / 2) - 60, 388),
                 new Size(120, 24),
                 startWork);
 
@@ -208,8 +212,8 @@ namespace puyo_tools
         /* Start Work */
         private void startWork(object sender, EventArgs e)
         {
-            /* First, disable the button */
-            startWorkButton.Enabled = false;
+            // Disable the window
+            PanelContent.Enabled = false;
 
             /* Set up our background worker */
             BackgroundWorker bw = new BackgroundWorker();
@@ -218,257 +222,228 @@ namespace puyo_tools
             /* Now, show our status */
             status = new StatusMessage("Archive - Extract", files);
             status.addProgressBarLocal();
+            status.Show();
 
             bw.RunWorkerAsync();
-            status.ShowDialog();
         }
 
-        /* Decompress the files */
+        // Extract the files
         private void run(object sender, DoWorkEventArgs e)
         {
-            /* Create the file list */
+            // Create the file list
             List<string> fileList = new List<string>();
             foreach (string i in files)
                 fileList.Add(i);
 
             for (int i = 0; i < fileList.Count; i++)
             {
-                /* Set the current file */
+                // Set the current file in the status
                 status.CurrentFile      = i;
                 status.CurrentFileLocal = 0;
 
-                //Set the image file list
+                // Set up the image file list for conversion
                 List<string> imageFileList = new List<string>();
 
                 try
                 {
-                    /* Open up the file */
-                    MemoryStream data = null;
-                    string outputFilename  = Path.GetFileName(fileList[i]);
-                    string outputDirectory = Path.GetDirectoryName(fileList[i]);
-                    using (Stream inputStream = new FileStream(fileList[i], FileMode.Open, FileAccess.Read))
+                    // Set up the file paths and open up the file
+                    string InFile       = Path.GetFileName(fileList[i]);
+                    string InDirectory  = Path.GetDirectoryName(fileList[i]);
+                    string OutFile      = InFile;
+                    string OutDirectory = InDirectory;
+
+                    using (FileStream InputStream = new FileStream(fileList[i], FileMode.Open, FileAccess.Read))
                     {
-                        /* Decompress this file? */
+                        Stream InputData = InputStream;
+
+                        // Decompress the file
                         if (decompressSourceFile.Checked)
                         {
-                            /* Set up the decompressor */
-                            Compression compression = new Compression(inputStream, Path.GetFileName(fileList[i]));
+                            Compression compression = new Compression(InputData, InFile);
                             if (compression.Format != CompressionFormat.NULL)
                             {
-                                /* Decompress data */
-                                MemoryStream decompressedData = compression.Decompress();
-
-                                /* Check to make sure the decompression was successful */
-                                if (decompressedData != null)
+                                MemoryStream DecompressedData = compression.Decompress();
+                                if (DecompressedData != null)
                                 {
-                                    data = decompressedData;
+                                    InputData = DecompressedData;
                                     if (useStoredFilename.Checked)
-                                        outputFilename = compression.DecompressFilename;
+                                        InFile = compression.DecompressFilename;
                                 }
                             }
                         }
 
-                        /* Let's get the file list now */
-                        Archive archive = new Archive((data == null ? inputStream : data), outputFilename);
+                        // Open up the archive
+                        Archive archive = new Archive(InputData, InFile);
                         if (archive.Format == ArchiveFormat.NULL)
                             continue;
-
-                        ArchiveFileList archiveFileList = archive.GetFileList();
-                        if (archiveFileList == null || archiveFileList.Entries.Length == 0)
+                        ArchiveFileList ArchiveFileList = archive.GetFileList();
+                        if (ArchiveFileList == null || ArchiveFileList.Entries.Length == 0)
                             continue;
+                        status.TotalFilesLocal = ArchiveFileList.Entries.Length;
 
-                        /* Set the total files in the archive */
-                        status.TotalFilesLocal = archiveFileList.Entries.Length;
-
-                        /* Create the extraction directory */
-                        outputDirectory = Path.GetDirectoryName(fileList[i]);
+                        // Create the directory where we will extract the files to
                         if (extractDirSameFilename.Checked && deleteSourceArchive.Checked)
-                            outputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-                        else if (!extractSameDir.Checked)
-                            outputDirectory += Path.DirectorySeparatorChar + archive.OutputDirectory + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(outputFilename);
+                            OutDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()); // Create a temporary place to store the files for now
+                        else if (extractSameDir.Checked)
+                            OutDirectory = InDirectory;
+                        else
+                            OutDirectory = InDirectory + Path.DirectorySeparatorChar + archive.OutputDirectory + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(InFile);
+                        if (!Directory.Exists(OutDirectory))
+                            Directory.CreateDirectory(OutDirectory);
 
-                        if (!Directory.Exists(outputDirectory))
-                            Directory.CreateDirectory(outputDirectory);
-
-                        /* Extract the data */
-                        for (int j = 0; j < archiveFileList.Entries.Length; j++)
+                        // Extract the data from the archive
+                        for (int j = 0; j < ArchiveFileList.Entries.Length; j++)
                         {
-                            /* Set the file number in the archive */
+                            // Set the current file and get the data
                             status.CurrentFileLocal = j;
+                            MemoryStream OutData = archive.GetData().Copy(ArchiveFileList.Entries[j].Offset, ArchiveFileList.Entries[j].Length);
 
-                            /* Load the file into a MemoryStream */
-                            MemoryStream outputData = archive.GetData().Copy(archiveFileList.Entries[j].Offset, archiveFileList.Entries[j].Length);
-
-                            /* Get the filename we will extract the data to */
-                            string extractFilename;
-                            if (extractFilenames.Checked && archiveFileList.Entries[j].Filename != String.Empty)
-                                extractFilename = archiveFileList.Entries[j].Filename;
+                            // Get the filename that the file will be extracted to
+                            if (extractFilenames.Checked && ArchiveFileList.Entries[j].Filename != String.Empty)
+                                OutFile = ArchiveFileList.Entries[j].Filename;
                             else
-                                extractFilename = j.ToString().PadLeft(archiveFileList.Entries.Length.Digits(), '0') + FileData.GetFileExtension(ref outputData);
+                                OutFile = j.ToString().PadLeft(ArchiveFileList.Entries.Length.Digits(), '0') + FileTypeInfo.GetFileExtension(OutData);
 
-                            /* Decompress this data before we write it? */
-                            if (decompressExtractedFile.Checked && !decompressExtractedDir.Checked)
+                            // Decompress the data
+                            if (decompressExtractedFile.Checked)
                             {
-                                /* Set up the decompressor */
-                                Compression compression = new Compression(outputData, Path.GetFileName(extractFilename));
+                                Compression compression = new Compression(OutData, OutFile);
                                 if (compression.Format != CompressionFormat.NULL)
                                 {
-                                    /* Decompress data */
-                                    MemoryStream decompressedData = compression.Decompress();
+                                    MemoryStream DecompressedData = compression.Decompress();
 
-                                    /* Check to make sure the decompression was successful */
-                                    if (decompressedData != null)
+                                    if (decompressExtractedDir.Checked)
                                     {
-                                        outputData = decompressedData;
+                                        // Write this to a different directory
+                                        string TempOutFile = OutFile; // We will change it temporarily
                                         if (useStoredFilename.Checked)
-                                            extractFilename = compression.DecompressFilename;
+                                            OutFile = compression.DecompressFilename;
+
+                                        if (!Directory.Exists(OutDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory))
+                                            Directory.CreateDirectory(OutDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory);
+                                        using (FileStream OutputStream = new FileStream(OutDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory + Path.DirectorySeparatorChar + OutFile, FileMode.Create, FileAccess.Write))
+                                            OutputStream.Write(DecompressedData);
+
+                                        OutFile = TempOutFile; // Reset the output file now
                                     }
+                                    else
+                                        OutData = DecompressedData;
                                 }
                             }
 
-                            /* Write the data */
-                            using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + extractFilename, FileMode.Create, FileAccess.Write))
-                                outputStream.Write(outputData);
-
-                            // Do we want to decompress the file to a different directory?
-                            if (decompressExtractedFile.Checked && decompressExtractedDir.Checked)
-                            {
-                                // Set up the decompressor
-                                Compression compression = new Compression(outputData, Path.GetFileName(extractFilename));
-                                if (compression.Format != CompressionFormat.NULL)
-                                {
-                                    // Decompress data
-                                    MemoryStream decompressedData = compression.Decompress();
-
-                                    // Check to make sure the decompression was successful */
-                                    if (decompressedData != null)
-                                    {
-                                        outputData = decompressedData;
-                                        if (useStoredFilename.Checked)
-                                            extractFilename = compression.DecompressFilename;
-
-                                        // Now write the file to the decompressed directory
-                                        if (!Directory.Exists(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory))
-                                            Directory.CreateDirectory(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory);
-                                        using (FileStream outputStream = new FileStream(outputDirectory + Path.DirectorySeparatorChar + compression.OutputDirectory + Path.DirectorySeparatorChar + extractFilename, FileMode.Create, FileAccess.Write))
-                                            outputStream.Write(outputData);
-                                    }
-                                }
-                            }
-
-
-                            /* Convert the file to an image? */
-                            if (unpackImage.Checked)
-                            {
-                                Images images = new Images(outputData, extractFilename);
-                                if (images.Format != GraphicFormat.NULL)
-                                {
-                                    // Add it to the list so we can process it later
-                                    imageFileList.Add(outputDirectory + Path.DirectorySeparatorChar + extractFilename);
-                                }
-                            }
-
-                            /* Extract the extracted file? */
+                            // See if we want to extract subarchives
                             if (extractExtracted.Checked)
                             {
-                                Archive testArchive = new Archive(outputData, extractFilename);
-                                if (testArchive.Format != ArchiveFormat.NULL)
+                                Archive archiveTemp = new Archive(OutData, OutFile);
+                                if (archiveTemp.Format != ArchiveFormat.NULL)
                                 {
-                                    /* Set the directory appropiately */
-                                    string addFile;
-                                    if (deleteSourceArchive.Checked && extractDirSameFilename.Checked)
-                                        addFile = fileList[i] + Path.DirectorySeparatorChar + extractFilename;
+                                    string AddFile = String.Empty;
+                                    if (extractDirSameFilename.Checked && deleteSourceArchive.Checked)
+                                        AddFile = fileList[i] + Path.DirectorySeparatorChar + OutFile;
                                     else
-                                        addFile = outputDirectory + Path.DirectorySeparatorChar + extractFilename;
+                                        AddFile = OutDirectory + Path.DirectorySeparatorChar + OutFile;
 
-                                    fileList.Add(addFile);
-                                    status.AddFile(addFile);
+                                    fileList.Add(AddFile);
+                                    status.AddFile(AddFile);
                                 }
                             }
+
+                            // Output an image
+                            if (unpackImage.Checked)
+                            {
+                                Images images = new Images(OutData, OutFile);
+                                if (images.Format != GraphicFormat.NULL)
+                                    imageFileList.Add(OutDirectory + Path.DirectorySeparatorChar + OutFile); // Add this to the image conversion list (in case we need a palette file)
+                            }
+
+                            // Write the file
+                            using (FileStream OutputStream = new FileStream(OutDirectory + Path.DirectorySeparatorChar + OutFile, FileMode.Create, FileAccess.Write))
+                                OutputStream.Write(OutData);
                         }
                     }
 
-                    // Convert images now
+                    // Process image conversion now
                     if (unpackImage.Checked && imageFileList.Count > 0)
                     {
                         // Reset the local file count
                         status.CurrentFileLocal = 0;
-                        status.TotalFilesLocal  = imageFileList.Count;
+                        status.TotalFilesLocal = imageFileList.Count;
 
                         for (int j = 0; j < imageFileList.Count; j++)
                         {
-                            // Set the local file count
                             status.CurrentFileLocal = j;
 
-                            using (FileStream inputData = new FileStream(imageFileList[j], FileMode.Open, FileAccess.Read))
+                            string InFileBitmap       = Path.GetFileName(imageFileList[j]);
+                            string InDirectoryBitmap  = Path.GetDirectoryName(imageFileList[j]);
+                            string OutFileBitmap      = Path.GetFileNameWithoutExtension(InFileBitmap) + ".png";
+                            string OutDirectoryBitmap = InDirectoryBitmap;
+
+                            // Load the file
+                            using (FileStream InputStream = new FileStream(imageFileList[j], FileMode.Open, FileAccess.Read))
                             {
-                                Images images = new Images(inputData, imageFileList[j]);
+                                Images images = new Images(InputStream, Path.GetFileName(imageFileList[j]));
                                 if (images.Format != GraphicFormat.NULL)
                                 {
-                                    // Set up our input and output image
-                                    string inputImage  = imageFileList[j];
-                                    string outputImage = Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + (convertSameDir.Checked ? String.Empty : images.OutputDirectory + Path.DirectorySeparatorChar) + Path.GetFileNameWithoutExtension(inputImage) + ".png";
+                                    if (!convertSameDir.Checked)
+                                        OutDirectoryBitmap = InDirectoryBitmap + Path.DirectorySeparatorChar + images.OutputDirectory;
 
-                                    // Convert image
-                                    Bitmap imageData = null;
+                                    // Start the conversion
+                                    Bitmap ImageData = null;
                                     try
                                     {
-                                        imageData = images.Unpack();
+                                        ImageData = images.Unpack();
                                     }
                                     catch (GraphicFormatNeedsPalette)
                                     {
-                                        // See if the palette file exists
-                                        if (File.Exists(Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + images.PaletteFilename))
+                                        // We need a palette file
+                                        if (File.Exists(InDirectoryBitmap + Path.DirectorySeparatorChar + images.PaletteFilename))
                                         {
-                                            using (FileStream paletteData = new FileStream(Path.GetDirectoryName(inputImage) + Path.DirectorySeparatorChar + images.PaletteFilename, FileMode.Open, FileAccess.Read))
+                                            using (FileStream InStreamPalette = new FileStream(InDirectoryBitmap + Path.DirectorySeparatorChar + images.PaletteFilename, FileMode.Open, FileAccess.Read))
                                             {
-                                                images.Decoder.PaletteData = paletteData;
-                                                imageData = images.Unpack();
+                                                images.Decoder.PaletteData = InStreamPalette;
+                                                ImageData = images.Unpack();
                                             }
                                         }
                                     }
-
-                                    // Make sure an image was written
-                                    if (imageData != null)
+                                    catch
                                     {
-                                        MemoryStream outputData = new MemoryStream();
-                                        imageData.Save(outputData, ImageFormat.Png);
+                                        continue;
+                                    }
 
-                                        // Create the output directory if it does not exist
-                                        if (!Directory.Exists(Path.GetDirectoryName(outputImage)))
-                                            Directory.CreateDirectory(Path.GetDirectoryName(outputImage));
+                                    // Output the image
+                                    if (ImageData != null)
+                                    {
+                                        if (!Directory.Exists(OutDirectoryBitmap))
+                                            Directory.CreateDirectory(OutDirectoryBitmap);
 
-                                        // Write the image
-                                        using (FileStream outputStream = new FileStream(outputImage, FileMode.Create, FileAccess.Write))
-                                            outputStream.Write(outputData);
-
-                                        // Delete the source image if we want to
-                                        if (deleteSourceImage.Checked && File.Exists(inputImage) && File.Exists(outputImage))
-                                            File.Delete(inputImage);
+                                        ImageData.Save(OutDirectoryBitmap + Path.DirectorySeparatorChar + OutFileBitmap, ImageFormat.Png);
                                     }
                                 }
                             }
+
+                            if (deleteSourceImage.Checked &&
+                                File.Exists(InDirectoryBitmap + Path.DirectorySeparatorChar + InFileBitmap) &&
+                                File.Exists(OutDirectoryBitmap + Path.DirectorySeparatorChar + OutFileBitmap))
+                                File.Delete(InDirectoryBitmap + Path.DirectorySeparatorChar + InFileBitmap);
                         }
                     }
 
-                    // Delete the source archive now?
+                    // Delete the source archive now
                     if (deleteSourceArchive.Checked && File.Exists(fileList[i]))
                     {
                         File.Delete(fileList[i]);
-
-                        // We have to rename that directory, remember? */
                         if (extractDirSameFilename.Checked)
-                            Directory.Move(outputDirectory, fileList[i]);
+                            Directory.Move(OutDirectory, fileList[i]);
                     }
                 }
                 catch
                 {
-                    /* Something went wrong. Continue please. */
+                    // Something went wrong. Continue please.
                     continue;
                 }
             }
 
-            /* Close the status box now */
+            // Close the status box now
             status.Close();
             this.Close();
         }

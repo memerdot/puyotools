@@ -200,7 +200,11 @@ namespace puyo_tools
                     catch (GraphicFormatNeedsPalette)
                     {
                         // Load palette data and then unpack again
-                        imageClass.Decoder.PaletteData = LoadPaletteFile(filename, imageClass);
+                        if (Path.GetDirectoryName(filename) != String.Empty)
+                            imageClass.Decoder.PaletteData = LoadPaletteFile(Path.GetDirectoryName(filename) + Path.DirectorySeparatorChar + imageClass.PaletteFilename, imageClass);
+                        else
+                            imageClass.Decoder.PaletteData = LoadPaletteFile(imageClass.PaletteFilename, imageClass);
+
                         return imageClass.Unpack();
                     }
                 }
@@ -351,9 +355,9 @@ namespace puyo_tools
         private Stream LoadPaletteFile(string filename, Images imageClass)
         {
             // See if the palette file exists
-            if (File.Exists(imageClass.PaletteFilename))
+            if (File.Exists(filename))
             {
-                using (FileStream input = new FileStream(imageClass.PaletteFilename, FileMode.Open, FileAccess.Read))
+                using (FileStream input = new FileStream(filename, FileMode.Open, FileAccess.Read))
                     return input.Copy();
             }
 

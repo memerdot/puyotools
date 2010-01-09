@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using GimSharp;
-using VrSharp;
+using VrSharp.PvrTexture;
 
 namespace puyo_tools
 {

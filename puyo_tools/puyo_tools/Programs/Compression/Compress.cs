@@ -12,7 +12,9 @@ namespace puyo_tools
 {
     public class Compression_Compress : Form
     {
-        /* Set up our form variables */
+        // Set up form variables
+        private Panel PanelContent;
+
         private GroupBox
             compressionSettings   = new GroupBox(); // Decompression Settings
 
@@ -61,24 +63,22 @@ namespace puyo_tools
 
         public Compression_Compress(bool selectDirectory)
         {
-            /* Select the directories */
+            // Select the directory
             string directory = FileSelectionDialog.SaveDirectory("Select a directory");
-
-            /* If no directory was selected, don't continue */
             if (directory == null || directory == String.Empty)
                 return;
 
-            /* Ask the user if they want to search sub directories */
-            DialogResult result = MessageBox.Show(this, "Do you want to add the files from sub directories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            // Include files from subdirectories
+            DialogResult result = MessageBox.Show(this, "Include files from subdirectories?", "Add Files", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
-                files = Files.FindFilesInDirectory(directory, true);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
             else
-                files = Files.FindFilesInDirectory(directory, false);
+                files = Directory.GetFiles(directory, "*.*", SearchOption.TopDirectoryOnly);
 
             // Initalize compression formats
             InitalizeCompressionFormats();
 
-            /* Show Options */
+            // Show Options
             showOptions();
         }
 
@@ -86,22 +86,28 @@ namespace puyo_tools
         {
             /* Set up the form */
             FormContent.Create(this, "Compression - Compress", new Size(400, 196));
+            PanelContent = new Panel() {
+                Location = new Point(0, 0),
+                Width    = this.ClientSize.Width,
+                Height   = this.ClientSize.Height,
+            };
+            this.Controls.Add(PanelContent);
 
             /* Files Selected */
-            FormContent.Add(this, new Label(),
+            FormContent.Add(PanelContent, new Label(),
                 String.Format("{0} {1} Selected",
                     files.Length.ToString(),
                     (files.Length > 1 ? "Files" : "File")),
                 new Point(0, 8),
-                new Size(this.Width, 16),
+                new Size(PanelContent.Width, 16),
                 ContentAlignment.TopCenter,
                 new Font(SystemFonts.DialogFont.FontFamily.Name, SystemFonts.DialogFont.Size, FontStyle.Bold));
 
             /* Compression Settings */
-            FormContent.Add(this, compressionSettings,
+            FormContent.Add(PanelContent, compressionSettings,
                 "Compression Settings",
                 new Point(8, 32),
-                new Size(this.Size.Width - 24, 124));
+                new Size(PanelContent.Size.Width - 24, 124));
 
             /* Compression Format */
             FormContent.Add(compressionSettings, new Label(),
@@ -133,9 +139,9 @@ namespace puyo_tools
             filesizeRestrictionSize.KeyPress += new KeyPressEventHandler(TextBoxIntegersOnly);
 
             /* Convert */
-            FormContent.Add(this, startWorkButton,
+            FormContent.Add(PanelContent, startWorkButton,
                 "Compress",
-                new Point((this.Width / 2) - 60, 164),
+                new Point((PanelContent.Width / 2) - 60, 164),
                 new Size(120, 24),
                 startWork);
 
@@ -145,17 +151,18 @@ namespace puyo_tools
         /* Start Work */
         private void startWork(object sender, EventArgs e)
         {
-            /* First, disable the button */
-            startWorkButton.Enabled = false;
+            // Disable the window
+            PanelContent.Enabled = false;
 
             /* Set up our background worker */
             BackgroundWorker bw = new BackgroundWorker();
             bw.DoWork += run;
 
-            /* Add the Status Message */
+            /* Now, show our status */
             status = new StatusMessage("Compression - Compress", files);
+            status.Show();
+
             bw.RunWorkerAsync();
-            status.ShowDialog();
         }
 
         /* Decompress the files */

@@ -143,7 +143,6 @@ namespace puyo_tools
             Dictionary.Add(CompressionFormat.LZSS, new LZSS());
             Dictionary.Add(CompressionFormat.ONZ,  new ONZ());
             Dictionary.Add(CompressionFormat.PRS,  new PRS());
-            Dictionary.Add(CompressionFormat.PVZ,  new PVZ());
         }
     }
     
@@ -158,7 +157,6 @@ namespace puyo_tools
         LZSS,
         ONZ,
         PRS,
-        PVZ,
     }
 
     // Compression Header
