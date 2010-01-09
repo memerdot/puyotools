@@ -68,6 +68,7 @@ namespace VrSharp.SvrTexture
                 byte[] output   = new byte[width * height * 4];
                 byte[,] clut    = ClutData;
                 int StartOffset = offset;
+                bool IsSwizzled = (width >= 128 && height >= 128);
 
                 for (int y = 0; y < height; y++)
                 {
@@ -77,10 +78,10 @@ namespace VrSharp.SvrTexture
                         // as they require that. Square textures already are width = height.
                         // Most significant bits first
                         byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, height)];
-                        if (width < 128 || height < 128)
-                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
-                        else
+                        if (IsSwizzled)
                             entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
+                        else
+                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
 
                         output[(((y * width) + x) * 4) + 3] = clut[entry, 3];
                         output[(((y * width) + x) * 4) + 2] = clut[entry, 2];
@@ -98,6 +99,7 @@ namespace VrSharp.SvrTexture
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
                 byte[] output = new byte[(width * height) / 2];
+                bool IsSwizzled = (width >= 128 && height >= 128);
 
                 for (int y = 0; y < height; y++)
                 {
@@ -105,10 +107,10 @@ namespace VrSharp.SvrTexture
                     {
                         int offset = GetSwizzledOffset4(x, y, width, height);
                         byte entry = (byte)(input[(y * width) + x] & 0x0F);
-                        if (width < 128 || height < 128)
-                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
-                        else
+                        if (IsSwizzled)
                             entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
+                        else
+                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
 
                         output[GetSwizzledOffset4(x, y, width, height)] = entry;
                     }
@@ -188,6 +190,7 @@ namespace VrSharp.SvrTexture
                 byte[] output   = new byte[width * height * 4];
                 byte[,] clut    = ClutData;
                 int StartOffset = offset;
+                bool IsSwizzled = (width >= 128 && height >= 128);
 
                 for (int y = 0; y < height; y++)
                 {
@@ -197,10 +200,10 @@ namespace VrSharp.SvrTexture
                         // as they require that. Square textures already are width = height.
                         // Most significant bits first
                         byte entry = input[StartOffset + GetSwizzledOffset4(x, y, width, height)];
-                        if (width < 128 || height < 128)
-                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
-                        else
+                        if (IsSwizzled)
                             entry = (byte)((entry >> ((y >> 1) & 0x01) * 4) & 0x0F);
+                        else
+                            entry = (byte)((entry >> (x & 0x01) * 4) & 0x0F);
 
                         output[(((y * width) + x) * 4) + 3] = clut[entry, 3];
                         output[(((y * width) + x) * 4) + 2] = clut[entry, 2];
@@ -218,6 +221,7 @@ namespace VrSharp.SvrTexture
             public override byte[] Encode(byte[] input, int width, int height, VrPixelCodec PixelCodec)
             {
                 byte[] output = new byte[(width * height) / 2];
+                bool IsSwizzled = (width >= 128 && height >= 128);
 
                 for (int y = 0; y < height; y++)
                 {
@@ -225,10 +229,10 @@ namespace VrSharp.SvrTexture
                     {
                         int offset = GetSwizzledOffset4(x, y, width, height);
                         byte entry = (byte)(input[(y * width) + x] & 0x0F);
-                        if (width < 128 || height < 128)
-                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
-                        else
+                        if (IsSwizzled)
                             entry = (byte)((output[offset] & (0x0F << ((y >> 1) & 0x01) * 4)) | (entry << ((~(y >> 1) & 0x01) * 4)));
+                        else
+                            entry = (byte)((output[offset] & (0x0F << (x & 0x01) * 4)) | (entry << ((~x & 0x01) * 4)));
 
                         output[GetSwizzledOffset4(x, y, width, height)] = entry;
                     }
@@ -304,7 +308,7 @@ namespace VrSharp.SvrTexture
                 case 32: return (((y * width) + x) * 4); // 32-bit textures aren't swizzled
             }
 
-            return (((y * width) + x) * 4); // Shouldn't ever reach here
+            return ((y * width) + x); // Shouldn't ever reach here
         }
 
         private int GetSwizzledOffset4(int x, int y, int width, int height)
@@ -373,12 +377,12 @@ namespace VrSharp.SvrTexture
             int LocX = x & 0x3f;
             int LocY = y & 0x3f;
 
-            int BlockPos  = (LocX & (~0x1)) * height + (LocY & (~0x7)) * 2;
+            int BlockPos  = (LocX & (~0xf)) * height + (LocY & (~0x7)) * 2;
             int ColoumPos = ((y & 0x7) * height + (x & 0x7)) * 2;
 
             int ByteNum = (x >> 3) & 1;       // 0,1
 
-            return PagePos + BlockPos + ColoumPos + ByteNum;
+            return (PagePos + BlockPos + ColoumPos + ByteNum) << 1;
         }
         #endregion
     }
