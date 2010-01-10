@@ -369,7 +369,7 @@ namespace VrSharp
             // Note: we have to use System.Drawing.Imaging.PixelFormat as PixelFormat is already defined.
             Bitmap newBitmap = new Bitmap(bitmap.Width, bitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             using (Graphics g = Graphics.FromImage(newBitmap))
-                g.DrawImage(bitmap, new Point(0, 0));
+                g.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
 
             BitmapData BitmapData = newBitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, newBitmap.PixelFormat);
             Marshal.Copy(BitmapData.Scan0, output, 0, output.Length);
