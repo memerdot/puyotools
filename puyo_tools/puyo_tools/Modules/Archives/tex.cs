@@ -15,12 +15,12 @@ namespace puyo_tools
         public TEX()
         {
             Name       = "Fever 2 TEX";
-            Extension  = ".tex";
+            Extension  = ".tex;*.tez";
             CanPack    = true;
             CanExtract = true;
             Translate  = false;
 
-            Filter       = new string[] { Name + " Archive", "*.tex" };
+            Filter       = new string[] { Name + " Archive", "*.tex;*.tez" };
             PaddingByte  = 0x00;
             PackSettings = new ArchivePackSettings.TEX();
         }

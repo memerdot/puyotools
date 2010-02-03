@@ -119,6 +119,12 @@ namespace puyo_tools
                 CompressedData.Write(0u); // Will be filled in later
                 CompressedData.Seek(8, SeekOrigin.Current); // Advance 8 bytes
 
+                // If the file extension is MRZ or TEZ, we probably want to change it
+                if (Path.GetExtension(filename).ToLower() == ".mrz")
+                    filename = Path.GetFileNameWithoutExtension(filename) + ".mrg";
+                else if (Path.GetExtension(filename).ToLower() == ".tez")
+                    filename = Path.GetFileNameWithoutExtension(filename) + ".tex";
+
                 CompressedData.Write(filename, 31, 32, Encoding.GetEncoding("Shift_JIS"));
                 CompressedData.Write(DecompressedSize);
                 CompressedData.Write(MagicValue);

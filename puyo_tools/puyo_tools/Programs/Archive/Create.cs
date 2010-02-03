@@ -219,20 +219,29 @@ namespace puyo_tools
             if (fileList.Count == 0)
                 return;
 
+            // Get output filename
+            string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
+            if (output_filename == null || output_filename == String.Empty)
+                return;
+
             // Set up our background worker
             BackgroundWorker bw = new BackgroundWorker();
-            bw.DoWork += run;
+            bw.DoWork += delegate(object sender2, DoWorkEventArgs e2) {
+                run(output_filename);
+            };
+            //bw.DoWork += run;
 
             // Now, show our status
             status = new StatusMessage("Archive - Create", fileList.ToArray());
             status.Show();
-            status.Visible = false;
+            //status.Visible = false;
 
             bw.RunWorkerAsync();
         }
 
         /* Create the archive */
-        private void run(object sender, DoWorkEventArgs e)
+        //private void run(object sender, DoWorkEventArgs e)
+        private void run(string output_filename)
         {
             try
             {
@@ -241,13 +250,13 @@ namespace puyo_tools
                 int CompressionFormatIndex = compressionFormatList.SelectedIndex;
 
                 // Get output filename
-                string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
-                if (output_filename == null || output_filename == String.Empty)
-                    return;
+                //string output_filename = FileSelectionDialog.SaveFile("Create Archive", String.Empty, String.Format("{0} ({1})|{1}", ArchiveFilters[archiveFormatList.SelectedIndex][0], ArchiveFilters[archiveFormatList.SelectedIndex][1]));
+                //if (output_filename == null || output_filename == String.Empty)
+                //    return;
 
                 // Disable the window and show the status box
                 PanelContent.Enabled = false;
-                status.Visible = true;
+                //status.Visible = true;
 
                 /* Start creating the archive */
                 Archive archive = new Archive(ArchiveFormats[archiveFormatList.SelectedIndex], Path.GetFileName(output_filename));
@@ -270,6 +279,9 @@ namespace puyo_tools
                     /* Add the files */
                     for (int i = 0; i < fileList.Count; i++)
                     {
+                        // Set the current file
+                        status.CurrentFile = i;
+
                         /* Pad file so we can have the correct block offset */
                         while (outputStream.Position < offsetList[i])
                             outputStream.WriteByte(archive.PaddingByte);

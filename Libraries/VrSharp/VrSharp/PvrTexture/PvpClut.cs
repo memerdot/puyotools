@@ -47,6 +47,11 @@ namespace VrSharp.PvrTexture
 
             NumClutEntries = BitConverter.ToUInt16(ClutData, 0x0E);
 
+            // Get the correct pixel codec from the clut file.
+            // If we don't know the format in the clut file then the
+            // one specified in the texture file should be used instead.
+            PixelCodec = PvrCodecList.GetPixelCodec((PvrPixelFormat)PixelFormat);
+
             return true;
         }
 

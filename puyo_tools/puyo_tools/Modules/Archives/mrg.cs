@@ -16,12 +16,12 @@ namespace puyo_tools
         public MRG()
         {
             Name       = "MRG";
-            Extension  = ".mrg";
+            Extension  = ".mrg;*.mrz";
             CanPack    = true;
             CanExtract = true;
             Translate  = false;
 
-            Filter       = new string[] { Name + " Archive", "*.mrg" };
+            Filter       = new string[] { Name + " Archive", "*.mrg;*.mrz" };
             PaddingByte  = 0x00;
             PackSettings = new ArchivePackSettings.MRG();
         }
