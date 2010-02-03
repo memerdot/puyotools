@@ -21,14 +21,14 @@ namespace VrConv
                 ClutData    = null; // Set external clut data to null
 
                 // Get the Pixel and Data Formats
-                GvrPixelFormat? PixelFormat = GetPixelFormat(PixelFormatText);
-                GvrDataFormat? DataFormat   = GetDataFormat(DataFormatText);
-                if ((PixelFormat == null && (DataFormat == GvrDataFormat.Index4 || DataFormat == GvrDataFormat.Index8)) || DataFormat == null)
+                GvrPixelFormat PixelFormat = GetPixelFormat(PixelFormatText);
+                GvrDataFormat DataFormat   = GetDataFormat(DataFormatText);
+                if ((PixelFormat == GvrPixelFormat.Unknown && (DataFormat == GvrDataFormat.Index4 || DataFormat == GvrDataFormat.Index8)) || DataFormat == GvrDataFormat.Unknown)
                 {
                     Console.WriteLine("ERROR: Unknown pixel or data format.");
                     return false;
                 }
-                if (PixelFormat == null && DataFormat != GvrDataFormat.Index4 && DataFormat != GvrDataFormat.Index8)
+                if (PixelFormat == GvrPixelFormat.Unknown && DataFormat != GvrDataFormat.Index4 && DataFormat != GvrDataFormat.Index8)
                     PixelFormat = GvrPixelFormat.IntensityA8; // Just so it gets set to 00.
 
                 // Load the bitmap
@@ -46,7 +46,7 @@ namespace VrConv
                 Console.WriteLine();
                 Console.WriteLine("Texture Type : Gvr");
                 Console.WriteLine("Dimensions   : {0}x{1}", TextureInfo.TextureWidth, TextureInfo.TextureHeight);
-                if (TextureInfo.PixelFormat != 0xFF)
+                if (TextureInfo.PixelFormat != (byte)GvrPixelFormat.Unknown)
                     Console.WriteLine("Pixel Format : {0} ({1})", TextureInfo.PixelFormat.ToString("X2"), GetPixelFormatAsText(TextureInfo.PixelFormat));
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"), GetDataFormatAsText(TextureInfo.DataFormat));
                 if (TextureInfo.DataFlags != 0x00)
@@ -134,7 +134,7 @@ namespace VrConv
                 return String.Join(", ", Flags.ToArray());
             }
 
-            private GvrPixelFormat? GetPixelFormat(string format)
+            private GvrPixelFormat GetPixelFormat(string format)
             {
                 switch (format.ToLower())
                 {
@@ -146,10 +146,10 @@ namespace VrConv
                         return GvrPixelFormat.Rgb5a3;
                 }
 
-                return null; // Unknown format
+                return GvrPixelFormat.Unknown; // Unknown format
             }
 
-            private GvrDataFormat? GetDataFormat(string format)
+            private GvrDataFormat GetDataFormat(string format)
             {
                 switch (format.ToLower())
                 {
@@ -173,7 +173,7 @@ namespace VrConv
                         return GvrDataFormat.Index8;
                 }
 
-                return null; // Unknown format
+                return GvrDataFormat.Unknown; // Unknown format
             }
         }
         #endregion
@@ -188,10 +188,10 @@ namespace VrConv
                 ClutData    = null; // Set external clut data to null
 
                 // Get the Pixel, Data, and Compression Formats
-                PvrPixelFormat? PixelFormat = GetPixelFormat(PixelFormatText);
-                PvrDataFormat? DataFormat   = GetDataFormat(DataFormatText);
+                PvrPixelFormat PixelFormat = GetPixelFormat(PixelFormatText);
+                PvrDataFormat DataFormat   = GetDataFormat(DataFormatText);
                 PvrCompressionFormat CompressionFormat = GetCompressionFormat(CompressionFormatText);
-                if (PixelFormat == null || DataFormat == null)
+                if (PixelFormat == PvrPixelFormat.Unknown || DataFormat == PvrDataFormat.Unknown)
                 {
                     Console.WriteLine("ERROR: Unknown pixel or data format.");
                     return false;
@@ -286,7 +286,7 @@ namespace VrConv
                 return String.Empty;
             }
 
-            private PvrPixelFormat? GetPixelFormat(string format)
+            private PvrPixelFormat GetPixelFormat(string format)
             {
                 switch (format.ToLower())
                 {
@@ -298,10 +298,10 @@ namespace VrConv
                         return PvrPixelFormat.Argb4444;
                 }
 
-                return null; // Unknown format
+                return PvrPixelFormat.Unknown; // Unknown format
             }
 
-            private PvrDataFormat? GetDataFormat(string format)
+            private PvrDataFormat GetDataFormat(string format)
             {
                 switch (format.ToLower())
                 {
@@ -317,7 +317,7 @@ namespace VrConv
                         return PvrDataFormat.RectangleTwiddled;
                 }
 
-                return null; // Unknown format
+                return PvrDataFormat.Unknown; // Unknown format
             }
 
             private PvrCompressionFormat GetCompressionFormat(string format)
@@ -357,9 +357,9 @@ namespace VrConv
                 }
 
                 // Get the Pixel and Data Formats
-                SvrPixelFormat? PixelFormat = GetPixelFormat(PixelFormatText);
-                SvrDataFormat? DataFormat   = GetDataFormat(DataFormatText, PixelFormat, BitmapBmp.Width, BitmapBmp.Height);
-                if (PixelFormat == null || DataFormat == null)
+                SvrPixelFormat PixelFormat = GetPixelFormat(PixelFormatText);
+                SvrDataFormat DataFormat   = GetDataFormat(DataFormatText, PixelFormat, BitmapBmp.Width, BitmapBmp.Height);
+                if (PixelFormat == SvrPixelFormat.Unknown || DataFormat == SvrDataFormat.Unknown)
                 {
                     Console.WriteLine("ERROR: Unknown pixel or data format.");
                     return false;
@@ -449,7 +449,7 @@ namespace VrConv
                 return String.Empty;
             }
 
-            private SvrPixelFormat? GetPixelFormat(string format)
+            private SvrPixelFormat GetPixelFormat(string format)
             {
                 switch (format.ToLower())
                 {
@@ -459,10 +459,10 @@ namespace VrConv
                         return SvrPixelFormat.Argb8888;
                 }
 
-                return null; // Unknown format
+                return SvrPixelFormat.Unknown; // Unknown format
             }
 
-            private SvrDataFormat? GetDataFormat(string format, SvrPixelFormat? PixelFormat, int width, int height)
+            private SvrDataFormat GetDataFormat(string format, SvrPixelFormat? PixelFormat, int width, int height)
             {
                 switch (format.ToLower())
                 {
@@ -508,7 +508,7 @@ namespace VrConv
                     case "6d": return SvrDataFormat.Index8SqrArgb8;
                 }
 
-                return null; // Unknown format
+                return SvrDataFormat.Unknown; // Unknown format
             }
         }
         #endregion

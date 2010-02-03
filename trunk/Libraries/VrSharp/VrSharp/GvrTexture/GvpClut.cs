@@ -47,6 +47,10 @@ namespace VrSharp.GvrTexture
 
             NumClutEntries = (ushort)((ClutData[0x0E] << 8) | ClutData[0x0F]);
 
+            // I don't know how gvp's are supposed to be formatted
+            PixelFormat = (byte)GvrPixelFormat.Unknown;
+            PixelCodec  = null;
+
             return true;
         }
 

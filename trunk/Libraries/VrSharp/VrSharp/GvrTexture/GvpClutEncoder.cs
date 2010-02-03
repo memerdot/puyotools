@@ -2,23 +2,35 @@
 using System.IO;
 using System.Text;
 
-namespace VrSharp
+namespace VrSharp.GvrTexture
 {
     public class GvpClutEncoder : VpClutEncoder
     {
+        #region Fields
+        GvrPixelFormat PixelFormat; // Pixel Format
+        #endregion
+
         #region Constructors
         /// <summary>
         /// Load a clut from a memory stream.
         /// </summary>
         /// <param name="stream">MemoryStream that contains the clut data.</param>
         /// <param name="NumClutEntries">Number of entries in the clut.</param>
-        public GvpClutEncoder(MemoryStream stream, ushort NumClutEntries) : base(stream, NumClutEntries) { }
+        public GvpClutEncoder(MemoryStream stream, ushort NumClutEntries, GvrPixelFormat PixelFormat)
+            : base(stream, NumClutEntries)
+        {
+            this.PixelFormat = PixelFormat;
+        }
 
         /// <summary>
         /// Load a clut from a byte array.
         /// </summary>
         /// <param name="array">Byte array that contains the clut data.</param>
-        public GvpClutEncoder(byte[] array, ushort NumClutEntries) : base(array, NumClutEntries) { }
+        public GvpClutEncoder(byte[] array, ushort NumClutEntries, GvrPixelFormat PixelFormat)
+            : base(array, NumClutEntries)
+        {
+            this.PixelFormat = PixelFormat;
+        }
         #endregion
 
         #region Clut

@@ -8,6 +8,7 @@ namespace VrSharp.GvrTexture
         IntensityA8 = 0x00,
         Rgb565      = 0x01,
         Rgb5a3      = 0x02,
+        Unknown     = 0xFF,
     }
 
     // Gvr Data Formats
@@ -23,6 +24,7 @@ namespace VrSharp.GvrTexture
         Index4      = 0x08,
         Index8      = 0x09,
         Dxt1        = 0x0E,
+        Unknown     = 0xFF,
     }
 
     public static class GvrCodecList

@@ -8,6 +8,7 @@ namespace VrSharp.PvrTexture
         Argb1555 = 0x00,
         Rgb565   = 0x01,
         Argb4444 = 0x02,
+        Unknown  = 0xFF,
     }
 
     // Pvr Data Formats
@@ -24,6 +25,7 @@ namespace VrSharp.PvrTexture
         SmallVq                  = 0x10,
         SmallVqMipmaps           = 0x11,
         SquareTwiddledMipmapsDup = 0x12,
+        Unknown                  = 0xFF,
     }
 
     // Pvr Compression Formats

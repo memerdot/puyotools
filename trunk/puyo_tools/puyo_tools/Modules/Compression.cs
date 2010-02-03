@@ -63,7 +63,7 @@ namespace puyo_tools
             if (Compressor == null)
                 throw new Exception("Could not compress because no compressor was initalized.");
 
-            return Compressor.Compress(ref Data, Filename);
+            return Compressor.Compress(ref Data, Path.GetFileName(Filename));
         }
 
         // Get Filename

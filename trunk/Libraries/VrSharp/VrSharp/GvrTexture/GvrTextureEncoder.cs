@@ -104,7 +104,7 @@ namespace VrSharp.GvrTexture
         #region Clut
         protected override void CreateVpClut(byte[] ClutData, ushort NumClutEntries)
         {
-            ClutEncoder = new GvpClutEncoder(ClutData, NumClutEntries);
+            ClutEncoder = new GvpClutEncoder(ClutData, NumClutEntries, (GvrPixelFormat)PixelFormat);
         }
         #endregion
 

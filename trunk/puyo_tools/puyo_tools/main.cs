@@ -145,11 +145,9 @@ namespace puyo_tools
             else if (sender == programItem[10] || sender == programItem[11])
             {
                 MessageBox.Show(this,
-                    "The Image Encoder has been disabled for the time being as it is awating a rewrite.\n" +
-                    "This is due to Puyo Tools using a new version of Vr Sharp which is incompatable\n" +
-                    "with the current methods being used to encode vr based textures.\n\n" +
-                    "For the time being you can use the command-line based Vr Conv\n" +
-                    "which you can get from the Puyo Tools project page at:\n" +
+                    "The Image Encoder has been disabled for the time being as it is awating a rewrite. " +
+                    "This is due to Puyo Tools using a new version of Vr Sharp which is incompatable with the current methods being used to encode vr based textures.\n\n" +
+                    "For the time being you can use the command-line based Vr Conv which you can get from the Puyo Tools project page at:\n" +
                     "http://puyotools.googlecode.com/",
                     "Image Encoder Temporarily Disabled",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -158,7 +156,7 @@ namespace puyo_tools
         }
 
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
             Initalize();
             Application.EnableVisualStyles();

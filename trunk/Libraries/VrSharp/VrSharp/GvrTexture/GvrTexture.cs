@@ -83,7 +83,7 @@ namespace VrSharp.GvrTexture
             GvrTextureInfo TextureInfo = new GvrTextureInfo();
             TextureInfo.TextureWidth   = TextureWidth;
             TextureInfo.TextureHeight  = TextureHeight;
-            TextureInfo.PixelFormat    = ((DataFlags & 0x0A) != 0 ? TextureInfo.DataFormat : (byte)0xFF);
+            TextureInfo.PixelFormat    = ((DataFlags & 0x0A) != 0 ? TextureInfo.DataFormat : (byte)GvrPixelFormat.Unknown);
             TextureInfo.DataFormat     = DataFormat;
             TextureInfo.DataFlags      = DataFlags;
 

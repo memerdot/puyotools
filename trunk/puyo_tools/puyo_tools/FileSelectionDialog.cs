@@ -60,7 +60,6 @@ namespace puyo_tools
                 ValidateNames    = true,
             };
             DialogResult result = sfd.ShowDialog();
-
             if (result != DialogResult.OK)
                 return null;
 

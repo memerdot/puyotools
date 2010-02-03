@@ -48,7 +48,7 @@ namespace VrConv
                 Console.WriteLine();
                 Console.WriteLine("Texture Type : Gvr");
                 Console.WriteLine("Dimensions   : {0}x{1}", TextureInfo.TextureWidth, TextureInfo.TextureHeight);
-                if (TextureInfo.PixelFormat != 0xFF)
+                if (TextureInfo.PixelFormat != (byte)GvrPixelFormat.Unknown)
                     Console.WriteLine("Pixel Format : {0} ({1})", TextureInfo.PixelFormat.ToString("X2"), GetPixelFormatAsText(TextureInfo.PixelFormat));
                 Console.WriteLine("Data Format  : {0} ({1})", TextureInfo.DataFormat.ToString("X2"), GetDataFormatAsText(TextureInfo.DataFormat));
                 if (TextureInfo.DataFlags != 0x00)

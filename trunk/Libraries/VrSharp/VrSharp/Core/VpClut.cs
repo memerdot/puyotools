@@ -11,6 +11,9 @@ namespace VrSharp
         protected byte[] ClutData; // Vp Clut Data
 
         protected ushort NumClutEntries; // Number of Clut Entries
+
+        protected byte PixelFormat;        // Pixel Format
+        public VrPixelCodec PixelCodec; // Pixel Codec
         #endregion
 
         #region Constructors

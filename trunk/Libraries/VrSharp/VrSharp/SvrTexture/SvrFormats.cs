@@ -7,6 +7,7 @@ namespace VrSharp.SvrTexture
     {
         Rgb5a3   = 0x08,
         Argb8888 = 0x09,
+        Unknown  = 0xFF,
     }
 
     // Svr Data Formats
@@ -23,6 +24,7 @@ namespace VrSharp.SvrTexture
         Index8SqrRgb5a3  = 0x6B,
         Index8RectArgb8  = 0x6C,
         Index8SqrArgb8   = 0x6D,
+        Unknown          = 0xFF,
     }
 
     public static class SvrCodecList
