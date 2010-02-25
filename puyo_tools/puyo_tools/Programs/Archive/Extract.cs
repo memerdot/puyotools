@@ -433,7 +433,14 @@ namespace puyo_tools
                     {
                         File.Delete(fileList[i]);
                         if (extractDirSameFilename.Checked)
-                            Directory.Move(OutDirectory, fileList[i]);
+                        {
+                            // If the source and destination directory are on the same volume we can just move the directory
+                            if (Directory.GetDirectoryRoot(OutDirectory) == Directory.GetDirectoryRoot(fileList[i]))
+                                Directory.Move(OutDirectory, fileList[i]);
+                            // Otherwise we have to do a series of complicated file moves
+                            else
+                                MoveDirectory(new DirectoryInfo(OutDirectory), new DirectoryInfo(fileList[i]));
+                        }
                     }
                 }
                 catch
@@ -446,6 +453,27 @@ namespace puyo_tools
             // Close the status box now
             status.Close();
             this.Close();
+        }
+
+        // Move a directory (mainly for diferent volumes)
+        private void MoveDirectory(DirectoryInfo sourceDir, DirectoryInfo destDir)
+        {
+            // Check if the directory exists
+            if (!Directory.Exists(destDir.FullName))
+                destDir.Create();
+
+            // Copy each file in the directory
+            FileInfo[] files = sourceDir.GetFiles();
+            foreach (FileInfo file in files)
+                file.MoveTo(Path.Combine(destDir.FullName, file.Name));
+
+            // Copy the subdirectories
+            DirectoryInfo[] dirs = sourceDir.GetDirectories();
+            foreach (DirectoryInfo dir in dirs)
+            {
+                MoveDirectory(dir, new DirectoryInfo(Path.Combine(destDir.FullName, dir.Name)));
+                dir.Delete(); // Directory should be empty if we moved all the files
+            }
         }
     }
 }
