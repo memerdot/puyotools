@@ -423,10 +423,6 @@ namespace ImageManipulation
                                     ((pixel->Green & mask[level]) >> (shift - 0)) |
                                     ((pixel->Blue & mask[level]) >> (shift + 1));
 
-                        Console.WriteLine("maskalpha: " + (pixel->Alpha & mask[level]));
-                        Console.WriteLine("maskalphashift: " + ((pixel->Alpha & mask[level]) >> (shift - 3)));
-                        Console.WriteLine("index: " + index);
-
 						if ( null != _children[index] )
 							paletteIndex = _children[index].GetPaletteIndex ( pixel , level + 1 ) ;
 						else
