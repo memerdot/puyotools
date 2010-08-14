@@ -313,10 +313,11 @@ namespace ImageManipulation
 					else
 					{
 						// Go to the next level down in the tree
-						int	shift = 7 - level ;
-						int index = ( ( pixel->Red & mask[level] ) >> ( shift - 2 ) ) |
-									( ( pixel->Green & mask[level] ) >> ( shift - 1 ) ) |
-									( ( pixel->Blue & mask[level] ) >> ( shift ) ) ;
+                        int shift = 7 - level;
+                        int index = ((pixel->Alpha & mask[level]) >> (shift - 2)) |
+                                    ((pixel->Red & mask[level]) >> (shift - 1)) |
+                                    ((pixel->Green & mask[level]) >> (shift - 0)) |
+                                    ((pixel->Blue & mask[level]) >> (shift + 1));
 
 						OctreeNode	child = _children[index] ;
 
@@ -363,10 +364,11 @@ namespace ImageManipulation
 					for ( int index = 0 ; index < 8 ; index++ )
 					{
 						if ( null != _children[index] )
-						{
+                        {
+                            _alpha += _children[index]._alpha;
 							_red += _children[index]._red ;
 							_green += _children[index]._green ;
-							_blue += _children[index]._blue ;
+                            _blue += _children[index]._blue;
 							_pixelCount += _children[index]._pixelCount ;
 							++children ;
 							_children[index] = null ;
@@ -392,8 +394,8 @@ namespace ImageManipulation
 						// Consume the next palette index
 						_paletteIndex = paletteIndex++ ;
 
-						// And set the color of the palette entry
-						palette.Add ( Color.FromArgb ( _red / _pixelCount , _green / _pixelCount , _blue / _pixelCount ) ) ;
+                        // And set the color of the palette entry
+                        palette.Add(Color.FromArgb(_alpha / _pixelCount, _red / _pixelCount, _green / _pixelCount, _blue / _pixelCount));
 					}
 					else
 					{
@@ -415,10 +417,15 @@ namespace ImageManipulation
 
 					if ( !_leaf )
 					{
-						int	shift = 7 - level ;
-						int index = ( ( pixel->Red & mask[level] ) >> ( shift - 2 ) ) |
-									( ( pixel->Green & mask[level] ) >> ( shift - 1 ) ) |
-									( ( pixel->Blue & mask[level] ) >> ( shift ) ) ;
+						int	shift = 7 - level;
+                        int index = ((pixel->Alpha & mask[level]) >> (shift - 2)) |
+                                    ((pixel->Red & mask[level]) >> (shift - 1)) |
+                                    ((pixel->Green & mask[level]) >> (shift - 0)) |
+                                    ((pixel->Blue & mask[level]) >> (shift + 1));
+
+                        Console.WriteLine("maskalpha: " + (pixel->Alpha & mask[level]));
+                        Console.WriteLine("maskalphashift: " + ((pixel->Alpha & mask[level]) >> (shift - 3)));
+                        Console.WriteLine("index: " + index);
 
 						if ( null != _children[index] )
 							paletteIndex = _children[index].GetPaletteIndex ( pixel , level + 1 ) ;
@@ -434,10 +441,11 @@ namespace ImageManipulation
 				/// </summary>
 				public void Increment ( Color32* pixel )
 				{
-					_pixelCount++ ;
+                    _pixelCount++;
+                    _alpha += pixel->Alpha;
 					_red += pixel->Red ;
 					_green += pixel->Green ;
-					_blue += pixel->Blue ;
+                    _blue += pixel->Blue ;
 				}
 
 				/// <summary>
@@ -463,7 +471,12 @@ namespace ImageManipulation
 				/// <summary>
 				/// Blue component
 				/// </summary>
-				private int				_blue ;
+                private int _blue;
+
+                /// <summary>
+                /// Alpha component
+                /// </summary>
+                private int _alpha;
 
 				/// <summary>
 				/// Pointers to any child nodes
