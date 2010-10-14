@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{A8E274F4-0D8E-4EAB-A5B2-7B40BC922534}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -14,6 +14,8 @@
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>vrsharp.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -81,5 +83,8 @@
     <Compile Include="PvrTexture\PvrTexture.cs" />
     <Compile Include="SvrTexture\SvpClut.cs" />
     <Compile Include="SvrTexture\SvrTexture.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vrsharp.snk" />
   </ItemGroup>
 </Project>
