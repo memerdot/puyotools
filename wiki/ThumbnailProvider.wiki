@@ -4,6 +4,10 @@
 
 Proprietary image files are sometimes hard to work through. To Windows they are nothing more than blobs of binary. However, Windows Explorer uses COM to allow other developers to 'extend' it's functionality. Using COM, we can create a 'thumbnail provider' which will allow Windows to create thumbnails for Puyo Tools-compatible imagery.
 
+== Potential Pitfall ==
+When Thumbnail Provider is loaded into COM, an instance of .NET 2.0 (.NET 3.5 is only an extension for .NET 2.0's runtime, so yes, .NET 2.0) will be loaded into the process.
+
+This can become a problem if you install software that loads .NET 1.x into Explorer. It's possible that if a .NET 1.x COM object is loaded first, the thumbnail provider will run under .NET 1.x and crash. .NET 2.0 and up, potentially minus .NET 4.x, will not affect thumbnailer's ability to work.
 
 = Implementation =
 In Vista+, it is no longer possible to initialize by path. Instead we're given a stream. This stream does contain one bit of file information, the filename, but not the location of this file.
