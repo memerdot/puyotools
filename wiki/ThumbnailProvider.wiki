@@ -14,9 +14,9 @@ The solution chosen is simple. We install Thumbnail Provider to also handle pale
 
 There are a few drawbacks to this solution.
 
-* If thumbnails become cached and multiple palettes have the same filename, the palette will stop changing on the last cached thumbnail with the same name.
-* During the first load of a folder, some files may not load. If the cache stores this status, simply reloading the page might not fix the problem.
-* It is difficult to avoid collisions in reading/writing to the same palette file when the thumbnail provider is being executed many times concurrently.
+  * If thumbnails become cached and multiple palettes have the same filename, the palette will stop changing on the last cached thumbnail with the same name.
+  * During the first load of a folder, some files may not load. If the cache stores this status, simply reloading the page might not fix the problem.
+  * It is difficult to avoid collisions in reading/writing to the same palette file when the thumbnail provider is being executed many times concurrently.
 
 However, it does work in limited testing. It works best when users forcefully disable thumbnail caching, by changing the security permissions on the folder used to store thumbnails.
 
